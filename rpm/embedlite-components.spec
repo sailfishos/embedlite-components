@@ -54,5 +54,5 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 # >> files
-%{_libdir}/*
+%{_libdir}/mozembedlite/*
 # << files
