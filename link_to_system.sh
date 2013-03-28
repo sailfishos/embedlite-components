@@ -23,7 +23,7 @@ $OBJPREFIX/prompt/.libs/libprompt.so
 $OBJPREFIX/touchhelper/.libs/libtouchhelper.so
 $OBJPREFIX/widgetfactory/.libs/libwidgetfactory.so
 EmbedLiteBinComponents.manifest
-EmbedLiteJSComponents.manifest
+jscomps/EmbedLiteJSComponents.manifest
 jscomps/AboutRedirector.js
 jscomps/AlertsService.js
 jscomps/LoginManagerPrompter.js
@@ -31,6 +31,7 @@ jscomps/HelperAppDialog.js
 jscomps/DownloadManagerUI.js
 jscomps/EmbedPrefService.js
 jscomps/ContentPermissionPrompt.js
+jscomps/EmbedLiteGlobalHelper.js
 "
 
 for str in $FILES_LIST; do
@@ -40,7 +41,7 @@ for str in $FILES_LIST; do
 done
 
 rm -f $TARGET_DIR/chrome/EmbedLiteJSScripts.manifest;
-ln -s $(pwd)/EmbedLiteJSScripts.manifest $TARGET_DIR/chrome/EmbedLiteJSScripts.manifest;
+ln -s $(pwd)/jsscripts/EmbedLiteJSScripts.manifest $TARGET_DIR/chrome/EmbedLiteJSScripts.manifest;
 
 rm -rf $TARGET_DIR/chrome/embedlite;
 mkdir -p $TARGET_DIR/chrome/embedlite/content;
