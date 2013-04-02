@@ -13,6 +13,8 @@
 #include "nsIURI.h"
 #include "nsIVariant.h"
 #include "nsArrayEnumerator.h"
+#include "nsIDOMFile.h"
+#include "nsIDOMWindowUtils.h"
 
 //-----------------------------
 
@@ -315,13 +317,81 @@ nsEmbedFilePicker::OnMessageReceived(const char* messageName, const PRUnichar* m
 NS_IMETHODIMP
 nsEmbedFilePicker::GetDomfile(nsIDOMFile * *aDomfile)
 {
-  printf("nsEmbedFilePicker::GetDomfile NOT IMPLEMENTED\n");
-  return NS_ERROR_NOT_IMPLEMENTED;
+  nsCOMPtr<nsIFile> localFile;
+  nsresult rv = GetFile(getter_AddRefs(localFile));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (!localFile) {
+    *aDomfile = nullptr;
+    return NS_OK;
+  }
+
+  nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
+  nsCOMPtr<nsIDOMFile> file;
+  utils->WrapDOMFile(localFile, getter_AddRefs(file));
+  file.forget(aDomfile);
+  return NS_OK;
 }
+
+class nsBaseFilePickerEnumerator : public nsISimpleEnumerator
+{
+public:
+  NS_DECL_ISUPPORTS
+
+  nsBaseFilePickerEnumerator(nsISimpleEnumerator* iterator, nsIDOMWindow* aWin)
+    : mIterator(iterator)
+  {
+    utils = do_GetInterface(aWin);
+  }
+
+  virtual ~nsBaseFilePickerEnumerator()
+  {}
+
+  NS_IMETHOD
+  GetNext(nsISupports** aResult)
+  {
+    nsCOMPtr<nsISupports> tmp;
+    nsresult rv = mIterator->GetNext(getter_AddRefs(tmp));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    if (!tmp) {
+      return NS_OK;
+    }
+
+    nsCOMPtr<nsIFile> localFile = do_QueryInterface(tmp);
+    if (!localFile) {
+      return NS_ERROR_FAILURE;
+    }
+
+    nsCOMPtr<nsIDOMFile> file;
+    utils->WrapDOMFile(localFile, getter_AddRefs(file));
+    file.forget(aResult);
+    return NS_OK;
+  }
+
+  NS_IMETHOD
+  HasMoreElements(bool* aResult)
+  {
+    return mIterator->HasMoreElements(aResult);
+  }
+
+private:
+  nsCOMPtr<nsISimpleEnumerator> mIterator;
+  nsCOMPtr<nsIDOMWindowUtils> utils;
+};
+
+NS_IMPL_ISUPPORTS1(nsBaseFilePickerEnumerator, nsISimpleEnumerator)
 
 NS_IMETHODIMP
 nsEmbedFilePicker::GetDomfiles(nsISimpleEnumerator * *aDomfiles)
 {
-  printf("nsEmbedFilePicker::GetDomfiles NOT IMPLEMENTED\n");
-  return NS_ERROR_NOT_IMPLEMENTED;
+  nsCOMPtr<nsISimpleEnumerator> iter;
+  nsresult rv = GetFiles(getter_AddRefs(iter));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsRefPtr<nsBaseFilePickerEnumerator> retIter =
+    new nsBaseFilePickerEnumerator(iter, mWin);
+
+  retIter.forget(aDomfiles);
+  return NS_OK;
 }
