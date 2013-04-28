@@ -11,6 +11,7 @@ Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(libxul)
 BuildRequires:  pkgconfig(nspr)
 BuildRequires:  python
+BuildRequires:  libtool
 
 %description
 EmbedLite Components
