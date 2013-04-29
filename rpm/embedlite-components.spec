@@ -29,7 +29,8 @@ EmbedLite Components
 NO_CONFIGURE=YES ./autogen.sh
 %configure --prefix=/usr \
 
-make %{?jobs:-j%jobs}
+#make %{?jobs:-j%jobs}
+make
 
 # >> build post
 # << build post
