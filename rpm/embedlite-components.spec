@@ -10,6 +10,8 @@ BuildRequires:  pkgconfig(libxul) >= 23.0a1
 BuildRequires:  pkgconfig(nspr)
 BuildRequires:  python
 BuildRequires:  libtool
+BuildRequires:  automake
+BuildRequires:  autoconf
 
 %description
 EmbedLite Components required for embeded browser UI
