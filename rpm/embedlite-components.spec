@@ -12,6 +12,7 @@ BuildRequires:  python
 BuildRequires:  libtool
 BuildRequires:  automake
 BuildRequires:  autoconf
+BuildRequires:  perl
 
 %description
 EmbedLite Components required for embeded browser UI
