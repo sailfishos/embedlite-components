@@ -70,6 +70,7 @@ EmbedPrefService.prototype = {
         Services.obs.addObserver(this, "embedui:saveprefs", true);
         Services.obs.addObserver(this, "embedui:allprefs", true);
         Services.obs.addObserver(this, "embedui:setprefs", true);
+        Services.obs.addObserver(this, "embedui:clearprefs", true);
         break;
       }
       case "embedui:prefs": {
@@ -102,6 +103,14 @@ EmbedPrefService.prototype = {
       case "embedui:allprefs": {
         let prefs = this._getPrefs()
         Services.obs.notifyObservers(null, "embed:allprefs", JSON.stringify(prefs));
+        break;
+      }
+      case "embedui:clearprefs": {
+        let prefs = JSON.parse(aData).prefs;
+        for (var i = 0; i < prefs.length; i++) {
+          Services.prefs.clearUserPref(prefs[i]);
+        }
+        break;
       }
       case "embedui:setprefs": {
         let prefs = JSON.parse(aData).prefs;
@@ -120,6 +129,7 @@ EmbedPrefService.prototype = {
             throw new Error("Unexpected value type: " + typeof(prefs[i].v));
           }
         }
+        break;
       }
     }
   },
