@@ -6,7 +6,7 @@ Group:      Applications/Internet
 License:    Mozilla License
 URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
-BuildRequires:  xulrunner-devel
+BuildRequires:  xulrunner-qt5-devel
 BuildRequires:  pkgconfig(nspr)
 BuildRequires:  python
 BuildRequires:  libtool
@@ -30,8 +30,7 @@ EmbedLite Components required for embeded browser UI
 NO_CONFIGURE=yes ./autogen.sh
 %configure --with-system-nspr
 
-#make %{?jobs:-j%jobs}
-make
+make %{?jobs:-j%jobs}
 
 # >> build post
 # << build post
