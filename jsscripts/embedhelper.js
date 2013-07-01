@@ -32,7 +32,7 @@ dump("###################################### embedhelper.js loaded\n");
 
 var globalObject = null;
 
-const kStateActive = 0x00000001; // :active pseudoclass for elements
+const kEmbedStateActive = 0x00000001; // :active pseudoclass for elements
 
 function fuzzyEquals(a, b) {
   return (Math.abs(a - b) < 1e-6);
@@ -66,7 +66,7 @@ EmbedHelper.prototype = {
     addMessageListener("embedui:find", this);
     addMessageListener("Gesture:ContextMenuSynth", this);
     addMessageListener("embed:ContextMenuCreate", this);
-    Services.obs.addObserver(this, "before-first-paint", true);
+    Services.obs.addObserver(this, "embedlite-before-first-paint", true);
     Services.prefs.addObserver("browser.zoom.reflowOnZoom", this, false);
   },
 
@@ -74,13 +74,9 @@ EmbedHelper.prototype = {
     // Ignore notifications not about our document.
     dump("observe topic:" + aTopic + "\n");
     switch (aTopic) {
-        case "before-first-paint":
+        case "embedlite-before-first-paint":
           // Is it on the top level?
-          let contentDocument = aSubject;
-          if (content && contentDocument == content.contentDocument) {
-            displayedDocumentChanged();
-            this.contentDocumentIsDisplayed = true;
-          }
+          this.contentDocumentIsDisplayed = true;
           break;
         case "nsPref:changed":
           if (data == "browser.zoom.reflowOnZoom") {
@@ -426,13 +422,8 @@ EmbedHelper.prototype = {
     }
   },
 
-  displayedDocumentChanged: function() {
-    content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils).isFirstPaint = true;
-  },
-
   isBrowserContentDocumentDisplayed: function() {
     if (content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils).isFirstPaint) {
-      dump("windowUtils Is FirstPaint\n");
       return false;
     }
     return this.contentDocumentIsDisplayed;
@@ -540,7 +531,7 @@ EmbedHelper.prototype = {
   },
 
   _doTapHighlight: function _doTapHighlight(aElement) {
-    DOMUtils.setContentState(aElement, kStateActive);
+    DOMUtils.setContentState(aElement, kEmbedStateActive);
     this._highlightElement = aElement;
     this._touchElement = aElement;
   },
@@ -552,9 +543,9 @@ EmbedHelper.prototype = {
     // If the active element is in a sub-frame, we need to make that frame's document
     // active to remove the element's active state.
     if (this._highlightElement.ownerDocument != content.document)
-      DOMUtils.setContentState(this._highlightElement.ownerDocument.documentElement, kStateActive);
+      DOMUtils.setContentState(this._highlightElement.ownerDocument.documentElement, kEmbedStateActive);
 
-    DOMUtils.setContentState(content.document.documentElement, kStateActive);
+    DOMUtils.setContentState(content.document.documentElement, kEmbedStateActive);
     this._highlightElement = null;
   },
 };
