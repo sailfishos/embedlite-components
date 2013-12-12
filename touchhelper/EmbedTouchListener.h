@@ -36,10 +36,10 @@ public:
     NS_DECL_NSIDOMEVENTLISTENER
 
     virtual void RequestContentRepaint(const mozilla::layers::FrameMetrics&);
-    virtual void HandleDoubleTap(const mozilla::CSSIntPoint&);
-    virtual void HandleSingleTap(const mozilla::CSSIntPoint&);
-    virtual void HandleLongTap(const mozilla::CSSIntPoint&);
-    virtual void SendAsyncScrollDOMEvent(mozilla::layers::FrameMetrics::ViewID, const mozilla::CSSRect&, const mozilla::CSSSize&);
+    virtual void HandleDoubleTap(const mozilla::CSSIntPoint&, int32_t);
+    virtual void HandleSingleTap(const mozilla::CSSIntPoint&, int32_t);
+    virtual void HandleLongTap(const mozilla::CSSIntPoint&, int32_t);
+    virtual void SendAsyncScrollDOMEvent(bool aIsRoot, const mozilla::CSSRect&, const mozilla::CSSSize&);
     virtual void ScrollUpdate(const mozilla::CSSPoint&, float);
     virtual void PostDelayedTask(Task*, int) {}
 
