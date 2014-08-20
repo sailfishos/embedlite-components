@@ -1,0 +1,41 @@
+From 843b78724be01f47e56ed95d89014a9349629bf6 Mon Sep 17 00:00:00 2001
+From: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+Date: Tue, 19 Aug 2014 11:52:46 +0300
+Subject: [PATCH] [embedhelper] Avoid zoomToRect when in fullscreen mode
+
+---
+ jsscripts/embedhelper.js | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/jsscripts/embedhelper.js b/jsscripts/embedhelper.js
+index 3050ca1..d030e23 100644
+--- a/jsscripts/embedhelper.js
++++ b/jsscripts/embedhelper.js
+@@ -47,6 +47,7 @@ function EmbedHelper() {
+   this.zoomMargin = 14;
+   this.vkbOpenCompositionMetrics = null;
+   this.returnToBoundsRequested = false;
++  this.inFullScreen = false;
+   this._init();
+ }
+ 
+@@ -318,7 +319,7 @@ EmbedHelper.prototype = {
+ 
+         // Floor cssCompositedRect.height and ceil cssPageRect.height that there needs to be more than 1px difference.
+         // Background reason being that TabChildHelper floors viewport x and y values.
+-        if (!this.returnToBoundsRequested && this._viewportData.y + Math.floor(this._viewportData.cssCompositedRect.height) > Math.ceil(this._viewportData.cssPageRect.height)) {
++        if (!this.inFullScreen && !this.returnToBoundsRequested && this._viewportData.y + Math.floor(this._viewportData.cssCompositedRect.height) > Math.ceil(this._viewportData.cssPageRect.height)) {
+           let y = -this._viewportData.cssCompositedRect.height + this._viewportData.cssPageRect.height
+           var winid = Services.embedlite.getIDByWindow(content);
+           Services.embedlite.zoomToRect(winid, this._viewportData.x, y,
+@@ -620,6 +621,7 @@ EmbedHelper.prototype = {
+   _handleFullScreenChanged: function(aEvent) {
+         let window = aEvent.target.defaultView;
+         let winid = Services.embedlite.getIDByWindow(window);
++        this.inFullScreen = aEvent.target.mozFullScreen;
+         Services.embedlite.sendAsyncMessage(winid, "embed:fullscreenchanged",
+                                             JSON.stringify({
+                                                     "fullscreen": aEvent.target.mozFullScreen
+-- 
+1.9.3
+
