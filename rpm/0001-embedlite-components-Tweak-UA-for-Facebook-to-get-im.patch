@@ -1,0 +1,35 @@
+From cd6d890d119b9d7c25cd19690c6a19bc4cbc07fa Mon Sep 17 00:00:00 2001
+From: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+Date: Thu, 21 Aug 2014 12:44:30 +0300
+Subject: [PATCH] [embedlite-components] Tweak UA for Facebook to get images of
+ proper sizes
+
+---
+ jscomps/UserAgentOverrideHelper.js | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/jscomps/UserAgentOverrideHelper.js b/jscomps/UserAgentOverrideHelper.js
+index 664e140..a7ea781 100644
+--- a/jscomps/UserAgentOverrideHelper.js
++++ b/jscomps/UserAgentOverrideHelper.js
+@@ -48,6 +48,7 @@ var UserAgent = {
+   GOOGLE_MAPS_DOMAIN: /(^|\.)maps\.google\.com$/,
+   YOUTUBE_DOMAIN: /(^|\.)youtube\.com$/,
+   NOKIA_HERE_DOMAIN: /(^|\.)here\.com$/,
++  FACEBOOK_DOMAIN: /(^|\.)facebook\.com$/,
+   _customUA: null,
+ 
+   getCustomUserAgent: function() {
+@@ -109,6 +110,9 @@ var UserAgent = {
+         if (!ua.contains("Mobile")) {
+           return ua.replace("X11", "Android").replace("Unix", "Android").replace("Linux", "Mobile");
+         }
++      } else if (this.FACEBOOK_DOMAIN.test(aUri.host)) {
++        // Facebook works best when UA is a copy of Firefox for Android, but without "Android" keyword
++        return "Mozilla/5.0 (Sailfish; Mobile; rv:31.0) Gecko/31.0 Firefox/31.0";
+       }
+     }
+ 
+-- 
+1.9.3
+
