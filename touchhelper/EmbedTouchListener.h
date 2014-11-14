@@ -23,7 +23,7 @@
 #define MOZ_DOMMetaAdded "DOMMetaAdded"
 
 class EmbedTouchListener : public nsIDOMEventListener,
-                           public mozilla::layers::GeckoContentController
+                           public mozilla::embedlite::EmbedLiteContentController
 {
 public:
     EmbedTouchListener(nsIDOMWindow* aWin);
@@ -33,11 +33,10 @@ public:
     virtual void RequestContentRepaint(const mozilla::layers::FrameMetrics&);
     virtual void HandleDoubleTap(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&);
     virtual void HandleSingleTap(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&);
-    virtual void HandleLongTap(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&);
+    virtual void HandleLongTap(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&, uint64_t);
     virtual void HandleLongTapUp(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&);
     virtual void SendAsyncScrollDOMEvent(bool aIsRoot, const mozilla::CSSRect&, const mozilla::CSSSize&);
     virtual void ScrollUpdate(const mozilla::CSSPoint&, float);
-    virtual void PostDelayedTask(Task*, int) {}
     virtual void AcknowledgeScrollUpdate(const mozilla::layers::FrameMetrics::ViewID&, const uint32_t&) {};
 
     nsCOMPtr<nsIDOMWindow> DOMWindow;
