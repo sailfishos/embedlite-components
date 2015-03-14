@@ -71,6 +71,7 @@ EmbedHelper.prototype = {
     addMessageListener("Gesture:LongTap", this);
     addMessageListener("embedui:find", this);
     addMessageListener("embedui:zoomToRect", this);
+    addMessageListener("embedui:scrollTo", this);
     // Metrics used when virtual keyboard is open/opening.
     addMessageListener("embedui:vkbOpenCompositionMetrics", this);
     addMessageListener("embedui:addhistory", this);
@@ -273,6 +274,12 @@ EmbedHelper.prototype = {
           } else {
             Services.embedlite.zoomToRect(winid, aMessage.data.x, aMessage.data.y, aMessage.data.width, aMessage.data.height);
           }
+        }
+        break;
+      }
+      case "embedui:scrollTo": {
+        if (aMessage.data) {
+            content.scrollTo(aMessage.data.x, aMessage.data.y);
         }
         break;
       }
