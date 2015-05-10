@@ -53,7 +53,7 @@ jscomps/Sidebar.js
 
 for str in $FILES_LIST; do
     fname="${str##*/}"
-    rm -f $TARGET_DIR/$fname;
+    rm -f $TARGET_DIR/components/$fname;
     ln -s $(pwd)/$str $TARGET_DIR/components/$fname;
 done
 
