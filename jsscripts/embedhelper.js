@@ -296,7 +296,6 @@ EmbedHelper.prototype = {
         let webNav = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
         let docShell = webNav.QueryInterface(Ci.nsIDocShell);
         let shist = webNav.sessionHistory.QueryInterface(Ci.nsISHistoryInternal);
-        let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
         try {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
@@ -306,27 +305,17 @@ EmbedHelper.prototype = {
         }
 
         aMessage.data.links.forEach(function(link) {
-            let uri;
-            try {
-                uri = ioService.newURI(link, null, null);
-            } catch (e) {
-                dump("Warning: no protocol provided for uri '" + link + "'. Assuming http...\n");
-                uri = ioService.newURI("http://" + link, null, null);
-            }
+            let uri = Cc["@mozilla.org/network/standard-url;1"].createInstance(Ci.nsIURI);
             let historyEntry = Cc["@mozilla.org/browser/session-history-entry;1"].createInstance(Ci.nsISHEntry);
+            uri.spec = link;
             historyEntry.setURI(uri);
             shist.addEntry(historyEntry, true);
         });
         webNav.sessionHistory.getEntryAtIndex(aMessage.data.index, true);
         shist.updateIndex();
 
-        let initialURI;
-        try {
-            initialURI = ioService.newURI(aMessage.data.links[aMessage.data.index], null, null);
-        } catch (e) {
-            dump("Warning: couldn't construct initial URI. Assuming a http:// URI is provided\n");
-            initialURI = ioService.newURI("http://" + aMessage.data.links[aMessage.data.index], null, null);
-        }
+        let initialURI = Cc["@mozilla.org/network/standard-url;1"].createInstance(Ci.nsIURI);
+        initialURI.spec = aMessage.data.links[aMessage.data.index];
         docShell.setCurrentURI(initialURI);
         break;
       }
