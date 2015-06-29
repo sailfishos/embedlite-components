@@ -17,7 +17,8 @@
   -moz-box-flex: 1;
   font-size: 16pt;
   padding: 0px 0px 10px 0px;
-  background-color: rgba(0,0,0,0.6);
+  background-color: rgba(50,50,50,0.8);
+  border-radius: 8px;
   width: 100%;
 }
 
@@ -40,8 +41,6 @@
   -moz-appearance: none;
   min-height: 72px;
   min-width: 72px;
-  max-height: 72px;
-  max-width: 72px;
   border: none !important;
 }
 
