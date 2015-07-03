@@ -249,10 +249,9 @@ EmbedHelper.prototype = {
       }
       case "Viewport:Change": {
         this._viewportData = aMessage.data;
-
-        let epsilon = 0.999;
         // Facebook generates two Viewport:Change's after an input field is tapped. And only
         // the second one is valid because Facebook's JS makes the page longer after the tap.
+        let epsilon = 0.999;
         let maxViewportChanges = 2;
         if (this.vkbOpenCompositionMetrics && this.vkbOpenCompositionMetrics.imOpen &&
             (this.viewportChangesSinceVkbUpdate <= maxViewportChanges) &&
