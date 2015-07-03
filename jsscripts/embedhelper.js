@@ -67,7 +67,6 @@ EmbedHelper.prototype = {
     addEventListener("DOMAutoComplete", this, true);
     addEventListener("blur", this, true);
     addEventListener("mozfullscreenchange", this, false);
-    addMessageListener("AZPC:ScrollDOMEvent", this);
     addMessageListener("Viewport:Change", this);
     addMessageListener("Gesture:DoubleTap", this);
     addMessageListener("Gesture:SingleTap", this);
