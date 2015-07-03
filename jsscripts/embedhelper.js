@@ -48,6 +48,7 @@ function EmbedHelper() {
   this.vkbOpenCompositionMetrics = null;
   this.returnToBoundsRequested = false;
   this.inFullScreen = false;
+  this.viewportChangesSinceVkbUpdate = 0;
   this._init();
 }
 
@@ -123,8 +124,8 @@ EmbedHelper.prototype = {
 //  this.scrollToFocusedInput(browser, false);
 
 
-  scrollToFocusedInput: function(aBrowser, aAllowZoom = true) {
-    let { inputElement: inputElement, isTextField: isTextField } = this.getFocusedInput(aBrowser);
+  scrollToFocusedInput: function(aAllowZoom = true) {
+    let { inputElement: inputElement, isTextField: isTextField } = this.getFocusedInput(content);
     if (inputElement) {
       // _zoomToInput will handle not sending any message if this input is already mostly filling the screen
       this._zoomToInput(inputElement, aAllowZoom, isTextField);
@@ -248,6 +249,7 @@ EmbedHelper.prototype = {
         break;
       }
       case "Gesture:SingleTap": {
+
         if (SelectionHandler.isActive) {
             SelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
         }
@@ -265,11 +267,9 @@ EmbedHelper.prototype = {
             this._sendMouseEvent("mouseup",   element, x, y);
 
             // scrollToFocusedInput does its own checks to find out if an element should be zoomed into
-            let { targetWindow: targetWindow,
-                  offsetX: offsetX,
-                  offsetY: offsetY } = Util.translateToTopLevelWindow(element);
-
-            this.scrollToFocusedInput(targetWindow);
+            if (this.vkbOpenCompositionMetrics.imOpen) {
+              this.scrollToFocusedInput();
+            }
           } catch(e) {
             Cu.reportError(e);
           }
@@ -329,7 +329,16 @@ EmbedHelper.prototype = {
           this.returnToBoundsRequested = false;
         }
 
-        this.performReflow();
+        let epsilon = 0.999;
+        // Facebook generates two Viewport:Change's after an input field is tapped. And only
+        // the second one is valid because Facebook's JS makes the page longer after the tap.
+        let maxViewportChanges = 2;
+        if (this.vkbOpenCompositionMetrics.imOpen &&
+            (this.viewportChangesSinceVkbUpdate <= maxViewportChanges) &&
+            Math.abs((this._viewportData.cssCompositedRect.height * this.vkbOpenCompositionMetrics.resolution) - this.vkbOpenCompositionMetrics.compositionHeight) < epsilon) {
+              this.scrollToFocusedInput();
+              this.viewportChangesSinceVkbUpdate = this.viewportChangesSinceVkbUpdate + 1;
+        }
         break;
       }
       case "embedui:zoomToRect": {
@@ -350,6 +359,7 @@ EmbedHelper.prototype = {
       case "embedui:vkbOpenCompositionMetrics": {
         if (aMessage.data) {
           this.vkbOpenCompositionMetrics = aMessage.data;
+          this.viewportChangesSinceVkbUpdate = 0;
         }
         break;
       }
@@ -421,7 +431,7 @@ EmbedHelper.prototype = {
     let maxCssCompositionWidth = this._viewportData.cssCompositedRect.width;
     let maxCssCompositionHeight = cssCompositionHeight;
 
-    if (this.vkbOpenCompositionMetrics) {
+    if (this.vkbOpenCompositionMetrics && this.vkbOpenCompositionMetrics.imOpen) {
         maxCssCompositionWidth = this.vkbOpenCompositionMetrics.maxCssCompositionWidth;
         maxCssCompositionHeight = this.vkbOpenCompositionMetrics.maxCssCompositionHeight;
         let currentCssCompositedHeight = this._viewportData.cssCompositedRect.height
@@ -437,7 +447,7 @@ EmbedHelper.prototype = {
     let scaleFactor = aIsTextField ? (this.inputItemSize / this.vkbOpenCompositionMetrics.compositionHeight) / (rect.h / cssCompositionHeight) : 1.0;
 
     let margin = this.zoomMargin / scaleFactor;
-    let allowZoom = aAllowZoom && rect.height != this.inputItemSize;
+    let allowZoom = aAllowZoom && rect.h != this.inputItemSize;
 
     // Calculate new css composition bounds that will be the bounds after zooming. Top-left corner is not yet moved.
     let cssCompositedRect = new Rect(this._viewportData.x,
@@ -515,7 +525,7 @@ EmbedHelper.prototype = {
       rect.x = cssCompositedRect.x;
     }
 
-    if (needYAxisMoving && aIsTextField) {
+    if (needYAxisMoving) {
       if (scrollToBottom) {
         rect.y = inputRect.y + inputRect.height - fixedCurrentViewport.height + margin;
       }
