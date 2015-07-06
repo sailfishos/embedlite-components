@@ -333,7 +333,7 @@ EmbedHelper.prototype = {
         // Facebook generates two Viewport:Change's after an input field is tapped. And only
         // the second one is valid because Facebook's JS makes the page longer after the tap.
         let maxViewportChanges = 2;
-        if (this.vkbOpenCompositionMetrics.imOpen &&
+        if (this.vkbOpenCompositionMetrics && this.vkbOpenCompositionMetrics.imOpen &&
             (this.viewportChangesSinceVkbUpdate <= maxViewportChanges) &&
             Math.abs((this._viewportData.cssCompositedRect.height * this.vkbOpenCompositionMetrics.resolution) - this.vkbOpenCompositionMetrics.compositionHeight) < epsilon) {
               this.scrollToFocusedInput();
