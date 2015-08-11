@@ -16,7 +16,7 @@
 
 Name:       embedlite-components-qt5
 Summary:    EmbedLite components Qt5
-Version:    1.8.22
+Version:    1.9.0
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
