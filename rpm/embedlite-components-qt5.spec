@@ -16,7 +16,7 @@
 
 Name:       embedlite-components-qt5
 Summary:    EmbedLite components Qt5
-Version:    1.0.0
+Version:    1.9.0
 Release:    1
 Group:      Applications/Internet
 License:    Mozilla License
