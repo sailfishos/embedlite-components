@@ -98,7 +98,7 @@ var UserAgent = {
         }
         if (!ua.contains("Android")) {
           // Nexus 7 Android chrome has best capabilities
-          return ua.replace("Linux", "Android 4.4.2").replace("Unix", "Android 4.4.2");
+          return ua.replace("Linux", "Android 4.4.2").replace("Unix", "Android 4.4.2").replace("Mobile", "");
         }
       } else if (this.NOKIA_HERE_DOMAIN.test(aUri.host)) {
         // Send the phone UA to here
