@@ -1,3 +1,5 @@
+%global min_xulrunner_version 38.0.5.1
+
 # Don't depend on private xulrunner-qt5 libraries.
 %global privlibs             libfreebl3
 %global privlibs %{privlibs}|libmozalloc
@@ -16,7 +18,7 @@
 
 Name:       embedlite-components-qt5
 Summary:    EmbedLite components Qt5
-Version:    1.9.0
+Version:    1.9.1
 Release:    1
 Group:      Applications/Internet
 License:    Mozilla License
@@ -24,7 +26,7 @@ URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 Patch0:     0001-Tweak-UA-for-Facebook-and-Engadget-to-get-images-of-.patch
 Patch1:     0002-Tweak-UA-for-Dailymotion-to-get-working-fullscreen-b.patch
-BuildRequires:  xulrunner-qt5-devel >= 38.0.5
+BuildRequires:  xulrunner-qt5-devel >= %{min_xulrunner_version}
 BuildRequires:  pkgconfig(nspr)
 BuildRequires:  python
 BuildRequires:  libtool
