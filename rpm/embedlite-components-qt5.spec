@@ -24,7 +24,7 @@ URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 Patch0:     0001-Tweak-UA-for-Facebook-and-Engadget-to-get-images-of-.patch
 Patch1:     0002-Tweak-UA-for-Dailymotion-to-get-working-fullscreen-b.patch
-BuildRequires:  xulrunner-qt5-devel >= 31.7.0.14
+BuildRequires:  xulrunner-qt5-devel >= 38.0.5
 BuildRequires:  pkgconfig(nspr)
 BuildRequires:  python
 BuildRequires:  libtool
