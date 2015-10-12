@@ -1,4 +1,4 @@
-From dfacbb1debb60cad3a4b6b22895aea80c9acbea2 Mon Sep 17 00:00:00 2001
+From 3e8984ce16205a895a00af1333cd0fcac8051bcf Mon Sep 17 00:00:00 2001
 From: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 Date: Fri, 31 Jul 2015 11:24:49 +0300
 Subject: [PATCH 2/2] Tweak UA for Dailymotion to get working fullscreen button
@@ -8,19 +8,19 @@ Subject: [PATCH 2/2] Tweak UA for Dailymotion to get working fullscreen button
  1 file changed, 4 insertions(+)
 
 diff --git a/jscomps/UserAgentOverrideHelper.js b/jscomps/UserAgentOverrideHelper.js
-index a7ea781..34806f9 100644
+index 307ff01..26193c4 100644
 --- a/jscomps/UserAgentOverrideHelper.js
 +++ b/jscomps/UserAgentOverrideHelper.js
-@@ -49,6 +49,7 @@ var UserAgent = {
-   YOUTUBE_DOMAIN: /(^|\.)youtube\.com$/,
+@@ -50,6 +50,7 @@ var UserAgent = {
    NOKIA_HERE_DOMAIN: /(^|\.)here\.com$/,
    FACEBOOK_DOMAIN: /(^|\.)facebook\.com$/,
+   ENGADGET_DOMAIN: /(^|\.)engadget.com$/,
 +  DAILYMOTION_DOMAIN: /(^|\.)dailymotion.com$/,
    _customUA: null,
  
    getCustomUserAgent: function() {
-@@ -113,6 +114,9 @@ var UserAgent = {
-       } else if (this.FACEBOOK_DOMAIN.test(aUri.host)) {
+@@ -110,6 +111,9 @@ var UserAgent = {
+       } else if (this.FACEBOOK_DOMAIN.test(aUri.host) || this.ENGADGET_DOMAIN.test(aUri.host)) {
          // Facebook works best when UA is a copy of Firefox for Android, but without "Android" keyword
          return "Mozilla/5.0 (Sailfish; Mobile; rv:31.0) Gecko/31.0 Firefox/31.0";
 +      } else if (this.DAILYMOTION_DOMAIN.test(aUri.host)) {
@@ -30,5 +30,5 @@ index a7ea781..34806f9 100644
      }
  
 -- 
-1.9.1
+2.1.4
 
