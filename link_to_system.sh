@@ -29,7 +29,6 @@ jscomps/AboutRedirector.js
 jscomps/AlertsService.js
 jscomps/LoginManagerPrompter.js
 jscomps/HelperAppDialog.js
-jscomps/DownloadManagerUI.js
 jscomps/EmbedPrefService.js
 jscomps/ContentPermissionPrompt.js
 jscomps/EmbedLiteGlobalHelper.js
@@ -43,6 +42,7 @@ jscomps/XPIDialogService.js
 jscomps/EmbedLiteWebAppInstall.js
 jscomps/PromptService.js
 jscomps/PrivateDataManager.js
+jscomps/EmbedliteDownloadManager.js
 jscomps/TelProtocolHandler.js
 jscomps/SmsProtocolHandler.js
 jscomps/MailtoProtocolHandler.js
