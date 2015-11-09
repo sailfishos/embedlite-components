@@ -106,7 +106,3 @@ contract @mozilla.org/network/protocol;1?name=rtsp {d43dab24-fab1-11e3-b977-3c97
 component {71b0a6e8-83ac-4006-af97-d66009db97c8} EmbedliteDownloadManager.js
 contract @mozilla.org/embedlite/download-manager;1 {71b0a6e8-83ac-4006-af97-d66009db97c8}
 category app-startup EmbedliteDownloadManager service,@mozilla.org/embedlite/download-manager;1
-
-# Sidebar.js
-component {1a8f0aa4-2433-441f-adad-ed3ea5be4b39} Sidebar.js
-contract @mozilla.org/sidebar;1 {1a8f0aa4-2433-441f-adad-ed3ea5be4b39}
