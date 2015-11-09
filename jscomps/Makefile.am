@@ -5,7 +5,6 @@ jscomps_manifest_DATA = \
 	AlertsService.js \
 	LoginManagerPrompter.js \
 	HelperAppDialog.js \
-	DownloadManagerUI.js \
 	EmbedPrefService.js \
 	ContentPermissionPrompt.js \
 	EmbedLiteGlobalHelper.js \
@@ -18,6 +17,7 @@ jscomps_manifest_DATA = \
 	XPIDialogService.js \
 	PromptService.js \
 	PrivateDataManager.js \
+	EmbedliteDownloadManager.js \
 	TelProtocolHandler.js \
 	SmsProtocolHandler.js \
 	MailtoProtocolHandler.js \
