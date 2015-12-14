@@ -42,6 +42,9 @@ EmbedLite Components required for embeded browser UI
 %prep
 %setup -q -n %{name}-%{version}
 
+%patch0 -p1
+%patch1 -p1
+
 %build
 
 NO_CONFIGURE=yes ./autogen.sh
@@ -63,3 +66,5 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 %files
 %defattr(-,root,root,-)
 %{_libdir}/mozembedlite/*
+%exclude %{_libdir}/mozembedlite/chrome/embedlite/content/duckduckgo.xml
+%exclude %{_libdir}/mozembedlite/chrome/embedlite/content/baidu.xml
