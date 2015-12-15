@@ -19,7 +19,7 @@ Summary:    EmbedLite components Qt5
 Version:    1.0.0
 Release:    1
 Group:      Applications/Internet
-License:    Mozilla License
+License:    MPLv2
 URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 Patch0:     0001-Tweak-UA-for-Facebook-and-Engadget-to-get-images-of-.patch
@@ -40,47 +40,29 @@ EmbedLite Components required for embeded browser UI
 %prep
 %setup -q -n %{name}-%{version}
 
-# >> setup
 %patch0 -p1
 %patch1 -p1
-# << setup
 
 %build
-# >> build pre
-# << build pre
 
 NO_CONFIGURE=yes ./autogen.sh
 %configure --with-system-nspr
 
 make %{?jobs:-j%jobs}
 
-# >> build post
-# << build post
-
 %install
 rm -rf %{buildroot}
-# >> install pre
-# << install pre
 %make_install
 
-# >> install post
-# << install post
-
 %post
-# >> post
 /sbin/ldconfig
 touch /var/lib/_MOZEMBED_CACHE_CLEAN_
-# << post
 
 %postun
-# >> postun
 /sbin/ldconfig
-# << postun
 
 %files
 %defattr(-,root,root,-)
-# >> files
 %{_libdir}/mozembedlite/*
 %exclude %{_libdir}/mozembedlite/chrome/embedlite/content/duckduckgo.xml
 %exclude %{_libdir}/mozembedlite/chrome/embedlite/content/baidu.xml
-# << files
