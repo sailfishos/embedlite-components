@@ -22,8 +22,6 @@ Group:      Applications/Internet
 License:    MPLv2
 URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
-Patch0:     0001-Tweak-UA-for-Facebook-and-Engadget-to-get-images-of-.patch
-Patch1:     0002-Tweak-UA-for-Dailymotion-to-get-working-fullscreen-b.patch
 BuildRequires:  xulrunner-qt5-devel >= 31.7.0.14
 BuildRequires:  pkgconfig(nspr)
 BuildRequires:  python
@@ -39,9 +37,6 @@ EmbedLite Components required for embeded browser UI
 
 %prep
 %setup -q -n %{name}-%{version}
-
-%patch0 -p1
-%patch1 -p1
 
 %build
 
