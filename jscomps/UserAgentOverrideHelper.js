@@ -51,8 +51,7 @@ UserAgentOverrideHelper.prototype = {
   },
 
   getUserAgentForURIAndWindow: function ssua_getUserAgentForURIAndWindow(aURI, aWindow) {
-    // aWindow is unused / not needed.
-    return UserAgent.getUserAgentForWindow(aURI)
+    return UserAgent.getUserAgentForWindow(aURI, aWindow, true)
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISiteSpecificUserAgent, Ci.nsIObserver,
@@ -65,6 +64,7 @@ var UserAgent = {
   overrideMap: new Map,
   initilized: false,
   DESKTOP_UA: null,
+  currentHost: "",
   GOOGLE_DOMAIN: /(^|\.)google\.com$/,
   GOOGLE_MAPS_DOMAIN: /(^|\.)maps\.google\.com$/,
   YOUTUBE_DOMAIN: /(^|\.)youtube\.com$/,
@@ -153,19 +153,27 @@ var UserAgent = {
 
     if (this.overrideMap.has(host)) {
       ua = this.overrideMap.get(host);
-    } else if (this.overrideMap.has(windowHost)) {
+    } else if (this.currentHost && (this.currentHost == windowHost) && this.overrideMap.has(windowHost)) {
       ua = this.overrideMap.get(windowHost);
     } else {
-      ua = this.getUserAgentForWindow(channel.URI);
+      ua = this.getUserAgentForWindow(channel.URI, channelWindow, false);
     }
 
     return ua
   },
 
   // Called if onRequest returns empty user-agent.
-  getUserAgentForWindow: function ua_getUserAgentForWindow(aUri) {
+  getUserAgentForWindow: function ua_getUserAgentForWindow(aUri, aWindow, aIsCurrentHost) {
     // Try to pick 'general.useragent.override.*'
-    let ua = UserAgentOverrides.getOverrideForURI(aUri)
+    let ua = UserAgentOverrides.getOverrideForURI(aUri);
+
+    if (aIsCurrentHost) {
+      this.currentHost = aUri.asciiHost;
+      if (aWindow) {
+        aWindow.addEventListener("beforeunload", this, true);
+      }
+    }
+
     if (!ua) {
       ua = this.getUserAgentForUriAndTab(aUri);
     }
@@ -176,6 +184,15 @@ var UserAgent = {
     }
 
     return this.getDefaultUserAgent();
+  },
+
+  handleEvent: function(aEvent) {
+    switch (aEvent.type) {
+      case "beforeunload": {
+        this.currentHost = "";
+        break;
+      }
+    }
   },
 
   _getRequestLoadContext: function ua_getRequestLoadContext(aRequest) {
