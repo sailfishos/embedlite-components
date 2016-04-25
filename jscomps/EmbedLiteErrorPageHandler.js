@@ -44,8 +44,13 @@ EventLinkListener.prototype = {
           ErrorPageEventHandler._targetWindow = this._targetWindow;
           Services.embedlite.chromeEventHandler(this._targetWindow).addEventListener("click", ErrorPageEventHandler, true);
           let listener = function() {
-            Services.embedlite.chromeEventHandler(this._targetWindow).removeEventListener("click", ErrorPageEventHandler, true);
-            Services.embedlite.chromeEventHandler(this._targetWindow).removeEventListener("pagehide", listener, true);
+            try {
+              Services.embedlite.chromeEventHandler(this._targetWindow).removeEventListener("click", ErrorPageEventHandler, true);
+            } catch (e) {}
+
+            try {
+              Services.embedlite.chromeEventHandler(this._targetWindow).removeEventListener("pagehide", listener, true);
+            } catch (e) {}
             ErrorPageEventHandler._targetWindow = null;
           }.bind(this);
 
