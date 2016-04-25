@@ -651,7 +651,9 @@ EmbedHelper.prototype = {
     let window = aEvent.target.defaultView;
     if (window) {
       let winid = Services.embedlite.getIDByWindow(window);
-      Services.embedlite.sendAsyncMessage(winid, "embed:domcontentloaded", JSON.stringify({ "rootFrame": window.parent === window }));
+      try {
+        Services.embedlite.sendAsyncMessage(winid, "embed:domcontentloaded", JSON.stringify({ "rootFrame": window.parent === window }));
+      } catch (e) {}
     }
   },
 
