@@ -102,7 +102,7 @@ var UserAgent = {
     if (this._desktopMode)
       return this.DESKTOP_UA;
 
-    return this._customUA ? this._customUA : defaultUA;
+    return this._customUA ? this._customUA : this.DESKTOP_UA;
   },
 
   getUserAgentForUriAndTab: function ua_getUserAgentForUriAndTab(aUri) {
