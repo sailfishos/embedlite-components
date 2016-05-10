@@ -61,5 +61,3 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 %files
 %defattr(-,root,root,-)
 %{_libdir}/mozembedlite/*
-%exclude %{_libdir}/mozembedlite/chrome/embedlite/content/duckduckgo.xml
-%exclude %{_libdir}/mozembedlite/chrome/embedlite/content/baidu.xml
