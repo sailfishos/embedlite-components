@@ -7,12 +7,6 @@ jsscripts_manifest_DATA = \
 	SelectionHandler.js \
 	Util.js \
 	ContextMenuHandler.js \
-	bing.xml \
-	google.xml \
-	yahoo.xml \
-	yandex.xml \
-	baidu.xml \
-	duckduckgo.xml \
 	$(NULL)
 
 sync_engine_manifestdir=$(libdir)/mozembedlite/chrome/embedlite/content/sync

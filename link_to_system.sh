@@ -69,12 +69,12 @@ ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content
 ln -s $(pwd)/jsscripts/SelectionHandler.js $TARGET_DIR/chrome/embedlite/content/SelectionHandler.js;
 ln -s $(pwd)/jsscripts/Util.js $TARGET_DIR/chrome/embedlite/content/Util.js;
 ln -s $(pwd)/jsscripts/ContextMenuHandler.js $TARGET_DIR/chrome/embedlite/content/ContextMenuHandler.js;
-ln -s $(pwd)/jsscripts/google.xml $TARGET_DIR/chrome/embedlite/content/google.xml;
-ln -s $(pwd)/jsscripts/bing.xml $TARGET_DIR/chrome/embedlite/content/bing.xml;
-ln -s $(pwd)/jsscripts/yahoo.xml $TARGET_DIR/chrome/embedlite/content/yahoo.xml;
-ln -s $(pwd)/jsscripts/baidu.xml $TARGET_DIR/chrome/embedlite/content/baidu.xml;
-ln -s $(pwd)/jsscripts/duckduckgo.xml $TARGET_DIR/chrome/embedlite/content/duckduckgo.xml;
-ln -s $(pwd)/jsscripts/yandex.xml $TARGET_DIR/chrome/embedlite/content/yandex.xml;
+ln -s $(pwd)/search-engines/google.xml $TARGET_DIR/chrome/embedlite/content/google.xml;
+ln -s $(pwd)/search-engines/bing.xml $TARGET_DIR/chrome/embedlite/content/bing.xml;
+ln -s $(pwd)/search-engines/yahoo.xml $TARGET_DIR/chrome/embedlite/content/yahoo.xml;
+ln -s $(pwd)/search-engines/baidu.xml $TARGET_DIR/chrome/embedlite/content/baidu.xml;
+ln -s $(pwd)/search-engines/duckduckgo.xml $TARGET_DIR/chrome/embedlite/content/duckduckgo.xml;
+ln -s $(pwd)/search-engines/yandex.xml $TARGET_DIR/chrome/embedlite/content/yandex.xml;
 
 ln -s $(pwd)/jsscripts/sync/bookmarks.js $TARGET_DIR/chrome/embedlite/content/sync/bookmarks.js;
 
