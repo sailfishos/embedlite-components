@@ -1,7 +1,9 @@
-TEMPLATE = aux
+TEMPLATE = subdirs
 
 SOURCES += touchhelper/*.cpp
 HEADERS += touchhelper/*.h
+
+SUBDIRS += search-engines
 
 OTHER_FILES += \
     jsscripts/*.js \
