@@ -130,7 +130,6 @@ EmbedHelper.prototype = {
 
   observe: function(aSubject, aTopic, data) {
     // Ignore notifications not about our document.
-    dump("observe topic:" + aTopic + "\n");
     switch (aTopic) {
         case "embedlite-before-first-paint":
           // Is it on the top level?
