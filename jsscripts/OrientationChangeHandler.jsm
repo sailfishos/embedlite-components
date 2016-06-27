@@ -28,25 +28,26 @@ OrientationChangeHandler.prototype = {
 
   lastOrientation: "portrait-primary",
   isRegistered: false,
+  orientationChangeSent: false,
 
   handleOrientationChange: function(evt) {
     let that = this;
     let newOrientation = that._targetWindow.screen.mozOrientation;
     let fullSwitch = (newOrientation.split("-")[0] ==
                       that.lastOrientation.split("-")[0]);
-    let changeSent = false;
+    that.orientationChangeSent = false;
     that.lastOrientation = newOrientation;
 
     function sendOrientationChanged() {
-      if (changeSent) {
+      if (that.orientationChangeSent) {
         return;
       }
       try {
         Services.embedlite.sendAsyncMessage(that._winID, "embed:contentOrientationChanged",
                                             JSON.stringify({
-                                                             "orientation": newOrientation
+                                                             "orientation": that.lastOrientation
                                                            }));
-        changeSent = true;
+        that.orientationChangeSent = true;
       } catch (e) {
         dump("EmbedLiteOrientationChangeHandler: Failed to report orientation change " + e + "\n")
       }
