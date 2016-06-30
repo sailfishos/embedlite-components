@@ -53,7 +53,10 @@ EmbedLiteOrientationChangeHandler.prototype = {
   },
 
   onWindowClosed: function(aWindow) {
-    Services.embedlite.chromeEventHandler(aWindow).addEventListener("DOMContentLoaded", this._orientationListeners[aWindow], false);
+    let chromeEventHandler = Services.embedlite.chromeEventHandler(aWindow);
+    if (chromeEventHandler) {
+      chromeEventHandler.removeEventListener("DOMContentLoaded", this._orientationListeners[aWindow], false);
+    }
     delete this._orientationListeners[aWindow];
   },
 
