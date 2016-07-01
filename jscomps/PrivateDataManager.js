@@ -27,8 +27,20 @@ PrivateDataManager.prototype = {
     return Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieManager);
   },
 
-  get cacheService() {
-    return Cc["@mozilla.org/network/cache-service;1"].getService(Ci.nsICacheService);
+  clearCaches: function() {
+    var cache = Cc["@mozilla.org/netwerk/cache-storage-service;1"].getService(Ci.nsICacheStorageService);
+    try {
+      cache.clear();
+    } catch(e) {
+      debug("error in clearing storage cache: " + e);
+    }
+
+    var imageCache = Cc["@mozilla.org/image/tools;1"].getService(Ci.imgITools).getImgCacheForDocument(null);
+    try {
+      imageCache.clearCache(false); // true=chrome, false=content
+    } catch(e) {
+      debug("error in clearing image cache: " + e);
+    }
   },
 
   clearPrivateData: function (aData) {
@@ -44,9 +56,7 @@ PrivateDataManager.prototype = {
         break;
       }
       case "cache": {
-        try {
-          this.cacheService.evictEntries(Ci.nsICache.STORE_ANYWHERE);
-        } catch (ex) {debug(ex)}
+        this.clearCaches()
         debug("Cache cleaned");
         break;
       }
