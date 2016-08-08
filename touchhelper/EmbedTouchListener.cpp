@@ -68,12 +68,12 @@ void EmbedTouchListener::HandleSingleTap(const CSSPoint& aPoint, int32_t, const 
 
 void EmbedTouchListener::HandleLongTap(const CSSPoint& aPoint, int32_t, const mozilla::layers::ScrollableLayerGuid&, uint64_t)
 {
-    LOGT("pt[%i,%i]", aPoint.x, aPoint.y);
+    LOGT("pt[%f,%f]", aPoint.x, aPoint.y);
 }
 
 void EmbedTouchListener::HandleLongTapUp(const CSSPoint& aPoint, int32_t, const mozilla::layers::ScrollableLayerGuid&)
 {
-    LOGT("pt[%i,%i]", aPoint.x, aPoint.y);
+    LOGT("pt[%f,%f]", aPoint.x, aPoint.y);
 }
 
 void EmbedTouchListener::SendAsyncScrollDOMEvent(bool aIsRoot,
@@ -110,8 +110,8 @@ void EmbedTouchListener::RequestContentRepaint(const mozilla::layers::FrameMetri
     float x, y;
     mService->GetCompositedRectInCSS(aMetrics, &x, &y, &mCssCompositedRect.width, &mCssCompositedRect.height);
 
-    mCssPageRect = gfx::Rect(aMetrics.mScrollableRect.x, aMetrics.mScrollableRect.y,
-                             aMetrics.mScrollableRect.width, aMetrics.mScrollableRect.height);
+    mCssPageRect = gfx::Rect(aMetrics.GetScrollableRect().x, aMetrics.GetScrollableRect().y,
+                             aMetrics.GetScrollableRect().width, aMetrics.GetScrollableRect().height);
 
 //    LOGT("EmbedTouchListener::RequestContentRepaint mCssPageRect %g %g %g %g", mCssPageRect.x, mCssPageRect.y, mCssPageRect.width, mCssPageRect.height);
 //    LOGT("EmbedTouchListener::RequestContentRepaint Viewport %g %g %g %g", mViewport.x, mViewport.y, mViewport.width, mViewport.height);
@@ -120,7 +120,7 @@ void EmbedTouchListener::RequestContentRepaint(const mozilla::layers::FrameMetri
 
 void EmbedTouchListener::HandleDoubleTap(const CSSPoint& aPoint, int32_t, const mozilla::layers::ScrollableLayerGuid&)
 {
-    LOGT("pt[%i,%i]", aPoint.x, aPoint.y);
+    LOGT("pt[%f,%f]", aPoint.x, aPoint.y);
     // We haven't received a metrics update yet; don't do anything.
     if (!mGotViewPortUpdate) {
         return;
@@ -260,7 +260,7 @@ EmbedTouchListener::ZoomToElement(nsIDOMElement* aElement, int aClickY, bool aCa
             zoomed = true;
         }
     }
-    else if (elementAspectRatio < viewportAspectRatio < 1) {
+    else if (elementAspectRatio < viewportAspectRatio && viewportAspectRatio < 1) {
         if ((clrect.height < mCssCompositedRect.height && aCanZoomIn) ||
             (clrect.height > mCssCompositedRect.height && aCanZoomOut) ) {
             mService->ZoomToRect(mTopWinid, clrect.x, clrect.y, clrect.width, clrect.height);

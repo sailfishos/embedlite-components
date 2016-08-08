@@ -29,13 +29,13 @@ jscomps/AboutRedirector.js
 jscomps/AlertsService.js
 jscomps/LoginManagerPrompter.js
 jscomps/HelperAppDialog.js
-jscomps/DownloadManagerUI.js
 jscomps/EmbedPrefService.js
 jscomps/ContentPermissionPrompt.js
 jscomps/EmbedLiteGlobalHelper.js
 jscomps/EmbedLiteConsoleListener.js
 jscomps/EmbedLiteSyncService.js
 jscomps/EmbedLiteFaviconService.js
+jscomps/EmbedLiteOrientationChangeHandler.js
 jscomps/EmbedLiteSearchEngine.js
 jscomps/EmbedLiteErrorPageHandler.js
 jscomps/UserAgentOverrideHelper.js
@@ -43,12 +43,12 @@ jscomps/XPIDialogService.js
 jscomps/EmbedLiteWebAppInstall.js
 jscomps/PromptService.js
 jscomps/PrivateDataManager.js
+jscomps/EmbedliteDownloadManager.js
 jscomps/TelProtocolHandler.js
 jscomps/SmsProtocolHandler.js
 jscomps/MailtoProtocolHandler.js
 jscomps/GeoProtocolHandler.js
 jscomps/RtspProtocolHandler.js
-jscomps/Sidebar.js
 "
 
 for str in $FILES_LIST; do
@@ -63,6 +63,7 @@ ln -s $(pwd)/jsscripts/EmbedLiteJSScripts.manifest $TARGET_DIR/chrome/EmbedLiteJ
 rm -rf $TARGET_DIR/chrome/embedlite;
 mkdir -p $TARGET_DIR/chrome/embedlite/content/sync;
 ln -s $(pwd)/jsscripts/embedhelper.js $TARGET_DIR/chrome/embedlite/content/embedhelper.js;
+ln -s $(pwd)/jsscripts/OrientationChangeHandler.jsm $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.jsm;
 ln -s $(pwd)/jsscripts/TelURIParser.jsm $TARGET_DIR/chrome/embedlite/content/TelURIParser.jsm;
 ln -s $(pwd)/jsscripts/SelectHelper.js $TARGET_DIR/chrome/embedlite/content/SelectHelper.js;
 ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content/SelectAsyncHelper.js;

@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: JavaScript; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -31,23 +31,24 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
 dump("###################################### embedhelper.js loaded\n");
 
 var globalObject = null;
+var gScreenWidth = 0;
+var gScreenHeight = 0;
 
 const kEmbedStateActive = 0x00000001; // :active pseudoclass for elements
 
 function fuzzyEquals(a, b) {
-  return (Math.abs(a - b) < 0.01);
+  return (Math.abs(a - b) < 0.999);
 }
 
 function EmbedHelper() {
-  this.lastTouchedAt = Date.now();
   this.contentDocumentIsDisplayed = true;
-  this.reflowPref = false;
   // Reasonable default. Will be read from preferences.
   this.inputItemSize = 38;
+  this.inputZoomed = false;
   this.zoomMargin = 14;
+  this.vkbOpen = false;
   this.vkbOpenCompositionMetrics = null;
   this.inFullScreen = false;
-  this.viewportChangesSinceVkbUpdate = 0;
   this._init();
 }
 
@@ -59,6 +60,9 @@ EmbedHelper.prototype = {
   _init: function()
   {
     dump("Init Called:" + this + "\n");
+
+    ViewportHandler.init();
+
     addEventListener("touchstart", this, true);
     addEventListener("touchmove", this, true);
     addEventListener("touchend", this, true);
@@ -73,6 +77,7 @@ EmbedHelper.prototype = {
     addMessageListener("Gesture:LongTap", this);
     addMessageListener("embedui:find", this);
     addMessageListener("embedui:zoomToRect", this);
+    addMessageListener("embedui:scrollTo", this);
     // Metrics used when virtual keyboard is open/opening.
     addMessageListener("embedui:vkbOpenCompositionMetrics", this);
     addMessageListener("embedui:addhistory", this);
@@ -80,10 +85,8 @@ EmbedHelper.prototype = {
     addMessageListener("Gesture:ContextMenuSynth", this);
     addMessageListener("embed:ContextMenuCreate", this);
     Services.obs.addObserver(this, "embedlite-before-first-paint", true);
-    Services.prefs.addObserver("browser.zoom.reflowOnZoom", this, false);
     Services.prefs.addObserver("embedlite.inputItemSize", this, false);
     Services.prefs.addObserver("embedlite.zoomMargin", this, false);
-    this.updateReflowPref();
     this.updateInputItemSizePref();
     this.updateZoomMarginPref();
   },
@@ -116,33 +119,24 @@ EmbedHelper.prototype = {
     return { inputElement: null, isTextField: false };
   },
 
-//  // observe this
-//  case "ScrollTo:FocusedInput":
-//  // these messages come from a change in the viewable area and not user interaction
-//  // we allow scrolling to the selected input, but not zooming the page
-//  this.scrollToFocusedInput(browser, false);
-
-
-  scrollToFocusedInput: function(aAllowZoom = true) {
+  scrollToFocusedInput: function() {
     let { inputElement: inputElement, isTextField: isTextField } = this.getFocusedInput(content);
-    if (inputElement) {
+    if (inputElement && this.isVirtualKeyboardOpen()) {
+      let viewportMetadata = ViewportHandler.getViewportMetadata(content);
       // _zoomToInput will handle not sending any message if this input is already mostly filling the screen
-      this._zoomToInput(inputElement, aAllowZoom, isTextField);
+      this._zoomToInput(inputElement, viewportMetadata.allowZoom, isTextField);
     }
   },
 
   observe: function(aSubject, aTopic, data) {
     // Ignore notifications not about our document.
-    dump("observe topic:" + aTopic + "\n");
     switch (aTopic) {
         case "embedlite-before-first-paint":
           // Is it on the top level?
           this.contentDocumentIsDisplayed = true;
           break;
         case "nsPref:changed":
-          if (data == "browser.zoom.reflowOnZoom") {
-            this.updateReflowPref();
-          } else if (data == "embedlite.inputItemSize") {
+          if (data == "embedlite.inputItemSize") {
             this.updateInputItemSizePref();
           } else if (data == "embedlite.zoomMargin") {
             this.updateZoomMarginPref();
@@ -152,7 +146,7 @@ EmbedHelper.prototype = {
     }
   },
 
-  _viewportLastResolution: 0,
+  _previousViewportData: null,
   _viewportData: null,
   _viewportReadyToChange: false,
   _lastTarget: null,
@@ -163,10 +157,6 @@ EmbedHelper.prototype = {
     let docShell = webNav.QueryInterface(Ci.nsIDocShell);
     let docViewer = docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
     docViewer.changeMaxLineBoxWidth(0);
-  },
-
-  updateReflowPref: function() {
-    this.reflowPref = Services.prefs.getBoolPref("browser.zoom.reflowOnZoom");
   },
 
   updateInputItemSizePref: function() {
@@ -185,56 +175,6 @@ EmbedHelper.prototype = {
         this.zoomMargin = tmpMargin;
       }
     } catch (e) {} /*pref is missing*/
-  },
-
-  performReflow: function performReflow() {
-    if (!this._viewportData) {
-      return;
-    }
-    let reflowMobile = false;
-    try {
-      reflowMobile = Services.prefs.getBoolPref("browser.zoom.reflowMobilePages");
-    } catch (e) {}
-    let isMobileView = this._viewportData.viewport.width == this._viewportData.cssPageRect.width;
-    if (this._viewportReadyToChange &&
-        this._viewportLastResolution != this._viewportData.resolution.width) {
-      if (isMobileView && !reflowMobile)
-        return; //dont reflow if pref not allowing reflow Mobile view pages
-      var reflowEnabled = false;
-      try {
-        reflowEnabled = Services.prefs.getBoolPref("browser.zoom.reflowOnZoom");
-      } catch (e) {}
-      let viewportWidth = this._viewportData.viewport.width;
-      let viewportHeight = this._viewportData.viewport.height;
-      let viewportWResolution = this._viewportData.resolution.width;
-
-      let viewportY = this._viewportData.y;
-      var fudge = 15 / viewportWResolution;
-      let width = viewportWidth / viewportWResolution;
-      if (!reflowEnabled) {
-        width = viewportWidth;
-      }
-      let utils = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-      let webNav = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
-      let docShell = webNav.QueryInterface(Ci.nsIDocShell);
-      let docViewer = docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
-      docViewer.changeMaxLineBoxWidth(width - 2*fudge);
-
-      let element = this._lastTarget;
-      if (reflowEnabled && element && viewportWResolution > 1) {
-        let window = element.ownerDocument.defaultView;
-        var winid = Services.embedlite.getIDByWindow(window);
-        let rect = ElementTouchHelper.getBoundingContentRect(element);
-        Services.embedlite.zoomToRect(winid,
-                                      rect.x - fudge,
-                                      viewportY + (rect.y - this._lastTargetY),
-                                      viewportWidth / viewportWResolution,
-                                      viewportHeight / viewportWResolution);
-        this._lastTarget = null;
-      }
-      this._viewportReadyToChange = false;
-      this._viewportLastResolution = this._viewportData.resolution.width;
-    }
   },
 
   _touchElement: null,
@@ -257,18 +197,11 @@ EmbedHelper.prototype = {
         if (element) {
           try {
             let [x, y] = [aMessage.json.x, aMessage.json.y];
-            if (ElementTouchHelper.isElementClickable(element)) {
-              [x, y] = this._moveClickPoint(element, x, y);
-            }
-
             this._sendMouseEvent("mousemove", element, x, y);
             this._sendMouseEvent("mousedown", element, x, y);
             this._sendMouseEvent("mouseup",   element, x, y);
-
             // scrollToFocusedInput does its own checks to find out if an element should be zoomed into
-            if (this.vkbOpenCompositionMetrics.imOpen) {
-              this.scrollToFocusedInput();
-            }
+            this.scrollToFocusedInput();
           } catch(e) {
             Cu.reportError(e);
           }
@@ -311,20 +244,11 @@ EmbedHelper.prototype = {
         break;
       }
       case "Viewport:Change": {
+        this._previousViewportData = this._viewportData
         this._viewportData = aMessage.data;
-        if (this._viewportLastResolution == 0 && this._viewportData != null) {
-          this._viewportLastResolution = this._viewportData.resolution.width;
-        }
 
-        let epsilon = 0.999;
-        // Facebook generates two Viewport:Change's after an input field is tapped. And only
-        // the second one is valid because Facebook's JS makes the page longer after the tap.
-        let maxViewportChanges = 2;
-        if (this.vkbOpenCompositionMetrics && this.vkbOpenCompositionMetrics.imOpen &&
-            (this.viewportChangesSinceVkbUpdate <= maxViewportChanges) &&
-            Math.abs((this._viewportData.cssCompositedRect.height * this.vkbOpenCompositionMetrics.resolution) - this.vkbOpenCompositionMetrics.compositionHeight) < epsilon) {
-              this.scrollToFocusedInput();
-              this.viewportChangesSinceVkbUpdate = this.viewportChangesSinceVkbUpdate + 1;
+        if (!this.inputZoomed) {
+          this.scrollToFocusedInput();
         }
         break;
       }
@@ -343,10 +267,23 @@ EmbedHelper.prototype = {
         }
         break;
       }
+      case "embedui:scrollTo": {
+        if (aMessage.data) {
+            content.scrollTo(aMessage.data.x, aMessage.data.y);
+        }
+        break;
+      }
       case "embedui:vkbOpenCompositionMetrics": {
         if (aMessage.data) {
           this.vkbOpenCompositionMetrics = aMessage.data;
-          this.viewportChangesSinceVkbUpdate = 0;
+          if (this.vkbOpenCompositionMetrics.imOpen) {
+            gScreenWidth = this.vkbOpenCompositionMetrics.screenWidth;
+            gScreenHeight = this.vkbOpenCompositionMetrics.screenHeight;
+            this.scrollToFocusedInput();
+          } else {
+            this.inputZoomed = false;
+            this.vkbOpen = false;
+          }
         }
         break;
       }
@@ -377,23 +314,66 @@ EmbedHelper.prototype = {
             historyEntry.setURI(uri);
             shist.addEntry(historyEntry, true);
         });
-        webNav.sessionHistory.getEntryAtIndex(aMessage.data.index, true);
+        let index = aMessage.data.index;
+        if (index < 0) {
+            dump("Warning: session history entry index out of bounds: " + index + ". Returning index 0.\n");
+            webNav.sessionHistory.getEntryAtIndex(0, true);
+            index = 0;
+        } else if (index >= webNav.sessionHistory.count) {
+            let lastIndex = webNav.sessionHistory.count - 1;
+            dump("Warning: session history entry index out of bound: " + index + ". There are " + webNav.sessionHistory.count +
+                 " item(s) in the session history. Returning index " + lastIndex + ".\n");
+            webNav.sessionHistory.getEntryAtIndex(lastIndex, true);
+            index = lastIndex;
+        } else {
+            webNav.sessionHistory.getEntryAtIndex(index, true);
+        }
+
         shist.updateIndex();
 
         let initialURI;
         try {
-            initialURI = ioService.newURI(aMessage.data.links[aMessage.data.index], null, null);
+            initialURI = ioService.newURI(aMessage.data.links[index], null, null);
         } catch (e) {
             dump("Warning: couldn't construct initial URI. Assuming a http:// URI is provided\n");
-            initialURI = ioService.newURI("http://" + aMessage.data.links[aMessage.data.index], null, null);
+            initialURI = ioService.newURI("http://" + aMessage.data.links[index], null, null);
         }
+        docShell.setCurrentURI(initialURI);
+        break;
+      }
+      case "embedui:addhistory": {
+        // aMessage.data contains: 1) list of 'links' loaded from DB, 2) current 'index'.
+
+        let webNav = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
+        let docShell = webNav.QueryInterface(Ci.nsIDocShell);
+        let shist = webNav.sessionHistory.QueryInterface(Ci.nsISHistoryInternal);
+
+        try {
+          // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
+          webNav.sessionHistory.PurgeHistory(1);
+        } catch (e) {
+            dump("Warning: couldn't PurgeHistory. Was it a file download?\n");
+        }
+
+        aMessage.data.links.forEach(function(link) {
+            let uri = Cc["@mozilla.org/network/standard-url;1"].createInstance(Ci.nsIURI);
+            let historyEntry = Cc["@mozilla.org/browser/session-history-entry;1"].createInstance(Ci.nsISHEntry);
+            uri.spec = link;
+            historyEntry.setURI(uri);
+            shist.addEntry(historyEntry, true);
+        });
+        webNav.sessionHistory.getEntryAtIndex(aMessage.data.index, true);
+        shist.updateIndex();
+
+        let initialURI = Cc["@mozilla.org/network/standard-url;1"].createInstance(Ci.nsIURI);
+        initialURI.spec = aMessage.data.links[aMessage.data.index];
         docShell.setCurrentURI(initialURI);
         break;
       }
       case "Memory:Dump": {
         if (aMessage.data && aMessage.data.fileName) {
             let memDumper = Cc["@mozilla.org/memory-info-dumper;1"].getService(Ci.nsIMemoryInfoDumper);
-            memDumper.dumpMemoryReportsToNamedFile(aMessage.data.fileName, null, null);
+            memDumper.dumpMemoryReportsToNamedFile(aMessage.data.fileName, null, null, false);
         }
         break;
       }
@@ -403,6 +383,7 @@ EmbedHelper.prototype = {
       }
     }
   },
+
 
   _rectVisibility: function(aSourceRect, aViewportRect) {
     let vRect = aViewportRect ? aViewportRect : new Rect(this._viewportData.x,
@@ -417,44 +398,43 @@ EmbedHelper.prototype = {
   },
 
   _zoomToInput: function(aElement, aAllowZoom = true, aIsTextField = true) {
-    // For possible error cases
-    if (!this._viewportData)
+    if (!this.vkbOpenCompositionMetrics || !this.vkbOpenCompositionMetrics.imOpen || !this._viewportData) {
       return;
+    }
 
     // Combination of browser.js _zoomToElement and special zoom logic
     let rect = ElementTouchHelper.getBoundingContentRect(aElement);
 
     // Rough cssCompositionHeight as virtual keyboard is not yet raised (upper half).
-    let cssCompositionHeight = this._viewportData.cssCompositedRect.height / 2;
-    let maxCssCompositionWidth = this._viewportData.cssCompositedRect.width;
+    let availableHeight = gScreenHeight - this.vkbOpenCompositionMetrics.bottomMargin;
+    let cssCompositionHeight = availableHeight / content.devicePixelRatio;
+
+    let maxCssCompositionWidth = gScreenWidth / content.devicePixelRatio;
     let maxCssCompositionHeight = cssCompositionHeight;
 
-    if (this.vkbOpenCompositionMetrics && this.vkbOpenCompositionMetrics.imOpen) {
-        maxCssCompositionWidth = this.vkbOpenCompositionMetrics.maxCssCompositionWidth;
-        maxCssCompositionHeight = this.vkbOpenCompositionMetrics.maxCssCompositionHeight;
-        let currentCssCompositedHeight = this._viewportData.cssCompositedRect.height
-        // Are equal if vkb is already open and content is not pinched after vkb opening. It does not
-        // matter if currentCssCompositedHeight happens to match target before vkb has been opened.
-        if (maxCssCompositionHeight != currentCssCompositedHeight) {
-          cssCompositionHeight = this.vkbOpenCompositionMetrics.compositionHeight / this._viewportData.resolution.width;
-        } else {
-          cssCompositionHeight = currentCssCompositedHeight;
-        }
+    let currentCssCompositedHeight = this._viewportData.cssCompositedRect.height
+    // Are equal if vkb is already open and content is not pinched after vkb opening. It does not
+    // matter if currentCssCompositedHeight happens to match target before vkb has been opened.
+    if (maxCssCompositionHeight != currentCssCompositedHeight) {
+      let resolution = this._viewportData.cssPageRect.width / this._viewportData.cssCompositedRect.width;
+      cssCompositionHeight = (gScreenHeight - this.vkbOpenCompositionMetrics.bottomMargin) / resolution;
+    } else {
+      cssCompositionHeight = currentCssCompositedHeight;
     }
+
     // TODO / Missing: handle maximum zoom level and respect viewport meta tag
-    let scaleFactor = aIsTextField ? (this.inputItemSize / this.vkbOpenCompositionMetrics.compositionHeight) / (rect.h / cssCompositionHeight) : 1.0;
+    let scaleFactor = aIsTextField ? (this.inputItemSize / availableHeight) / (rect.h / cssCompositionHeight) : 1.0;
 
     let margin = this.zoomMargin / scaleFactor;
-    let allowZoom = aAllowZoom && rect.h != this.inputItemSize;
-
     // Calculate new css composition bounds that will be the bounds after zooming. Top-left corner is not yet moved.
     let cssCompositedRect = new Rect(this._viewportData.x,
                                     this._viewportData.y,
                                     this._viewportData.cssCompositedRect.width,
                                     cssCompositionHeight);
+
     let bRect = new Rect(Util.clamp(rect.x - margin, 0, this._viewportData.cssPageRect.width - rect.w),
                         Util.clamp(rect.y - margin, 0, this._viewportData.cssPageRect.height - rect.h),
-                        allowZoom ? rect.w + 2 * margin : this._viewportData.viewport.width,
+                        aAllowZoom ? rect.w + 2 * margin : this._viewportData.viewport.width,
                         rect.h);
 
     // constrict the rect to the screen's right edge
@@ -494,11 +474,6 @@ EmbedHelper.prototype = {
       let moveToZero = new Rect(0, fixedCurrentViewport.y, fixedCurrentViewport.width, fixedCurrentViewport.height);
       let zeroNeedsMoving = this._testXMovement(inputRect, moveToZero);
       if (!zeroNeedsMoving) {
-        if (cssCompositedRect.x === 0) {
-          rect.x = 1;
-        } else {
-          rect.x = 0;
-        }
         xUpdated = true;
         needXAxisMoving = false;
       }
@@ -538,8 +513,16 @@ EmbedHelper.prototype = {
     rect.w = fixedCurrentViewport.width;
     rect.h = fixedCurrentViewport.height;
 
-    var winid = Services.embedlite.getIDByWindow(content);
-    Services.embedlite.zoomToRect(winid, rect.x, rect.y, rect.w, rect.h);
+    // Are we really zooming.
+    aAllowZoom = !fuzzyEquals(rect.w, this._viewportData.cssCompositedRect.width)
+
+    if (aAllowZoom) {
+      var winid = Services.embedlite.getIDByWindow(content);
+      Services.embedlite.zoomToRect(winid, rect.x, rect.y, rect.w, rect.h);
+    } else {
+      content.scrollTo(rect.x, rect.y);
+    }
+    this.inputZoomed = true;
   },
 
   // Move y-axis to viewport area and test if element is visible.
@@ -556,40 +539,11 @@ EmbedHelper.prototype = {
     return showing < 0.99;
   },
 
-  _moveClickPoint: function(aElement, aX, aY) {
-    // the element can be out of the aX/aY point because of the touch radius
-    // if outside, we gracefully move the touch point to the edge of the element
-    if (!(aElement instanceof Ci.nsIDOMHTMLHtmlElement)) {
-      let isTouchClick = true;
-      let rects = ElementTouchHelper.getContentClientRects(aElement);
-      for (let i = 0; i < rects.length; i++) {
-        let rect = rects[i];
-        let inBounds =
-          (aX > rect.left && aX < (rect.left + rect.width)) &&
-          (aY > rect.top && aY < (rect.top + rect.height));
-        if (inBounds) {
-          isTouchClick = false;
-          break;
-        }
-        }
-
-      if (isTouchClick) {
-        let rect = rects[0];
-        // if either width or height is zero, we don't want to move the click to the edge of the element. See bug 757208
-        if (rect.width != 0 && rect.height != 0) {
-          aX = Math.min(Math.floor(rect.left + rect.width), Math.max(Math.ceil(rect.left), aX));
-          aY = Math.min(Math.floor(rect.top + rect.height), Math.max(Math.ceil(rect.top),  aY));
-        }
-      }
-    }
-    return [aX, aY];
-  },
-
   _sendMouseEvent: function _sendMouseEvent(aName, aElement, aX, aY) {
     let window = aElement.ownerDocument.defaultView;
     try {
       let cwu = window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true);
+      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, Ci.nsIDOMMouseEvent.MOZ_SOURCE_TOUCH);
     } catch(e) {
       Cu.reportError(e);
     }
@@ -611,7 +565,6 @@ EmbedHelper.prototype = {
         if (LoginManagerContent.onContentLoaded) {
           LoginManagerContent.onContentLoaded(aEvent);
         }
-        this._handleDomContentLoaded(aEvent);
         break;
       }
       case "DOMFormHasPassword": {
@@ -647,16 +600,6 @@ EmbedHelper.prototype = {
     return this.contentDocumentIsDisplayed;
   },
 
-  _handleDomContentLoaded: function(aEvent) {
-    let window = aEvent.target.defaultView;
-    if (window) {
-      let winid = Services.embedlite.getIDByWindow(window);
-      try {
-        Services.embedlite.sendAsyncMessage(winid, "embed:domcontentloaded", JSON.stringify({ "rootFrame": window.parent === window }));
-      } catch (e) {}
-    }
-  },
-
   _handleFullScreenChanged: function(aEvent) {
         let window = aEvent.target.defaultView;
         let winid = Services.embedlite.getIDByWindow(window);
@@ -677,85 +620,24 @@ EmbedHelper.prototype = {
   },
 
   _handleTouchStart: function(aEvent) {
-    if (this._touchElement) {
+    if (this._touchElement) { // TODO: check if _highlightelement is enough and this can be dropped
       this._touchElement = null;
     }
     if (!this.isBrowserContentDocumentDisplayed() || aEvent.touches.length > 1 || aEvent.defaultPrevented)
       return;
 
-    let closest = aEvent.target;
-    this._lastTarget = aEvent.target;
-    this._lastTargetY = ElementTouchHelper.getBoundingContentRect(aEvent.target).y;
-
-    if (closest) {
-      // If we've pressed a scrollable element, let Java know that we may
-      // want to override the scroll behaviour (for document sub-frames)
-      this._scrollableElement = this._findScrollableElement(closest, true);
-      this._firstScrollEvent = true;
+    let target = aEvent.target;
+    if (!target) {
+      return;
     }
 
-    if (!ElementTouchHelper.isElementClickable(closest, null, false))
-      closest = ElementTouchHelper.elementFromPoint(aEvent.changedTouches[0].screenX,
-                                                    aEvent.changedTouches[0].screenY);
-    if (!closest)
-      closest = aEvent.target;
-
-    if (closest) {
-      // SelectionHandler._onSelectionAttach(aEvent.changedTouches[0].screenX, aEvent.changedTouches[0].screenY);
-      let uri = this._getLinkURI(closest);
-      if (uri) {
+    let uri = this._getLinkURI(target);
+    if (uri) {
+      try {
         Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
-      }
-      this._doTapHighlight(closest);
+      } catch (e) {}
     }
-  },
-
-  _hasScrollableOverflow: function(elem) {
-    var win = elem.ownerDocument.defaultView;
-    if (!win)
-      return false;
-    var computedStyle = win.getComputedStyle(elem);
-    if (!computedStyle)
-      return false;
-    return computedStyle.overflowX == 'auto' || computedStyle.overflowX == 'scroll'
-        || computedStyle.overflowY == 'auto' || computedStyle.overflowY == 'scroll';
-  },
-
-  _findScrollableElement: function(elem, checkElem) {
-    // Walk the DOM tree until we find a scrollable element
-    let scrollable = false;
-
-    while (elem) {
-      /* Element is scrollable if its scroll-size exceeds its client size, and:
-       * - It has overflow 'auto' or 'scroll'
-       * - It's a textarea
-       * - It's an HTML/BODY node
-       * - It's a select element showing multiple rows
-       */
-      if (checkElem) {
-        if (((elem.scrollHeight > elem.clientHeight) ||
-             (elem.scrollWidth > elem.clientWidth)) &&
-            (this._hasScrollableOverflow(elem) ||
-             elem.mozMatchesSelector("html, body, textarea")) ||
-            (elem instanceof HTMLSelectElement && (elem.size > 1 || elem.multiple))) {
-          scrollable = true;
-          break;
-        }
-      } else {
-        checkElem = true;
-      }
-
-      // Propagate up iFrames
-      if (!elem.parentNode && elem.documentElement && elem.documentElement.ownerDocument)
-        elem = elem.documentElement.ownerDocument.defaultView.frameElement;
-      else
-        elem = elem.parentNode;
-    }
-
-    if (!scrollable)
-      return null;
-
-    return elem;
+    this._doTapHighlight(target);
   },
 
   _getLinkURI: function(aElement) {
@@ -788,233 +670,59 @@ EmbedHelper.prototype = {
     this._highlightElement = null;
   },
 
+  isVirtualKeyboardOpen: function() {
+    if (this.vkbOpen) {
+      return this.vkbOpen;
+    }
+
+    if (this.vkbOpenCompositionMetrics && this.vkbOpenCompositionMetrics.imOpen &&
+        this._previousViewportData && this._viewportData) {
+      let oldVpWidth = this._previousViewportData.viewport.width;
+      let oldVpHeight = this._previousViewportData.viewport.height;
+
+      let vpWidth = this._viewportData.viewport.width;
+      let vpHeight = this._viewportData.viewport.height;
+
+      let scaleFactor = vpWidth / (gScreenWidth / content.devicePixelRatio);
+      oldVpHeight = oldVpHeight / scaleFactor;
+      vpHeight = vpHeight / scaleFactor;
+
+      this.vkbOpen = fuzzyEquals(oldVpHeight - vpHeight, this.vkbOpenCompositionMetrics.bottomMargin / 2);
+      return this.vkbOpen;
+    }
+    return false;
+  },
+
   _dumpViewport: function() {
-    if (this._viewportData != null) {
-      dump("--------------- Viewport data ----------------------- \n")
-      for (var i in this._viewportData) {
-        if (typeof(this._viewportData[i]) == "object") {
-          for (var j in this._viewportData[i]) {
-            dump("   " + i + " " + j + ": " + this._viewportData[i][j] + "\n")
+    dump("--------------- Viewport data ----------------------- \n")
+    this._dumpObject(this._viewportData)
+    dump("--------------- Viewport data dumpped --------------- \n")
+  },
+
+  _dumpVkbMetrics: function() {
+    dump("--------------- Vkb metrics ----------------------- \n")
+    this._dumpObject(this.vkbOpenCompositionMetrics)
+    dump("--------------- Vkb metrics dumpped --------------- \n")
+  },
+
+  _dumpObject: function(object) {
+    if (object) {
+      for (var i in object) {
+        if (typeof(object[i]) == "object") {
+          for (var j in object[i]) {
+            dump("   " + i + " " + j + ": " + object[i][j] + "\n")
           }
         } else {
-          dump("viewport data object: " + i + ": " + this._viewportData[i] + "\n")
+          dump(i + ": " + object[i] + "\n")
         }
       }
-      dump("--------------- Viewport data dumpped --------------- \n")
     } else {
       dump("Nothing to dump\n")
     }
-  },
+  }
 };
 
-const kReferenceDpi = 240; // standard "pixel" size used in some preferences
-
 const ElementTouchHelper = {
-  /* Return the element at the given coordinates, starting from the given window and
-     drilling down through frames. If no window is provided, the top-level window of
-     the currently selected tab is used. The coordinates provided should be CSS pixels
-     relative to the window's scroll position. */
-  anyElementFromPoint: function(aX, aY, aWindow) {
-    let win = (aWindow ? aWindow : content);
-    let cwu = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-    let elem = cwu.elementFromPoint(aX, aY, false, true);
-
-    while (elem && (elem instanceof HTMLIFrameElement || elem instanceof HTMLFrameElement)) {
-      let rect = elem.getBoundingClientRect();
-      aX -= rect.left;
-      aY -= rect.top;
-      cwu = elem.contentDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-      elem = cwu.elementFromPoint(aX, aY, false, true);
-    }
-
-    return elem;
-  },
-
-  /* Return the most appropriate clickable element (if any), starting from the given window
-     and drilling down through iframes as necessary. If no window is provided, the top-level
-     window of the currently selected tab is used. The coordinates provided should be CSS
-     pixels relative to the window's scroll position. The element returned may not actually
-     contain the coordinates passed in because of touch radius and clickability heuristics. */
-  elementFromPoint: function(aX, aY, aWindow) {
-    // browser's elementFromPoint expect browser-relative client coordinates.
-    // subtract browser's scroll values to adjust
-    let win = (aWindow ? aWindow : content);
-    let cwu = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-    let elem = this.getClosest(cwu, aX, aY);
-
-    // step through layers of IFRAMEs and FRAMES to find innermost element
-    while (elem && (elem instanceof HTMLIFrameElement || elem instanceof HTMLFrameElement)) {
-      // adjust client coordinates' origin to be top left of iframe viewport
-      let rect = elem.getBoundingClientRect();
-      aX -= rect.left;
-      aY -= rect.top;
-      cwu = elem.contentDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-      elem = this.getClosest(cwu, aX, aY);
-    }
-
-    return elem;
-  },
-
-  /* Returns the touch radius in content px. */
-  getTouchRadius: function getTouchRadius(aWindowUtils) {
-    let dpiRatio = 1.0; // TODO: check if it's needed as "resX = zoom.scale/dpiRatio" already
-    let zoom = 1.0;
-    let resX = {value: 1};
-    let resY = {value: 1};
-    aWindowUtils.getResolution(resX, resY);
-    if (resX.value) {
-      zoom = resX.value;
-    }
-
-    return {
-      top: this.radius.top * dpiRatio / zoom,
-      right: this.radius.right * dpiRatio / zoom,
-      bottom: this.radius.bottom * dpiRatio / zoom,
-      left: this.radius.left * dpiRatio / zoom
-    };
-  },
-
-  /* Returns the touch radius in reference pixels. */
-  get radius() {
-    let prefs = Services.prefs;
-    delete this.radius;
-    return this.radius = { "top": prefs.getIntPref("browser.ui.touch.top"),
-                           "right": prefs.getIntPref("browser.ui.touch.right"),
-                           "bottom": prefs.getIntPref("browser.ui.touch.bottom"),
-                           "left": prefs.getIntPref("browser.ui.touch.left")
-                         };
-  },
-
-  get weight() {
-    delete this.weight;
-    return this.weight = { "visited": Services.prefs.getIntPref("browser.ui.touch.weight.visited") };
-  },
-
-  /* Retrieve the closest element to a point by looking at borders position */
-  getClosest: function getClosest(aWindowUtils, aX, aY) {
-    let target = aWindowUtils.elementFromPoint(aX, aY,
-                                               true,   /* ignore root scroll frame*/
-                                               false); /* don't flush layout */
-
-    // if this element is clickable we return quickly. also, if it isn't,
-    // use a cache to speed up future calls to isElementClickable in the
-    // loop below.
-    let unclickableCache = new Array();
-    if (this.isElementClickable(target, unclickableCache, false))
-      return target;
-
-    target = null;
-    let radius = this.getTouchRadius(aWindowUtils);
-    let nodes = aWindowUtils.nodesFromRect(aX, aY, radius.top, radius.right, radius.bottom, radius.left, true, false);
-
-    let threshold = Number.POSITIVE_INFINITY;
-    for (let i = 0; i < nodes.length; i++) {
-      let current = nodes[i];
-      if (!current.mozMatchesSelector || !this.isElementClickable(current, unclickableCache, true))
-        continue;
-
-      let rect = current.getBoundingClientRect();
-      let distance = this._computeDistanceFromRect(aX, aY, rect);
-
-      // increase a little bit the weight for already visited items
-      if (current && current.mozMatchesSelector("*:visited"))
-        distance *= (this.weight.visited / 100);
-
-      if (distance < threshold) {
-        target = current;
-        threshold = distance;
-      }
-    }
-
-    return target;
-  },
-
-  isElementClickable: function isElementClickable(aElement, aUnclickableCache, aAllowBodyListeners) {
-    const selector = "a,:link,:visited,[role=button],button,input,select,textarea";
-
-    let stopNode = null;
-    if (!aAllowBodyListeners && aElement && aElement.ownerDocument)
-      stopNode = aElement.ownerDocument.body;
-
-    for (let elem = aElement; elem && elem != stopNode; elem = elem.parentNode) {
-      if (aUnclickableCache && aUnclickableCache.indexOf(elem) != -1)
-        continue;
-      if (this._hasMouseListener(elem))
-        return true;
-      if (elem.mozMatchesSelector && elem.mozMatchesSelector(selector))
-        return true;
-      if (elem instanceof HTMLLabelElement && elem.control != null)
-        return true;
-      if (aUnclickableCache)
-        aUnclickableCache.push(elem);
-    }
-    return false;
-  },
-
-  _computeDistanceFromRect: function _computeDistanceFromRect(aX, aY, aRect) {
-    let x = 0, y = 0;
-    let xmost = aRect.left + aRect.width;
-    let ymost = aRect.top + aRect.height;
-
-    // compute horizontal distance from left/right border depending if X is
-    // before/inside/after the element's rectangle
-    if (aRect.left < aX && aX < xmost)
-      x = Math.min(xmost - aX, aX - aRect.left);
-    else if (aX < aRect.left)
-      x = aRect.left - aX;
-    else if (aX > xmost)
-      x = aX - xmost;
-
-    // compute vertical distance from top/bottom border depending if Y is
-    // above/inside/below the element's rectangle
-    if (aRect.top < aY && aY < ymost)
-      y = Math.min(ymost - aY, aY - aRect.top);
-    else if (aY < aRect.top)
-      y = aRect.top - aY;
-    if (aY > ymost)
-      y = aY - ymost;
-
-    return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-  },
-
-  _els: Cc["@mozilla.org/eventlistenerservice;1"].getService(Ci.nsIEventListenerService),
-  _clickableEvents: ["mousedown", "mouseup", "click"],
-  _hasMouseListener: function _hasMouseListener(aElement) {
-    let els = this._els;
-    let listeners = els.getListenerInfoFor(aElement, {});
-    for (let i = 0; i < listeners.length; i++) {
-      if (this._clickableEvents.indexOf(listeners[i].type) != -1)
-        return true;
-    }
-    return false;
-  },
-
-  getContentClientRects: function(aElement) {
-    let offset = { x: 0, y: 0 };
-
-    let nativeRects = aElement.getClientRects();
-    // step out of iframes and frames, offsetting scroll values
-    for (let frame = aElement.ownerDocument.defaultView; frame.frameElement; frame = frame.parent) {
-      // adjust client coordinates' origin to be top left of iframe viewport
-      let rect = frame.frameElement.getBoundingClientRect();
-      let left = frame.getComputedStyle(frame.frameElement, "").borderLeftWidth;
-      let top = frame.getComputedStyle(frame.frameElement, "").borderTopWidth;
-      offset.x += rect.left + parseInt(left);
-      offset.y += rect.top + parseInt(top);
-    }
-
-    let result = [];
-    for (let i = nativeRects.length - 1; i >= 0; i--) {
-      let r = nativeRects[i];
-      result.push({ left: r.left + offset.x,
-                    top: r.top + offset.y,
-                    width: r.width,
-                    height: r.height
-                  });
-    }
-    return result;
-  },
-
   getBoundingContentRect: function(aElement) {
     if (!aElement)
       return {x: 0, y: 0, w: 0, h: 0};
@@ -1043,6 +751,179 @@ const ElementTouchHelper = {
             y: r.top + scrollY.value,
             w: r.width,
             h: r.height };
+  }
+};
+
+
+// Blindly copied from Safari documentation for now.
+const kViewportMinScale  = 0;
+const kViewportMaxScale  = 10;
+const kViewportMinWidth  = 200;
+const kViewportMaxWidth  = 10000;
+const kViewportMinHeight = 223;
+const kViewportMaxHeight = 10000;
+
+var ViewportHandler = {
+  // The cached viewport metadata for each document. We tie viewport metadata to each document
+  // instead of to each tab so that we don't have to update it when the document changes. Using an
+  // ES6 weak map lets us avoid leaks.
+  _metadata: new WeakMap(),
+  _zoom: 1.0,
+
+  init: function init() {
+  },
+
+  update: function(viewport) {
+    if (viewport) {
+      this._zoom = viewport.cssPageRect.width / viewport.cssCompositedRect.width;
+    } else {
+      dump("Updated with an invalid viewport")
+    }
+  },
+
+  get zoomLevel() {
+    return this._zoom;
+  },
+
+  /**
+   * Returns the ViewportMetadata object.
+   */
+  getViewportMetadata: function getViewportMetadata(aWindow) {
+    let windowUtils = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+
+    // viewport details found here
+    // http://developer.apple.com/safari/library/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html
+    // http://developer.apple.com/safari/library/documentation/AppleApplications/Reference/SafariWebContent/UsingtheViewport/UsingtheViewport.html
+
+    // Note: These values will be NaN if parseFloat or parseInt doesn't find a number.
+    // Remember that NaN is contagious: Math.max(1, NaN) == Math.min(1, NaN) == NaN.
+    let hasMetaViewport = true;
+    let scale = parseFloat(windowUtils.getDocumentMetadata("viewport-initial-scale"));
+    let minScale = parseFloat(windowUtils.getDocumentMetadata("viewport-minimum-scale"));
+    let maxScale = parseFloat(windowUtils.getDocumentMetadata("viewport-maximum-scale"));
+
+    let widthStr = windowUtils.getDocumentMetadata("viewport-width");
+    let heightStr = windowUtils.getDocumentMetadata("viewport-height");
+    let width = this.clamp(parseInt(widthStr), kViewportMinWidth, kViewportMaxWidth) || 0;
+    let height = this.clamp(parseInt(heightStr), kViewportMinHeight, kViewportMaxHeight) || 0;
+
+    // Allow zoom unless explicity disabled or minScale and maxScale are equal.
+    // WebKit allows 0, "no", or "false" for viewport-user-scalable.
+    // Note: NaN != NaN. Therefore if minScale and maxScale are undefined the clause has no effect.
+    let allowZoomStr = windowUtils.getDocumentMetadata("viewport-user-scalable");
+    let allowZoom = !/^(0|no|false)$/.test(allowZoomStr) && (minScale != maxScale);
+
+    // Double-tap should always be disabled if allowZoom is disabled. So we initialize
+    // allowDoubleTapZoom to the same value as allowZoom and have additional conditions to
+    // disable it in updateViewportSize.
+    let allowDoubleTapZoom = allowZoom;
+
+    let autoSize = true;
+
+    if (isNaN(scale) && isNaN(minScale) && isNaN(maxScale) && allowZoomStr == "" && widthStr == "" && heightStr == "") {
+      // Only check for HandheldFriendly if we don't have a viewport meta tag
+      let handheldFriendly = windowUtils.getDocumentMetadata("HandheldFriendly");
+      if (handheldFriendly == "true") {
+        return new ViewportMetadata({
+          defaultZoom: 1,
+          autoSize: true,
+          allowZoom: true,
+          allowDoubleTapZoom: false
+        });
+      }
+
+      let doctype = aWindow.document.doctype;
+      if (doctype && /(WAP|WML|Mobile)/.test(doctype.publicId)) {
+        return new ViewportMetadata({
+          defaultZoom: 1,
+          autoSize: true,
+          allowZoom: true,
+          allowDoubleTapZoom: false
+        });
+      }
+
+      hasMetaViewport = false;
+    }
+
+    scale = this.clamp(scale, kViewportMinScale, kViewportMaxScale);
+    minScale = this.clamp(minScale, kViewportMinScale, kViewportMaxScale);
+    maxScale = this.clamp(maxScale, (isNaN(minScale) ? kViewportMinScale : minScale), kViewportMaxScale);
+    if (autoSize) {
+      // If initial scale is 1.0 and width is not set, assume width=device-width
+      autoSize = (widthStr == "device-width" ||
+                  (!widthStr && (heightStr == "device-height" || scale == 1.0)));
+    }
+
+    let isRTL = aWindow.document.documentElement.dir == "rtl";
+
+    return new ViewportMetadata({
+      defaultZoom: scale,
+      minZoom: minScale,
+      maxZoom: maxScale,
+      width: width,
+      height: height,
+      autoSize: autoSize,
+      allowZoom: allowZoom,
+      allowDoubleTapZoom: allowDoubleTapZoom,
+      isSpecified: hasMetaViewport,
+      isRTL: isRTL
+    });
+  },
+
+  clamp: function(num, min, max) {
+    return Math.max(min, Math.min(max, num));
+  },
+};
+
+/**
+ * An object which represents the page's preferred viewport properties:
+ *   width (int): The CSS viewport width in px.
+ *   height (int): The CSS viewport height in px.
+ *   defaultZoom (float): The initial scale when the page is loaded.
+ *   minZoom (float): The minimum zoom level.
+ *   maxZoom (float): The maximum zoom level.
+ *   autoSize (boolean): Resize the CSS viewport when the window resizes.
+ *   allowZoom (boolean): Let the user zoom in or out.
+ *   allowDoubleTapZoom (boolean): Allow double-tap to zoom in.
+ *   isSpecified (boolean): Whether the page viewport is specified or not.
+ */
+function ViewportMetadata(aMetadata = {}) {
+  this.width = ("width" in aMetadata) ? aMetadata.width : 0;
+  this.height = ("height" in aMetadata) ? aMetadata.height : 0;
+  this.defaultZoom = ("defaultZoom" in aMetadata) ? aMetadata.defaultZoom : 0;
+  this.minZoom = ("minZoom" in aMetadata) ? aMetadata.minZoom : 0;
+  this.maxZoom = ("maxZoom" in aMetadata) ? aMetadata.maxZoom : 0;
+  this.autoSize = ("autoSize" in aMetadata) ? aMetadata.autoSize : false;
+  this.allowZoom = ("allowZoom" in aMetadata) ? aMetadata.allowZoom : true;
+  this.allowDoubleTapZoom = ("allowDoubleTapZoom" in aMetadata) ? aMetadata.allowDoubleTapZoom : true;
+  this.isSpecified = ("isSpecified" in aMetadata) ? aMetadata.isSpecified : false;
+  this.isRTL = ("isRTL" in aMetadata) ? aMetadata.isRTL : false;
+  Object.seal(this);
+}
+
+ViewportMetadata.prototype = {
+  width: null,
+  height: null,
+  defaultZoom: null,
+  minZoom: null,
+  maxZoom: null,
+  autoSize: null,
+  allowZoom: null,
+  allowDoubleTapZoom: null,
+  isSpecified: null,
+  isRTL: null,
+
+  toString: function() {
+    return "width=" + this.width
+         + "; height=" + this.height
+         + "; defaultZoom=" + this.defaultZoom
+         + "; minZoom=" + this.minZoom
+         + "; maxZoom=" + this.maxZoom
+         + "; autoSize=" + this.autoSize
+         + "; allowZoom=" + this.allowZoom
+         + "; allowDoubleTapZoom=" + this.allowDoubleTapZoom
+         + "; isSpecified=" + this.isSpecified
+         + "; isRTL=" + this.isRTL;
   }
 };
 

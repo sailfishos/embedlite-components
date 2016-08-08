@@ -1,3 +1,5 @@
+%global min_xulrunner_version 38.8.0.5
+
 # Don't depend on private xulrunner-qt5 libraries.
 %global privlibs             libfreebl3
 %global privlibs %{privlibs}|libmozalloc
@@ -16,13 +18,13 @@
 
 Name:       embedlite-components-qt5
 Summary:    EmbedLite components Qt5
-Version:    1.8.22
+Version:    1.9.14
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
 URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
-BuildRequires:  xulrunner-qt5-devel >= 31.7.0.14
+BuildRequires:  xulrunner-qt5-devel >= %{min_xulrunner_version}
 BuildRequires:  pkgconfig(nspr)
 BuildRequires:  python
 BuildRequires:  libtool
@@ -59,3 +61,5 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 %files
 %defattr(-,root,root,-)
 %{_libdir}/mozembedlite/*
+%exclude %{_libdir}/mozembedlite/chrome/embedlite/content/duckduckgo.xml
+%exclude %{_libdir}/mozembedlite/chrome/embedlite/content/baidu.xml

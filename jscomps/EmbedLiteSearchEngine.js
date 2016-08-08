@@ -19,21 +19,42 @@ EmbedLiteSearchEngine.prototype = {
   classID: Components.ID("{924fe7ba-afa1-11e2-9d4f-533572064b73}"),
 
   observe: function (aSubject, aTopic, aData) {
+    let searchCallback = {
+      onSuccess: function (engine) {
+        var message = {
+          "msg": "search-engine-added",
+          "engine": (engine && engine.name) || "",
+          "errorCode": 0,
+        }
+        Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+      },
+      onError: function (errorCode) {
+        // Checked possible failures from nsIBrowserSearchService.idl
+        var message = {
+          "msg": "search-engine-added",
+          "engine": "",
+          "errorCode": errorCode
+        }
+        Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+      }
+    }
+
     switch(aTopic) {
       // Engine DownloadManager notifications
       case "app-startup": {
         Services.obs.addObserver(this, "xpcom-shutdown", true);
         Services.obs.addObserver(this, "embedui:search", true);
-        Services.obs.addObserver(this, "embedliteInitialized", true);
+        Services.obs.addObserver(this, "profile-after-change", false);
         break;
       }
-      case "embedliteInitialized": {
-        Services.obs.removeObserver(this, "embedliteInitialized");
+      case "profile-after-change": {
+        Services.obs.removeObserver(this, "profile-after-change");
         Services.search.init(function addEngine_cb(rv) {
             let engines = Services.search.getEngines({});
             let engineNames = engines.map(function (element) {
               return element.name;
             });
+
             let enginesAvailable = (engines && engines.length > 0);
             var messg = {
               msg: "init",
@@ -49,7 +70,7 @@ EmbedLiteSearchEngine.prototype = {
         var data = JSON.parse(aData);
         switch (data.msg) {
           case "loadxml": {
-            Services.search.addEngine(data.uri, Ci.nsISearchEngine.DATA_XML, null, data.confirm);
+            Services.search.addEngine(data.uri, Ci.nsISearchEngine.DATA_XML, null, data.confirm, searchCallback);
             break;
           }
           case "restoreDefault": {

@@ -51,7 +51,8 @@ UserAgentOverrideHelper.prototype = {
   },
 
   getUserAgentForURIAndWindow: function ssua_getUserAgentForURIAndWindow(aURI, aWindow) {
-    return UserAgent.getUserAgentForWindow(aURI, aWindow, true)
+    // aWindow is unused / not needed.
+    return UserAgent.getUserAgentForWindow(aURI)
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISiteSpecificUserAgent, Ci.nsIObserver,
@@ -102,7 +103,7 @@ var UserAgent = {
     if (this._desktopMode)
       return this.DESKTOP_UA;
 
-    return this._customUA ? this._customUA : this.DESKTOP_UA;
+    return this._customUA ? this._customUA : defaultUA;
   },
 
   getUserAgentForUriAndTab: function ua_getUserAgentForUriAndTab(aUri) {
@@ -153,27 +154,19 @@ var UserAgent = {
 
     if (this.overrideMap.has(host)) {
       ua = this.overrideMap.get(host);
-    } else if (this.currentHost && (this.currentHost == windowHost) && this.overrideMap.has(windowHost)) {
+    } else if (this.overrideMap.has(windowHost)) {
       ua = this.overrideMap.get(windowHost);
     } else {
-      ua = this.getUserAgentForWindow(channel.URI, channelWindow, false);
+      ua = this.getUserAgentForWindow(channel.URI);
     }
 
     return ua
   },
 
   // Called if onRequest returns empty user-agent.
-  getUserAgentForWindow: function ua_getUserAgentForWindow(aUri, aWindow, aIsCurrentHost) {
+  getUserAgentForWindow: function ua_getUserAgentForWindow(aUri) {
     // Try to pick 'general.useragent.override.*'
-    let ua = UserAgentOverrides.getOverrideForURI(aUri);
-
-    if (aIsCurrentHost) {
-      this.currentHost = aUri.asciiHost;
-      if (aWindow) {
-        aWindow.addEventListener("beforeunload", this, true);
-      }
-    }
-
+    let ua = UserAgentOverrides.getOverrideForURI(aUri)
     if (!ua) {
       ua = this.getUserAgentForUriAndTab(aUri);
     }
@@ -184,15 +177,6 @@ var UserAgent = {
     }
 
     return this.getDefaultUserAgent();
-  },
-
-  handleEvent: function(aEvent) {
-    switch (aEvent.type) {
-      case "beforeunload": {
-        this.currentHost = "";
-        break;
-      }
-    }
   },
 
   _getRequestLoadContext: function ua_getRequestLoadContext(aRequest) {

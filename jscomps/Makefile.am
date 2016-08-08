@@ -5,11 +5,11 @@ jscomps_manifest_DATA = \
 	AlertsService.js \
 	LoginManagerPrompter.js \
 	HelperAppDialog.js \
-	DownloadManagerUI.js \
 	EmbedPrefService.js \
 	ContentPermissionPrompt.js \
 	EmbedLiteGlobalHelper.js \
 	EmbedLiteConsoleListener.js \
+	EmbedLiteOrientationChangeHandler.js \
 	EmbedLiteSyncService.js \
 	EmbedLiteFaviconService.js \
 	EmbedLiteSearchEngine.js \
@@ -18,12 +18,12 @@ jscomps_manifest_DATA = \
 	XPIDialogService.js \
 	PromptService.js \
 	PrivateDataManager.js \
+	EmbedliteDownloadManager.js \
 	TelProtocolHandler.js \
 	SmsProtocolHandler.js \
 	MailtoProtocolHandler.js \
 	GeoProtocolHandler.js \
 	RtspProtocolHandler.js \
-	Sidebar.js \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)
