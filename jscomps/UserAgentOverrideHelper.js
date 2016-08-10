@@ -165,7 +165,7 @@ var UserAgent = {
   // Called if onRequest returns empty user-agent.
   getUserAgentForWindow: function ua_getUserAgentForWindow(aUri, aWindow, aIsCurrentHost) {
     // Try to pick 'general.useragent.override.*'
-    let ua = UserAgentOverrides.getOverrideForURI(aUri)
+    let ua = UserAgentOverrides.getOverrideForURI(aUri);
 
     if (aIsCurrentHost) {
       this.currentHost = aUri.asciiHost;
