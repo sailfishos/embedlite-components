@@ -612,7 +612,7 @@ EmbedHelper.prototype = {
   },
 
   _getLinkURI: function(aElement) {
-    if (aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
+    if (aElement && aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
         ((aElement instanceof Ci.nsIDOMHTMLAnchorElement && aElement.href) ||
         (aElement instanceof Ci.nsIDOMHTMLAreaElement && aElement.href))) {
       try {
