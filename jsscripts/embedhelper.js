@@ -207,6 +207,16 @@ EmbedHelper.prototype = {
           }
           this._touchElement = null;
         }
+
+        let uri = this._getLinkURI(element);
+        if (uri && (uri instanceof Ci.nsIURI)) {
+          let winid = Services.embedlite.getIDByWindow(content);
+          Services.embedlite.sendAsyncMessage(winid, "embed:linkclicked",
+                                              JSON.stringify({
+                                                               "uri": uri.asciiSpec
+                                                             }));
+        }
+
         break;
       }
       case "Gesture:DoubleTap": {
