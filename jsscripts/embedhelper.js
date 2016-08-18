@@ -572,13 +572,13 @@ EmbedHelper.prototype = {
   },
 
   _handleFullScreenChanged: function(aEvent) {
-        let window = aEvent.target.defaultView;
-        let winid = Services.embedlite.getIDByWindow(window);
-        this.inFullScreen = aEvent.target.mozFullScreen;
-        Services.embedlite.sendAsyncMessage(winid, "embed:fullscreenchanged",
-                                            JSON.stringify({
-                                                    "fullscreen": aEvent.target.mozFullScreen
-                                            }));
+    let window = aEvent.target.defaultView;
+    let winid = Services.embedlite.getIDByWindow(window);
+    this.inFullScreen = aEvent.target.mozFullScreen;
+    Services.embedlite.sendAsyncMessage(winid, "embed:fullscreenchanged",
+                                        JSON.stringify({
+                                                         "fullscreen": aEvent.target.mozFullScreen
+                                                       }));
   },
 
   _handleTouchMove: function(aEvent) {
