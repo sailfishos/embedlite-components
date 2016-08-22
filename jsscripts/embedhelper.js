@@ -207,6 +207,16 @@ EmbedHelper.prototype = {
           }
           this._touchElement = null;
         }
+
+        let uri = this._getLinkURI(element);
+        if (uri && (uri instanceof Ci.nsIURI)) {
+          let winid = Services.embedlite.getIDByWindow(content);
+          Services.embedlite.sendAsyncMessage(winid, "embed:linkclicked",
+                                              JSON.stringify({
+                                                               "uri": uri.asciiSpec
+                                                             }));
+        }
+
         break;
       }
       case "Gesture:DoubleTap": {
@@ -572,13 +582,13 @@ EmbedHelper.prototype = {
   },
 
   _handleFullScreenChanged: function(aEvent) {
-        let window = aEvent.target.defaultView;
-        let winid = Services.embedlite.getIDByWindow(window);
-        this.inFullScreen = aEvent.target.mozFullScreen;
-        Services.embedlite.sendAsyncMessage(winid, "embed:fullscreenchanged",
-                                            JSON.stringify({
-                                                    "fullscreen": aEvent.target.mozFullScreen
-                                            }));
+    let window = aEvent.target.defaultView;
+    let winid = Services.embedlite.getIDByWindow(window);
+    this.inFullScreen = aEvent.target.mozFullScreen;
+    Services.embedlite.sendAsyncMessage(winid, "embed:fullscreenchanged",
+                                        JSON.stringify({
+                                                         "fullscreen": aEvent.target.mozFullScreen
+                                                       }));
   },
 
   _handleTouchMove: function(aEvent) {
@@ -612,7 +622,7 @@ EmbedHelper.prototype = {
   },
 
   _getLinkURI: function(aElement) {
-    if (aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
+    if (aElement && aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
         ((aElement instanceof Ci.nsIDOMHTMLAnchorElement && aElement.href) ||
         (aElement instanceof Ci.nsIDOMHTMLAreaElement && aElement.href))) {
       try {
