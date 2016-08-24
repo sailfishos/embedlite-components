@@ -26,6 +26,7 @@ URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  xulrunner-qt5-devel >= %{min_xulrunner_version}
 BuildRequires:  pkgconfig(nspr)
+BuildRequires:  pkgconfig(pixman-1)
 BuildRequires:  python
 BuildRequires:  libtool
 BuildRequires:  automake
@@ -43,7 +44,7 @@ EmbedLite Components required for embeded browser UI
 %build
 
 NO_CONFIGURE=yes ./autogen.sh
-%configure --with-system-nspr
+%configure --with-system-nspr --with-system-pixman
 
 make %{?jobs:-j%jobs}
 

@@ -19,6 +19,7 @@ AC_PROG_CPP
 PKG_PROG_PKG_CONFIG
 
 NSPR_VERSION=4.9.6
+PIXMAN_VERSION=0.19.2
 
 if test "$PYTHON" == ""; then
     PYTHON=python
@@ -48,9 +49,22 @@ AC_ARG_WITH([system-nspr],
   ]
 )
 
+AC_ARG_WITH([system_pixman],
+  [AS_HELP_STRING([--with-system_pixman],
+    [Use system installed pixman(default=no)])
+  ]
+)
+
 AS_IF([test "x$with_system_nspr" = "xyes"],
   [PKG_CHECK_MODULES([nspr], [nspr >= $NSPR_VERSION], [NSPR=nspr],
     [AC_MSG_ERROR([--with-system-nspr requested but no nspr(>=$NSPR_VERSION) package found])
+  ])
+])
+
+
+AS_IF([test "x$with_system_pixman" = "xyes"],
+  [PKG_CHECK_MODULES([pixman], [pixman-1 >= $PIXMAN_VERSION], [PIXMAN=pixman],
+    [AC_MSG_ERROR([--with-system-pixman requested but no pixman(>=$PIXMAN_VERSION) package found])
   ])
 ])
 
@@ -62,6 +76,11 @@ AS_IF([test "x$with_system_nspr" = "xyes"],
   [ENGINE_CFLAGS="${ENGINE_CFLAGS} `pkg-config --cflags-only-I nspr`"],
   [ENGINE_CFLAGS="${ENGINE_CFLAGS} -I$OBJ_PATH/dist/include/nspr"]
 )
+
+AS_IF([test "x$with_system_pixman" = "xyes"],
+  [ENGINE_CFLAGS="${ENGINE_CFLAGS} `pkg-config --cflags-only-I pixman-1`"],
+  [ENGINE_CFLAGS="${ENGINE_CFLAGS} -I$OBJ_PATH/dist/include/pixman"]
+)
 ENGINE_LIBS="-L$OBJ_PATH/dist/sdk/lib -lxpcomglue_s -lxul"
 else
 PKG_CHECK_MODULES(ENGINE, libxul $NSPR,
@@ -69,7 +88,16 @@ PKG_CHECK_MODULES(ENGINE, libxul $NSPR,
     SDK_DIR=`pkg-config --variable=sdkdir libxul`
     IDL_DIR=`pkg-config --variable=idldir libxul`
     INCLUDE_DIR=`pkg-config --variable=includedir libxul`
-    ENGINE_CFLAGS="$ENGINE_CFLAGS -I$INCLUDE_DIR/nspr"
+
+    AS_IF([test "x$with_system_nspr" = "xyes"],
+      [ENGINE_CFLAGS="${ENGINE_CFLAGS} `pkg-config --cflags-only-I nspr`"],
+      [ENGINE_CFLAGS="${ENGINE_CFLAGS} -I$INCLUDE_DIR/nspr"]
+    )
+
+    AS_IF([test "x$with_system_pixman" = "xyes"],
+      [ENGINE_CFLAGS="${ENGINE_CFLAGS} `pkg-config --cflags-only-I pixman-1`"],
+      [ENGINE_CFLAGS="${ENGINE_CFLAGS} -I$INCLUDE_DIR/pixman"]
+    )
 ])
 fi
 AC_SUBST(SDK_DIR)
