@@ -17,6 +17,10 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "nsIEmbedAppService");
 
 this.OrientationChangeHandler = function OrientationChangeHandler(window) {
+  this.docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                    .getInterface(Ci.nsIWebNavigation)
+                    .QueryInterface(Ci.nsIDocShell);
+
     this._winID = Services.embedlite.getIDByWindow(window);
     this._targetWindow = Services.embedlite.getContentWindowByID(this._winID);
     // "DomContentLoaded" event listener registered in EmbedLiteOrientationChangeHandler.js
@@ -25,6 +29,7 @@ this.OrientationChangeHandler = function OrientationChangeHandler(window) {
 OrientationChangeHandler.prototype = {
   _targetWindow: null,
   _winID: -1,
+  docShell: null,
 
   lastOrientation: "portrait-primary",
   isRegistered: false,
@@ -32,6 +37,13 @@ OrientationChangeHandler.prototype = {
 
   handleOrientationChange: function(evt) {
     let that = this;
+
+    // Report orientation change only for the active doc shell.
+    // Chrome / embedder side controls if doc shell is active or not (e.i. tab active).
+    if (!that.docShell || !that.docShell.isActive) {
+      return;
+    }
+
     let newOrientation = that._targetWindow.screen.mozOrientation;
     let fullSwitch = (newOrientation.split("-")[0] ==
                       that.lastOrientation.split("-")[0]);
