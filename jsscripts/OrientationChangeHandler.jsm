@@ -43,13 +43,6 @@ OrientationChangeHandler.prototype = {
 
   handleOrientationChange: function(evt) {
     let that = this;
-
-    // Report orientation change only for the active doc shell.
-    // Chrome / embedder side controls if doc shell is active or not (e.i. tab active).
-    if (!that.docShell || !that.docShell.isActive) {
-      return;
-    }
-
     let newOrientation = that._targetWindow.screen.mozOrientation;
     let fullSwitch = (newOrientation.split("-")[0] ==
                       that.lastOrientation.split("-")[0]);
