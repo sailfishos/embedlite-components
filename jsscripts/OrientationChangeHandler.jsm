@@ -37,8 +37,7 @@ OrientationChangeHandler.prototype = {
   webProgress: null,
   docShell: null,
 
-  lastOrientation: "portrait-primary",
-  isRegistered: false,
+  lastOrientation: "unknown",
   orientationChangeSent: false,
 
   handleOrientationChange: function(evt) {
@@ -96,43 +95,21 @@ OrientationChangeHandler.prototype = {
   },
 
   registerOrientationChangeListener: function() {
-    if (this.isRegistered) {
-      return;
-    }
-
     let window = this._targetWindow;
     window.screen.addEventListener("mozorientationchange", this, true);
-    // This will take care of navigation between pages.
-    window.addEventListener("beforeunload", this, true);
-    this.isRegistered = true;
-
-    this.webProgress.removeProgressListener(this, Ci.nsIWebProgress.NOTIFY_PROGRESS |
-                                                  Ci.nsIWebProgress.NOTIFY_STATE_ALL);
 
     // Confirm initial orientation
     try {
+      let updateInitialOrientation = (this._targetWindow.screen.mozOrientation != this.lastOrientation);
       this.lastOrientation = this._targetWindow.screen.mozOrientation;
-      Services.embedlite.sendAsyncMessage(this._winID, "embed:contentOrientationChanged",
-                                          JSON.stringify({
-                                                           "orientation": this.lastOrientation
-                                                         }));
+      if (updateInitialOrientation) {
+        Services.embedlite.sendAsyncMessage(this._winID, "embed:contentOrientationChanged",
+                                            JSON.stringify({
+                                                             "orientation": this.lastOrientation
+                                                           }));
+      }
     } catch (e) {
       dump("EmbedLiteOrientationChangeHandler: Report initial orientation " + e + "\n")
-    }
-  },
-
-  unregisterOrientationChangeListener: function() {
-    if (this.isRegistered) {
-      let window = this._targetWindow;
-      this.isRegistered = false;
-      if (window && window.screen) {
-        window.screen.removeEventListener("mozorientationchange", this, true);
-      }
-
-      // No extra guards needed here as nsDocLoader checks
-      // whether progress listener is registered or not.
-      this.webProgress.addProgressListener(this, Ci.nsIWebProgress.NOTIFY_PROGRESS |
-                                                 Ci.nsIWebProgress.NOTIFY_STATE_ALL);
     }
   },
 
@@ -150,16 +127,13 @@ OrientationChangeHandler.prototype = {
     case "mozorientationchange":
       this.handleOrientationChange(evt);
       break;
-    case "beforeunload":
-      this.unregisterOrientationChangeListener();
-      break;
     }
   },
 
   // nsIWebProgressListener
   onStateChange: function(aWebProgress, aRequest, aStateFlags, aStatus) {
     if ((aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) &&
-        (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK)) {
+        (aStateFlags & Ci.nsIWebProgressListener.STATE_IS_NETWORK) && aWebProgress.isTopLevel) {
       // This is a fallback registration in case content loading
       // is stopped before dom is loaded. Could happen in slow mobile networks.
       this.registerOrientationChangeListener();
