@@ -91,6 +91,11 @@ EmbedHelper.prototype = {
     this.updateZoomMarginPref();
   },
 
+  // Similar to HtmlInputElement IsExperimentalMobileType
+  isExperimentalMobileType: function(type) {
+      return type === "number" || type === "time" || type === "date";
+  },
+
   getFocusedInput: function(aBrowser, aOnlyInputElements = false) {
     if (!aBrowser)
       return null;
@@ -107,8 +112,10 @@ EmbedHelper.prototype = {
       focused = doc.activeElement;
     }
 
-    if (focused instanceof HTMLInputElement && (focused.mozIsTextField && focused.mozIsTextField(false) || focused.type === "number"))
+    if (focused instanceof HTMLInputElement && (focused.mozIsTextField && focused.mozIsTextField(false)
+                                                || this.isExperimentalMobileType(focused.type))) {
       return { inputElement: focused, isTextField: true };
+    }
 
     if (aOnlyInputElements)
       return null;
