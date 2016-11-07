@@ -36,10 +36,6 @@ var gScreenHeight = 0;
 
 const kEmbedStateActive = 0x00000001; // :active pseudoclass for elements
 
-function fuzzyEquals(a, b) {
-  return (Math.abs(a - b) < 0.999);
-}
-
 function EmbedHelper() {
   this.contentDocumentIsDisplayed = true;
   // Reasonable default. Will be read from preferences.
@@ -502,7 +498,7 @@ EmbedHelper.prototype = {
     rect.h = fixedCurrentViewport.height;
 
     // Are we really zooming.
-    aAllowZoom = !fuzzyEquals(rect.w, this._viewportData.cssCompositedRect.width)
+    aAllowZoom = !Util.fuzzyEquals(rect.w, this._viewportData.cssCompositedRect.width)
 
     if (aAllowZoom) {
       var winid = Services.embedlite.getIDByWindow(content);
@@ -675,7 +671,7 @@ EmbedHelper.prototype = {
       oldVpHeight = oldVpHeight / scaleFactor;
       vpHeight = vpHeight / scaleFactor;
 
-      this.vkbOpen = fuzzyEquals(oldVpHeight - vpHeight, this.vkbOpenCompositionMetrics.bottomMargin / 2);
+      this.vkbOpen = Util.fuzzyEquals(oldVpHeight - vpHeight, this.vkbOpenCompositionMetrics.bottomMargin / 2);
       return this.vkbOpen;
     }
     return false;

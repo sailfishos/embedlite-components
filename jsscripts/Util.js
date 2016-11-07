@@ -6,9 +6,12 @@ let Util = {
   /*
    * General purpose utilities
    */
-
   getWindowUtils: function getWindowUtils(aWindow) {
     return aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+  },
+
+  fuzzyEquals: function fuzzyEquals(a, b) {
+    return (Math.abs(a - b) < 0.999);
   },
 
   // Recursively find all documents, including root document.
@@ -183,6 +186,46 @@ let Util = {
     return ((aElement instanceof Ci.nsIDOMHTMLInputElement &&
              aElement.mozIsTextField(false)) ||
             aElement instanceof Ci.nsIDOMHTMLTextAreaElement);
+  },
+
+  /**
+   * Checks whether aElement's content can be edited either if it(or any of its
+   * parents) has "contenteditable" attribute set to "true" or aElement's
+   * ownerDocument is in design mode.
+   */
+  isEditableContent: function isEditableContent(aElement) {
+    return !!aElement && (aElement.isContentEditable ||
+                          this.isOwnerDocumentInDesignMode(aElement));
+
+  },
+
+  isEditable: function isEditable(aElement) {
+    if (!aElement) {
+      return false;
+    }
+
+    if (this.isTextInput(aElement) || this.isEditableContent(aElement)) {
+      return true;
+    }
+
+    // If a body element is editable and the body is the child of an
+    // iframe or div we can assume this is an advanced HTML editor
+    if ((aElement instanceof Ci.nsIDOMHTMLIFrameElement ||
+         aElement instanceof Ci.nsIDOMHTMLDivElement) &&
+        aElement.contentDocument &&
+        this.isEditableContent(aElement.contentDocument.body)) {
+      return true;
+    }
+
+    return false;
+  },
+
+  /**
+   * Checks whether aElement's owner document has design mode turned on.
+   */
+  isOwnerDocumentInDesignMode: function(aElement) {
+    return !!aElement && !!aElement.ownerDocument &&
+           aElement.ownerDocument.designMode == "on";
   },
 
   isMultilineInput: function isMultilineInput(aElement) {
@@ -404,6 +447,44 @@ let Util = {
     let download = dm.getDownload(newItemId);
     //dm.resumeDownload(download);
     //Services.obs.notifyObservers(download, "dl-start", null);
+  },
+
+
+  /*
+   * aViewHeight - the height of the viewable area in the browser
+   * aRect - a bounding rectangle of a selection or element.
+   *
+   * return - number of pixels for the browser to be shifted up by such
+   * that aRect is centered vertically within aViewHeight.
+   */
+  centerElementInView: function centerElementInView(aViewHeight, aRect) {
+    // If the bottom of the target bounds is higher than the new height,
+    // there's no need to adjust. It will be above the keyboard.
+    if (aRect.bottom <= aViewHeight) {
+      return 0;
+    }
+
+    // height of the target element
+    let targetHeight = aRect.bottom - aRect.top;
+    // height of the browser view.
+    let viewBottom = content.innerHeight;
+
+    // If the target is shorter than the new content height, we can go ahead
+    // and center it.
+    if (targetHeight <= aViewHeight) {
+      // Try to center the element vertically in the new content area, but
+      // don't position such that the bottom of the browser view moves above
+      // the top of the chrome. We purposely do not resize the browser window
+      // by making it taller when trying to center elements that are near the
+      // lower bounds. This would trigger reflow which can cause content to
+      // shift around.
+      let splitMargin = Math.round((aViewHeight - targetHeight) * .5);
+      let distanceToPageBounds = viewBottom - aRect.bottom;
+      let distanceFromChromeTop = aRect.bottom - aViewHeight;
+      let distanceToCenter =
+        distanceFromChromeTop + Math.min(distanceToPageBounds, splitMargin);
+      return distanceToCenter;
+    }
   },
 
   /*
