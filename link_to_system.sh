@@ -68,6 +68,7 @@ ln -s $(pwd)/jsscripts/TelURIParser.jsm $TARGET_DIR/chrome/embedlite/content/Tel
 ln -s $(pwd)/jsscripts/SelectHelper.js $TARGET_DIR/chrome/embedlite/content/SelectHelper.js;
 ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content/SelectAsyncHelper.js;
 ln -s $(pwd)/jsscripts/SelectionHandler.js $TARGET_DIR/chrome/embedlite/content/SelectionHandler.js;
+ln -s $(pwd)/jsscripts/SelectionPrototype.js $TARGET_DIR/chrome/embedlite/content/SelectionPrototype.js;
 ln -s $(pwd)/jsscripts/Util.js $TARGET_DIR/chrome/embedlite/content/Util.js;
 ln -s $(pwd)/jsscripts/ContextMenuHandler.js $TARGET_DIR/chrome/embedlite/content/ContextMenuHandler.js;
 ln -s $(pwd)/search-engines/google.xml $TARGET_DIR/chrome/embedlite/content/google.xml;

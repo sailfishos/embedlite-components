@@ -6,6 +6,7 @@ jsscripts_manifest_DATA = \
 	SelectHelper.js \
 	SelectAsyncHelper.js \
 	SelectionHandler.js \
+	SelectionPrototype.js \
 	Util.js \
 	ContextMenuHandler.js \
 	$(NULL)

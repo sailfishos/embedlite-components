@@ -677,6 +677,69 @@ EmbedHelper.prototype = {
     return false;
   },
 
+  virtualKeyboardHeight: function() {
+    return this.isVirtualKeyboardOpen() ? (this.vkbOpenCompositionMetrics.bottomMargin / content.devicePixelRatio) : 0
+  },
+
+  /******************************************************
+   * General utilities
+   */
+
+  /*
+   * Retrieve the total offset from the window's origin to the sub frame
+   * element including frame and scroll offsets. The resulting offset is
+   * such that:
+   * sub frame coords + offset = root frame position
+   */
+  getCurrentWindowAndOffset: function(x, y) {
+    // If the element at the given point belongs to another document (such
+    // as an iframe's subdocument), the element in the calling document's
+    // DOM (e.g. the iframe) is returned.
+    let utils = Util.getWindowUtils(content);
+    let element = utils.elementFromPoint(x, y, true, false);
+    let offset = { x:0, y:0 };
+
+    while (element && (element instanceof HTMLIFrameElement ||
+                       element instanceof HTMLFrameElement)) {
+      // get the child frame position in client coordinates
+      let rect = element.getBoundingClientRect();
+
+      // calculate offsets for digging down into sub frames
+      // using elementFromPoint:
+
+      // Get the content scroll offset in the child frame
+      let scrollOffset = ContentScroll.getScrollOffset(element.contentDocument.defaultView);
+      // subtract frame and scroll offset from our elementFromPoint coordinates
+      x -= rect.left + scrollOffset.x;
+      y -= rect.top + scrollOffset.y;
+
+      // calculate offsets we'll use to translate to client coords:
+
+      // add frame client offset to our total offset result
+      offset.x += rect.left;
+      offset.y += rect.top;
+
+      // get the frame's nsIDOMWindowUtils
+      utils = element.contentDocument
+                     .defaultView
+                     .QueryInterface(Ci.nsIInterfaceRequestor)
+                     .getInterface(Ci.nsIDOMWindowUtils);
+
+      // retrieve the target element in the sub frame at x, y
+      element = utils.elementFromPoint(x, y, true, false);
+    }
+
+    if (!element)
+      return {};
+
+    return {
+      element: element,
+      contentWindow: element.ownerDocument.defaultView,
+      offset: offset,
+      utils: utils
+    };
+  },
+
   _dumpViewport: function() {
     dump("--------------- Viewport data ----------------------- \n")
     this._dumpObject(this._viewportData)
@@ -859,6 +922,77 @@ var ViewportHandler = {
   },
 };
 
+// Ported from Metro code base. SHA1 554eff3a212d474f5a883
+let ContentScroll =  {
+  // The most recent offset set by APZC for the root scroll frame
+  _scrollOffset: { x: 0, y: 0 },
+
+  init: function() {
+    addMessageListener("Content:SetWindowSize", this);
+
+    addEventListener("pagehide", this, false);
+    addEventListener("MozScrolledAreaChanged", this, false);
+  },
+
+  getScrollOffset: function(aWindow) {
+    let cwu = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+    let scrollX = {}, scrollY = {};
+    cwu.getScrollXY(false, scrollX, scrollY);
+    return { x: scrollX.value, y: scrollY.value };
+  },
+
+  getScrollOffsetForElement: function(aElement) {
+    if (aElement.parentNode == aElement.ownerDocument)
+      return this.getScrollOffset(aElement.ownerDocument.defaultView);
+    return { x: aElement.scrollLeft, y: aElement.scrollTop };
+  },
+
+  receiveMessage: function(aMessage) {
+    let json = aMessage.json;
+    switch (aMessage.name) {
+      case "Content:SetWindowSize": {
+        let cwu = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+        cwu.setCSSViewport(json.width, json.height);
+        sendAsyncMessage("Content:SetWindowSize:Complete", {});
+        break;
+      }
+    }
+  },
+
+  handleEvent: function(aEvent) {
+    switch (aEvent.type) {
+      case "pagehide":
+        this._scrollOffset = { x: 0, y: 0 };
+        break;
+
+      case "MozScrolledAreaChanged": {
+        let doc = aEvent.originalTarget;
+        if (content != doc.defaultView) // We are only interested in root scroll pane changes
+          return;
+
+        sendAsyncMessage("MozScrolledAreaChanged", {
+          width: aEvent.width,
+          height: aEvent.height,
+          left: aEvent.x + content.scrollX
+        });
+
+        // Send event only after painting to make sure content views in the parent process have
+        // been updated.
+        addEventListener("MozAfterPaint", function afterPaint() {
+          removeEventListener("MozAfterPaint", afterPaint, false);
+          sendAsyncMessage("Content:UpdateDisplayPort");
+        }, false);
+
+        break;
+      }
+    }
+  }
+};
+this.ContentScroll = ContentScroll;
+
+ContentScroll.init();
+
+
 /**
  * An object which represents the page's preferred viewport properties:
  *   width (int): The CSS viewport width in px.
@@ -913,6 +1047,7 @@ ViewportMetadata.prototype = {
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Util.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandler.js");
+Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js");
 
 globalObject = new EmbedHelper();
