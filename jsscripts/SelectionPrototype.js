@@ -237,6 +237,11 @@ SelectionPrototype.prototype = {
     this._cache.updateCaret = aUpdateCaret || false;
     this._cache.targetIsEditable = this._targetIsEditable;
 
+    // Snap to word when content is not editable
+    if (this._cache.src == "start") {
+      this.snap = !this._cache.targetIsEditable;
+    }
+
     // Get monocles positioned correctly
     this.sendAsync("Content:SelectionRange", this._cache);
   },

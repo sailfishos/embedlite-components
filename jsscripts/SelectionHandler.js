@@ -10,7 +10,7 @@ dump("### SelectionHandler.js loaded\n");
 var SelectionHandler = {
   init: function init() {
     this.type = kContentSelector;
-    this.snap = true;
+    this.snap = false;
     this.lastYPos = this.lastXPos = null;
     addMessageListener("Browser:SelectionStart", this);
     addMessageListener("Browser:SelectionAttach", this);
