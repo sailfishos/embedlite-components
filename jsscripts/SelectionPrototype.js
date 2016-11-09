@@ -296,7 +296,7 @@ SelectionPrototype.prototype = {
           [aSelectionInfo.end, aSelectionInfo.start];
 
       isSwapNeeded = true;
-      this.sendAsync("Content:SelectionSwap");
+      this.sendAsync("Content:SelectionSwap", {});
     }
 
     // Modify selection based on monocle movement
