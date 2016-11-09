@@ -7,8 +7,9 @@ let Cc = Components.classes;
 
 dump("### SelectionHandler.js loaded\n");
 
-var SelectionHandler = {
-  init: function init() {
+function SelectionHandler() {
+  SelectionPrototype.call(this);
+  this.init = function init() {
     this.type = kContentSelector;
     this.snap = false;
     this.lastYPos = this.lastXPos = null;
@@ -32,9 +33,9 @@ var SelectionHandler = {
 
     // Handle orientation change, dynamic DOM manipulation etc
     addMessageListener("Viewport:Change", this);
-  },
+  }
 
-  shutdown: function shutdown() {
+  this.shutdown = function shutdown() {
     removeMessageListener("Browser:SelectionStart", this);
     removeMessageListener("Browser:SelectionAttach", this);
     removeMessageListener("Browser:SelectionEnd", this);
@@ -54,26 +55,26 @@ var SelectionHandler = {
     removeMessageListener("Browser:ResetLastPos", this);
 
     removeMessageListener("Viewport:Change", this);
-  },
+  }
 
-  sendAsync: function sendAsync(aMsg, aJson) {
+  this.sendAsync = function sendAsync(aMsg, aJson) {
     sendAsyncMessage(aMsg, aJson);
-  },
+  }
 
   /*************************************************
    * Browser event handlers
    */
 
-  _viewportChanged: function(metrics) {
+  this._viewportChanged = function(metrics) {
     if (this.isActive) {
       this._updateSelectionUI("reflow", true, true);
     }
-  },
+  }
 
   /*
    * Selection start event handler
    */
-  _onSelectionStart: function _onSelectionStart(aJson) {
+  this._onSelectionStart = function _onSelectionStart(aJson) {
     // Init content window information
     if (!this._initTargetInfo(aJson.xPos, aJson.yPos)) {
       this._onFail("failed to get target information");
@@ -100,9 +101,9 @@ var SelectionHandler = {
 
     // Update the position of our selection monocles
     this._updateSelectionUI("start", true, true);
-  },
+  }
 
-  _onSelectionAttach: function _onSelectionAttach(aX, aY) {
+  this._onSelectionAttach = function _onSelectionAttach(aX, aY) {
     // Init content window information
     if (!this._initTargetInfo(aX, aY)) {
       this._onFail("failed to get frame offset");
@@ -111,13 +112,13 @@ var SelectionHandler = {
 
     // Update the position of our selection monocles
     this._updateSelectionUI("start", true, true);
-  },
+  }
 
   /*
    * Switch selection modes. Currently we only support switching
    * from "caret" to "selection".
    */
-  _onSwitchMode: function _onSwitchMode(aMode, aMarker, aX, aY) {
+  this._onSwitchMode = function _onSwitchMode(aMode, aMarker, aX, aY) {
     if (aMode != "selection") {
       this._onFail("unsupported mode switch");
       return;
@@ -155,12 +156,12 @@ var SelectionHandler = {
     // Update the position of the selection marker that is *not*
     // being dragged.
     this._updateSelectionUI("update", aMarker == "end", aMarker == "start");
-  },
+  }
 
   /*
    * Selection monocle start move event handler
    */
-  _onSelectionMoveStart: function _onSelectionMoveStart(aMsg) {
+  this._onSelectionMoveStart = function _onSelectionMoveStart(aMsg) {
     if (!this._contentWindow) {
       this._onFail("_onSelectionMoveStart was called without proper view set up");
       return;
@@ -184,12 +185,12 @@ var SelectionHandler = {
 
     // Update the position of our selection monocles
     this._updateSelectionUI("update", true, true);
-  },
+  }
   
   /*
    * Selection monocle move event handler
    */
-  _onSelectionMove: function _onSelectionMove(aMsg) {
+  this._onSelectionMove = function _onSelectionMove(aMsg) {
     if (!this._contentWindow) {
       this._onFail("_onSelectionMove was called without proper view set up");
       return;
@@ -201,12 +202,12 @@ var SelectionHandler = {
     }
 
     this._handleSelectionPoint(aMsg, false);
-  },
+  }
 
   /*
    * Selection monocle move finished event handler
    */
-  _onSelectionMoveEnd: function _onSelectionMoveComplete(aMsg) {
+  this._onSelectionMoveEnd = function _onSelectionMoveComplete(aMsg) {
     if (!this._contentWindow) {
       this._onFail("_onSelectionMove was called without proper view set up");
       return;
@@ -226,7 +227,7 @@ var SelectionHandler = {
 
     // Update the position of our selection monocles
     this._updateSelectionUI("end", true, true);
-  },
+  }
 
    /*
     * _onCaretAttach - called by SelectionHelperUI when the user taps in a
@@ -235,7 +236,7 @@ var SelectionHandler = {
     *
     * @param aX, aY tap location in client coordinates.
     */
-  _onCaretAttach: function _onCaretAttach(aX, aY) {
+  this._onCaretAttach = function _onCaretAttach(aX, aY) {
     // Init content window information
     if (!this._initTargetInfo(aX, aY)) {
       this._onFail("failed to get target information");
@@ -257,7 +258,7 @@ var SelectionHandler = {
 
     // Update the position of our selection monocles
     this._updateSelectionUI("caret", false, false, true);
-  },
+  }
 
   /*
    * Selection copy event handler
@@ -266,7 +267,7 @@ var SelectionHandler = {
    * if it was, copy to the clipboard. Incoming coordinates are
    * content values.
    */
-  _onSelectionCopy: function _onSelectionCopy(aMsg) {
+  this._onSelectionCopy = function _onSelectionCopy(aMsg) {
     let tap = {
       xPos: aMsg.xPos,
       yPos: aMsg.yPos,
@@ -289,25 +290,25 @@ var SelectionHandler = {
       success = true;
     }
     sendSyncMessage("Content:SelectionCopied", { succeeded: success });
-  },
+  }
 
   /*
    * Selection close event handler
    *
    * @param aClearSelection requests that selection be cleared.
    */
-  _onSelectionClose: function _onSelectionClose(aClearSelection) {
+  this._onSelectionClose = function _onSelectionClose(aClearSelection) {
     if (aClearSelection) {
       this._clearSelection();
     }
     this.closeSelection();
-  },
+  }
 
   /*
    * Called any time SelectionHelperUI would like us to
    * recalculate the selection bounds.
    */
-  _onSelectionUpdate: function _onSelectionUpdate(aMsg) {
+  this._onSelectionUpdate = function _onSelectionUpdate(aMsg) {
     if (!this._contentWindow) {
       this._onFail("_onSelectionUpdate was called without proper view set up");
       return;
@@ -321,26 +322,26 @@ var SelectionHandler = {
 
     // Update the position of our selection monocles
     this._updateSelectionUI("update", true, true);
-  },
+  }
 
   /*
    * Called if for any reason we fail during the selection
    * process. Cancels the selection.
    */
-  _onFail: function _onFail(aDbgMessage) {
+  this._onFail = function _onFail(aDbgMessage) {
     if (aDbgMessage && aDbgMessage.length > 0)
       Util.dumpLn(aDbgMessage);
     this.sendAsync("Content:SelectionFail");
     this._clearSelection();
     this.closeSelection();
-  },
+  }
 
   /*
    * _repositionInfoRequest - fired at us by ContentAreaObserver when the
    * soft keyboard is being displayed. CAO wants to make a decision about
    * whether the browser deck needs repositioning.
    */
-  _repositionInfoRequest: function _repositionInfoRequest(aJsonMsg) {
+  this._repositionInfoRequest = function _repositionInfoRequest(aJsonMsg) {
     let result = this._calcNewContentPosition(aJsonMsg.viewHeight);
 
     // no repositioning needed
@@ -353,16 +354,16 @@ var SelectionHandler = {
       reposition: true,
       raiseContent: result,
     });
-  },
+  }
 
-  _onPing: function _onPing(aId) {
+  this._onPing = function _onPing(aId) {
     this.sendAsync("Content:SelectionHandlerPong", { id: aId });
-  },
+  }
 
-  onClickCoords: function (xPos, yPos) {
+  this.onClickCoords = function (xPos, yPos) {
     this.lastXPos = xPos;
     this.lastYPos = yPos;
-  },
+  }
 
   /*************************************************
    * Selection helpers
@@ -373,7 +374,7 @@ var SelectionHandler = {
    *
    * Clear existing selection if it exists and reset our internla state.
    */
-  _clearSelection: function _clearSelection() {
+  this._clearSelection = function _clearSelection() {
     this._clearTimers();
     if (this._contentWindow) {
       let selection = this._getSelection();
@@ -384,14 +385,14 @@ var SelectionHandler = {
       if (selection)
         selection.removeAllRanges();
     }
-  },
+  }
 
   /*
    * closeSelection
    *
    * Shuts SelectionHandler down.
    */
-  closeSelection: function closeSelection() {
+  this.closeSelection = function closeSelection() {
     this._clearTimers();
     this._cache = null;
     this._contentWindow = null;
@@ -402,13 +403,13 @@ var SelectionHandler = {
     this._targetIsEditable = false;
     this._targetCoordinates = null;
     sendSyncMessage("Content:HandlerShutdown", {});
-  },
+  }
 
   /*
    * Find content within frames - cache the target nsIDOMWindow,
    * client coordinate offset, target element, and dom utils interface.
    */
-  _initTargetInfo: function _initTargetInfo(aX, aY) {
+  this._initTargetInfo = function _initTargetInfo(aX, aY) {
     // getCurrentWindowAndOffset takes client coordinates
     let { element: element,
           contentWindow: contentWindow,
@@ -429,7 +430,7 @@ var SelectionHandler = {
     };
 
     return true;
-  },
+  }
 
   /*
    * _calcNewContentPosition - calculates the distance the browser should be
@@ -440,7 +441,7 @@ var SelectionHandler = {
    * @return 0 if no positioning is required or a positive val equal to the
    * distance content should be raised to center the target element.
    */
-  _calcNewContentPosition: function _calcNewContentPosition(aNewViewHeight) {
+  this._calcNewContentPosition = function _calcNewContentPosition(aNewViewHeight) {
     // We have no target element but the keyboard is up
     // so lets not cover content that is below the keyboard
     if (!this._cache || !this._cache.element) {
@@ -481,7 +482,7 @@ var SelectionHandler = {
 
     // distance from the top of the keyboard down to the caret location
     return caretLocation - aNewViewHeight;
-  },
+  }
 
   /*************************************************
    * Events
@@ -491,15 +492,15 @@ var SelectionHandler = {
    * Scroll + selection advancement timer when the monocle is
    * outside the bounds of an input control.
    */
-  scrollTimerCallback: function scrollTimerCallback() {
+  this.scrollTimerCallback = function scrollTimerCallback() {
     let result = SelectionHandler.updateTextEditSelection();
     // Update monocle position and speed if we've dragged off to one side
     if (result.trigger) {
       SelectionHandler._updateSelectionUI("update", result.start, result.end);
     }
-  },
+  }
 
-  receiveMessage: function sh_receiveMessage(aMessage) {
+  this.receiveMessage = function sh_receiveMessage(aMessage) {
     if (this._debugEvents && aMessage.name != "Browser:SelectionMove") {
       Util.dumpLn("SelectionHandler:", aMessage.name);
     }
@@ -577,28 +578,28 @@ var SelectionHandler = {
         this._viewportChanged(json);
         break;
     }
-  },
+  }
 
   /*************************************************
    * Utilities
    */
 
-  _getDocShell: function _getDocShell(aWindow) {
+  this._getDocShell = function _getDocShell(aWindow) {
     if (aWindow == null)
       return null;
     return aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                   .getInterface(Ci.nsIWebNavigation)
                   .QueryInterface(Ci.nsIDocShell);
-  },
+  }
 
-  _getSelectedText: function _getSelectedText() {
+  this._getSelectedText = function _getSelectedText() {
     let selection = this._getSelection();
     if (selection)
       return selection.toString();
     return "";
-  },
+  }
 
-  _getSelection: function _getSelection() {
+  this._getSelection = function _getSelection() {
     if (this._targetElement instanceof Ci.nsIDOMNSEditableElement) {
       return this._targetElement
                  .QueryInterface(Ci.nsIDOMNSEditableElement)
@@ -606,9 +607,9 @@ var SelectionHandler = {
     } else if (this._contentWindow)
       return this._contentWindow.getSelection();
     return null;
-  },
+  }
 
-  _getSelectController: function _getSelectController() {
+  this._getSelectController = function _getSelectController() {
     if (this._targetElement instanceof Ci.nsIDOMNSEditableElement) {
       return this._targetElement
                  .QueryInterface(Ci.nsIDOMNSEditableElement)
@@ -621,10 +622,11 @@ var SelectionHandler = {
                      .getInterface(Ci.nsISelectionDisplay)
                      .QueryInterface(Ci.nsISelectionController);
     }
-  },
+  }
 };
-this.SelectionHandler = SelectionHandler;
 
-SelectionHandler.__proto__ = new SelectionPrototype();
-SelectionHandler.init();
+SelectionHandler.prototype = Object.create(SelectionPrototype.prototype);
+SelectionHandler.prototype.constructor = SelectionHandler;
 
+this.SelectionHandler = new SelectionHandler;
+this.SelectionHandler.init()
