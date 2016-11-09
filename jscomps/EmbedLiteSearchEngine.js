@@ -98,7 +98,9 @@ EmbedLiteSearchEngine.prototype = {
           case "setdefault": {
             var engine = Services.search.getEngineByName(data.name);
             if (engine) {
+              // Update currentEngine as well when default search engine is updated.
               Services.search.defaultEngine = engine;
+              Services.search.currentEngine = engine;
             }
             break;
           }

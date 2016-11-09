@@ -236,6 +236,14 @@ SelectionPrototype.prototype = {
     this._cache.updateEnd = aUpdateEnd;
     this._cache.updateCaret = aUpdateCaret || false;
     this._cache.targetIsEditable = this._targetIsEditable;
+    this._cache.text = this._getSelectedText();
+
+    let searchEngine = Services.search.currentEngine;
+    let searchUri = "";
+    if (searchEngine) {
+      searchUri = Services.search.currentEngine.getSubmission(this._cache.text).uri.spec;
+    }
+    this._cache.searchUri =  searchUri;
 
     // Snap to word when content is not editable
     if (this._cache.src == "start") {
