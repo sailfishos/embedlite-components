@@ -29,6 +29,9 @@ var SelectionHandler = {
     addMessageListener("Browser:RepositionInfoRequest", this);
     addMessageListener("Browser:SelectionHandlerPing", this);
     addMessageListener("Browser:ResetLastPos", this);
+
+    // Handle orientation change, dynamic DOM manipulation etc
+    addMessageListener("Viewport:Change", this);
   },
 
   shutdown: function shutdown() {
@@ -49,6 +52,8 @@ var SelectionHandler = {
     removeMessageListener("Browser:RepositionInfoRequest", this);
     removeMessageListener("Browser:SelectionHandlerPing", this);
     removeMessageListener("Browser:ResetLastPos", this);
+
+    removeMessageListener("Viewport:Change", this);
   },
 
   sendAsync: function sendAsync(aMsg, aJson) {
@@ -58,6 +63,12 @@ var SelectionHandler = {
   /*************************************************
    * Browser event handlers
    */
+
+  _viewportChanged: function(metrics) {
+    if (this.isActive) {
+      this._updateSelectionUI("reflow", true, true);
+    }
+  },
 
   /*
    * Selection start event handler
@@ -561,6 +572,9 @@ var SelectionHandler = {
 
       case "Browser:ResetLastPos":
         this.onClickCoords(json.xPos, json.yPos);
+        break;
+      case "Viewport:Change":
+        this._viewportChanged(json);
         break;
     }
   },
