@@ -18,6 +18,9 @@ this.kSelectionNodeFocus = 2;
 this.kChromeSelector = 1;
 this.kContentSelector = 2;
 
+// Define elements that bound phone number containers.
+const PHONE_NUMBER_CONTAINERS = "td,div";
+
 dump("### SelectionPrototype.js loaded\n");
 
 /*
@@ -198,6 +201,81 @@ SelectionPrototype.prototype = {
    * Selection api
    */
 
+  _phoneRegex: /^\+?[0-9\s,-.\(\)*#pw]{1,30}$/,
+
+  _getSelectedPhoneNumber: function sh_getSelectedPhoneNumber() {
+    return this._isPhoneNumber(this._getSelectedText().trim());
+  },
+
+  _isPhoneNumber: function sh_isPhoneNumber(selectedText) {
+    return (this._phoneRegex.test(selectedText) ? selectedText : null);
+  },
+
+  /*
+   * Called to expand a selection that appears to represent a phone number. This enhances the basic
+   * SELECT_WORDNOSPACE logic employed in performSelection() in response to long-tap / selecting text.
+   */
+  _selectSmartPhoneNumber: function() {
+    this._extendPhoneNumberSelection("forward");
+    this._reversePhoneNumberSelectionDir();
+
+    this._extendPhoneNumberSelection("backward");
+    this._reversePhoneNumberSelectionDir();
+  },
+
+  /*
+   * Extend the current phone number selection in the requested direction.
+   */
+  _extendPhoneNumberSelection: function(direction) {
+    let selection = this._getSelection();
+
+    // Extend the phone number selection until we find a boundry.
+    while (true) {
+      // Save current focus position, and extend the selection.
+      let focusNode = selection.focusNode;
+      let focusOffset = selection.focusOffset;
+      selection.modify("extend", direction, "character");
+
+      // If the selection doesn't change, (can't extend further), we're done.
+      if (selection.focusNode == focusNode && selection.focusOffset == focusOffset) {
+        return;
+      }
+
+      // Don't extend past a valid phone number.
+      if (!this._isPhoneNumber(selection.toString().trim())) {
+        // Backout the undesired selection extend, and we're done.
+        selection.collapse(selection.anchorNode, selection.anchorOffset);
+        selection.extend(focusNode, focusOffset);
+        return;
+      }
+
+      // Don't extend the selection into a new container.
+      if (selection.focusNode != focusNode) {
+        let nextContainer = (selection.focusNode.nodeType == Ci.nsIDOMNode.TEXT_NODE) ?
+          selection.focusNode.parentNode : selection.focusNode;
+        if (nextContainer.matches &&
+            nextContainer.matches(PHONE_NUMBER_CONTAINERS)) {
+          // Backout the undesired selection extend, and we're done.
+          selection.collapse(selection.anchorNode, selection.anchorOffset);
+          selection.extend(focusNode, focusOffset);
+          return
+        }
+      }
+    }
+  },
+
+  /*
+   * Reverse the the selection direction, swapping anchorNode <-+-> focusNode.
+   */
+  _reversePhoneNumberSelectionDir: function(direction) {
+    let selection = this._getSelection();
+
+    let anchorNode = selection.anchorNode;
+    let anchorOffset = selection.anchorOffset;
+    selection.collapse(selection.focusNode, selection.focusOffset);
+    selection.extend(anchorNode, anchorOffset);
+  },
+
   /*
    * _updateSelectionUI
    *
@@ -220,6 +298,14 @@ SelectionPrototype.prototype = {
       return;
     }
 
+
+    // Ported from Android FF
+    // Perform additional phone-number "smart selection".
+    let isPhoneNumber = this._isPhoneNumber(selection);
+    if (isPhoneNumber) {
+      this._selectSmartPhoneNumber();
+    }
+
     // Updates this._cache content selection position data which we send over
     // to SelectionHelperUI. Note updateUIMarkerRects will fail if there isn't
     // any selection in the page. This can happen when we start a monocle drag
@@ -236,7 +322,8 @@ SelectionPrototype.prototype = {
     this._cache.updateEnd = aUpdateEnd;
     this._cache.updateCaret = aUpdateCaret || false;
     this._cache.targetIsEditable = this._targetIsEditable;
-    this._cache.text = this._getSelectedText();
+    this._cache.text = isPhoneNumber ? this._getSelectedPhoneNumber() : this._getSelectedText();
+    this._cache.isPhoneNumber = !!isPhoneNumber;
 
     let searchEngine = Services.search.currentEngine;
     let searchUri = "";
