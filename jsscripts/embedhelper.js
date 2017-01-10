@@ -315,7 +315,20 @@ EmbedHelper.prototype = {
             dump("Warning: couldn't PurgeHistory. Was it a file download?\n");
         }
 
-        aMessage.data.links.forEach(function(link) {
+        // Use same default value as there is in nsSHistory.cpp of Gecko.
+        let maxEntries = 50;
+        try {
+          maxEntries = Services.prefs.getIntPref("browser.sessionhistory.max_entries");
+        } catch (e) {
+          maxEntries = 50;
+        } /*pref is missing*/
+
+        let links = aMessage.data.links;
+        let itemsToRemove = Math.max(0, links.length - maxEntries);
+        // Adjust index to the range max session history entries.
+        let index = Math.max(0, (aMessage.data.index - itemsToRemove));
+        links.splice(0, itemsToRemove);
+        links.forEach(function(link) {
             let uri;
             try {
                 uri = ioService.newURI(link, null, null);
@@ -327,7 +340,6 @@ EmbedHelper.prototype = {
             historyEntry.setURI(uri);
             shist.addEntry(historyEntry, true);
         });
-        let index = aMessage.data.index;
         if (index < 0) {
             dump("Warning: session history entry index out of bounds: " + index + ". Returning index 0.\n");
             webNav.sessionHistory.getEntryAtIndex(0, true);
@@ -346,10 +358,10 @@ EmbedHelper.prototype = {
 
         let initialURI;
         try {
-            initialURI = ioService.newURI(aMessage.data.links[index], null, null);
+            initialURI = ioService.newURI(links[index], null, null);
         } catch (e) {
             dump("Warning: couldn't construct initial URI. Assuming a http:// URI is provided\n");
-            initialURI = ioService.newURI("http://" + aMessage.data.links[index], null, null);
+            initialURI = ioService.newURI("http://" + links[index], null, null);
         }
         docShell.setCurrentURI(initialURI);
         break;
