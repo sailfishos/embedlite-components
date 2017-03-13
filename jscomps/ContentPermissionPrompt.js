@@ -60,7 +60,7 @@ ContentPermissionPrompt.prototype = {
     let types = request.types.QueryInterface(Ci.nsIArray);
     let perm = types.queryElementAt(0, Ci.nsIContentPermissionType);
 
-    Services.embedlite.removeMessageListener("embedui:premissions", this);
+    Services.embedlite.removeMessageListener("embedui:permissions", this);
     let entityName = kEntities[perm.type];
     if (ret.allow) {
       // If the user checked "Don't ask again", make a permanent exception
@@ -111,7 +111,7 @@ ContentPermissionPrompt.prototype = {
 
     let entityName = kEntities[perm.type];
 
-    Services.embedlite.addMessageListener("embedui:premissions", this);
+    Services.embedlite.addMessageListener("embedui:permissions", this);
     var winid = Services.embedlite.getIDByWindow(request.window);
     Services.embedlite.sendAsyncMessage(winid, "embed:permissions",
                                         JSON.stringify({title: entityName,
