@@ -313,7 +313,7 @@ SelectionPrototype.prototype = {
     try {
       this._updateUIMarkerRects(selection);
     } catch (ex) {
-      Util.dumpLn("_updateUIMarkerRects:", ex.message);
+      this._onFail();
       return;
     }
 
