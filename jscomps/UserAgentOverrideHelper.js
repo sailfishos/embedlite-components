@@ -2,14 +2,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const Cu = Components.utils;
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
+const APP_STARTUP         = "app-startup"
+const VIEW_CREATED        = "embedliteviewcreated";
+const XPCOM_SHUTDOWN      = "xpcom-shutdown";
+const PREF_OVERRIDE       = "general.useragent.override";
+
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UserAgentOverrides",
-                                  "resource://gre/modules/UserAgentOverrides.jsm");
 
 // Common helper service
 
@@ -23,35 +27,39 @@ UserAgentOverrideHelper.prototype = {
   observe: function (aSubject, aTopic, aData) {
     switch(aTopic) {
       // Engine DownloadManager notifications
-      case "app-startup": {
+      case APP_STARTUP: {
         dump("UserAgentOverrideHelper app-startup\n");
-        Services.obs.addObserver(this, "embedliteviewcreated", true);
-        Services.obs.addObserver(this, "xpcom-shutdown", false);
-        Services.prefs.addObserver("general.useragent.override", this, false);
+        Services.obs.addObserver(this, VIEW_CREATED, true);
+        Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
+        Services.prefs.addObserver(PREF_OVERRIDE, this, false);
+
         break;
       }
       case "nsPref:changed": {
-        if (aData == "general.useragent.override") {
+        if (aData == PREF_OVERRIDE) {
           UserAgent.init();
         }
         break;
       }
-      case "embedliteviewcreated": {
+      case VIEW_CREATED: {
         UserAgent.init();
         break;
       }
 
-      case "xpcom-shutdown": {
-        dump("UserAgentOverrideHelper xpcom-shutdown\n");
-        Services.obs.removeObserver(this, "xpcom-shutdown", false);
+      case XPCOM_SHUTDOWN: {
+        dump("UserAgentOverrideHelper " + XPCOM_SHUTDOWN + "\n");
+        Services.obs.removeObserver(this, XPCOM_SHUTDOWN, false);
         UserAgent.uninit();
         break;
       }
+      default:
+        break;
     }
   },
 
+  // From nsISiteSpecificUserAgent
   getUserAgentForURIAndWindow: function ssua_getUserAgentForURIAndWindow(aURI, aWindow) {
-    return UserAgent.getUserAgentForWindow(aURI, aWindow, true)
+    return UserAgent.getUserAgentForWindow(aURI)
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISiteSpecificUserAgent, Ci.nsIObserver,
@@ -64,7 +72,6 @@ var UserAgent = {
   overrideMap: new Map,
   initilized: false,
   DESKTOP_UA: null,
-  currentHost: "",
   GOOGLE_DOMAIN: /(^|\.)google\.com$/,
   GOOGLE_MAPS_DOMAIN: /(^|\.)maps\.google\.com$/,
   YOUTUBE_DOMAIN: /(^|\.)youtube\.com$/,
@@ -76,8 +83,9 @@ var UserAgent = {
     }
 
     Services.obs.addObserver(this, "DesktopMode:Change", false);
-    Services.prefs.addObserver("general.useragent.override", this, false);
+    Services.prefs.addObserver(PREF_OVERRIDE, this, false);
     this._customUA = this.getCustomUserAgent();
+    Cu.import("resource://gre/modules/UserAgentOverrides.jsm");
     UserAgentOverrides.init();
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
     // See https://developer.mozilla.org/en/Gecko_user_agent_string_reference
@@ -89,8 +97,8 @@ var UserAgent = {
   },
 
   getCustomUserAgent: function() {
-    if (Services.prefs.prefHasUserValue("general.useragent.override")) {
-      let ua = Services.prefs.getCharPref("general.useragent.override");
+    if (Services.prefs.prefHasUserValue(PREF_OVERRIDE)) {
+      let ua = Services.prefs.getCharPref(PREF_OVERRIDE);
       return ua;
     } else {
       return null;
@@ -106,9 +114,9 @@ var UserAgent = {
   },
 
   getUserAgentForUriAndTab: function ua_getUserAgentForUriAndTab(aUri) {
-    let ua = this.getDefaultUserAgent();
     // Not all schemes have a host member.
-    if (aUri.schemeIs("http") || aUri.schemeIs("https")) {
+    if (aUri && (aUri.schemeIs("http") || aUri.schemeIs("https"))) {
+      let ua = this.getDefaultUserAgent();
       if (this.GOOGLE_DOMAIN.test(aUri.host)) {
         if (this.GOOGLE_MAPS_DOMAIN.test(aUri.host)) {
             return ua.replace("X11", "Android").replace("Linux", "Android");
@@ -140,82 +148,50 @@ var UserAgent = {
 
   uninit: function ua_uninit() {
     Services.obs.removeObserver(this, "DesktopMode:Change");
-    Services.prefs.removeObserver("general.useragent.override", this);
+    Services.prefs.removeObserver(PREF_OVERRIDE, this);
     UserAgentOverrides.uninit();
   },
 
   // Complex override calls this first.
   onRequest: function(channel, defaultUA) {
-    let channelWindow = this._getWindowForRequest(channel);
     let ua = "";
-    let host = channel.URI.asciiHost
-    let windowHost = channelWindow && channelWindow.location.hostname || "";
+    let uri = channel.URI;
 
-    if (this.overrideMap.has(host)) {
-      ua = this.overrideMap.get(host);
-    } else if (this.currentHost && (this.currentHost == windowHost) && this.overrideMap.has(windowHost)) {
-      ua = this.overrideMap.get(windowHost);
+    // Prefer current uri over the loading principal's uri in case both have overrides.
+    ua = uri && UserAgentOverrides.getOverrideForURI(uri)
+
+    if (ua) {
+      return ua
     } else {
-      ua = this.getUserAgentForWindow(channel.URI, channelWindow, false);
-    }
-
-    return ua
-  },
-
-  // Called if onRequest returns empty user-agent.
-  getUserAgentForWindow: function ua_getUserAgentForWindow(aUri, aWindow, aIsCurrentHost) {
-    // Try to pick 'general.useragent.override.*'
-    let ua = UserAgentOverrides.getOverrideForURI(aUri);
-
-    if (aIsCurrentHost) {
-      this.currentHost = aUri.asciiHost;
-      if (aWindow) {
-        aWindow.addEventListener("beforeunload", this, true);
+      let loadInfo = channel.loadInfo;
+      let loadingPrincipalURI = loadInfo && loadInfo.loadingPrincipal && loadInfo.loadingPrincipal.URI;
+      if (loadingPrincipalURI && loadingPrincipalURI.asciiHost) {
+        uri = loadingPrincipalURI;
       }
     }
 
-    if (!ua) {
+    return this.getUserAgentForWindow(uri);
+  },
+
+  getUserAgentForWindow: function ua_getUserAgentForWindow(aUri, aWindow) {
+    // Try to pick 'general.useragent.override.*'
+    let ua = null;
+
+    if (aUri) {
+      ua = UserAgentOverrides.getOverrideForURI(aUri);
+    }
+
+    if (ua) {
+      return ua;
+    } else if (aUri) {
       ua = this.getUserAgentForUriAndTab(aUri);
     }
 
     if (ua) {
-      this.overrideMap.set(aUri.asciiHost, ua)
       return ua
     }
 
     return this.getDefaultUserAgent();
-  },
-
-  handleEvent: function(aEvent) {
-    switch (aEvent.type) {
-      case "beforeunload": {
-        this.currentHost = "";
-        break;
-      }
-    }
-  },
-
-  _getRequestLoadContext: function ua_getRequestLoadContext(aRequest) {
-    if (aRequest && aRequest.notificationCallbacks) {
-      try {
-        return aRequest.notificationCallbacks.getInterface(Ci.nsILoadContext);
-      } catch (ex) { }
-    }
-
-    if (aRequest && aRequest.loadGroup && aRequest.loadGroup.notificationCallbacks) {
-      try {
-        return aRequest.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
-      } catch (ex) { }
-    }
-
-    return null;
-  },
-
-  _getWindowForRequest: function ua_getWindowForRequest(aRequest) {
-    let loadContext = this._getRequestLoadContext(aRequest);
-    if (loadContext)
-      return loadContext.associatedWindow;
-    return null;
   },
 
   observe: function ua_observe(aSubject, aTopic, aData) {
@@ -226,7 +202,7 @@ var UserAgent = {
         break;
       }
       case "nsPref:changed": {
-        if (aData == "general.useragent.override") {
+        if (aData == PREF_OVERRIDE) {
           this._customUA = this.getCustomUserAgent();
         }
         break;
