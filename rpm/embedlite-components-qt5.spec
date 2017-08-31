@@ -1,4 +1,4 @@
-%global min_xulrunner_version 38.8.0.5
+%global min_xulrunner_version 38.8.0.18
 
 # Don't depend on private xulrunner-qt5 libraries.
 %global privlibs             libfreebl3
@@ -18,7 +18,7 @@
 
 Name:       embedlite-components-qt5
 Summary:    EmbedLite components Qt5
-Version:    1.9.17
+Version:    1.19.29
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
@@ -32,7 +32,7 @@ BuildRequires:  libtool
 BuildRequires:  automake
 BuildRequires:  autoconf
 BuildRequires:  perl
-Requires:  xulrunner-qt5 >= 31.7.0.14
+Requires:  xulrunner-qt5 >= %{min_xulrunner_version}
 Conflicts: embedlite-components
 
 %description
