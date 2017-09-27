@@ -37,7 +37,8 @@ EmbedHistoryListener* EmbedHistoryListener::sHistory = nullptr;
 namespace AndroidBridge {
   bool
   HasEnv() {
-    return true;
+    // Disable for now. This not currently in use and causes crashing. JB#39908
+    return false;
   }
 }
 
