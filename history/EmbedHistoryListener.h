@@ -10,10 +10,11 @@
 #include "mozilla/IHistory.h"
 #include "nsDataHashtable.h"
 #include "nsTPriorityQueue.h"
-#include "nsThreadUtils.h"
+#include "nsIRunnable.h"
 #include "nsIEmbedAppService.h"
-#include "nsServiceManagerUtils.h"
 #include "nsIObserver.h"
+#include "nsIURI.h"
+#include "nsITimer.h"
 
 #define NS_EMBEDLITEHISTORY_CID \
 { 0xec7cf1e2, \
@@ -21,15 +22,23 @@
   0x11e2, \
   { 0xa7, 0x9a, 0xfb, 0x19, 0xfe, 0x29, 0x97 }}
 
+// Max size of History::mRecentlyVisitedURIs
+#define RECENTLY_VISITED_URI_SIZE 8
+
+// Max size of History::mEmbedURIs
+#define EMBED_URI_SIZE 128
+
 class EmbedHistoryListener : public mozilla::IHistory
                            , public nsIRunnable
                            , public nsIObserver
+                           , public nsITimerCallback
 {
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_IHISTORY
   NS_DECL_NSIRUNNABLE
   NS_DECL_NSIOBSERVER
+  NS_DECL_NSITIMERCALLBACK
 
   nsresult Init() { return NS_OK; }
 
@@ -47,8 +56,53 @@ private:
 
   static EmbedHistoryListener* sHistory;
 
-  nsDataHashtable<nsCStringHashKey, nsTArray<mozilla::dom::Link*> *> mListeners;
-  nsTPriorityQueue<nsCString> mPendingURIs;
+  // Will mimic the value of the places.history.enabled preference.
+  bool mHistoryEnabled;
+
+  void LoadPrefs();
+  bool ShouldRecordHistory();
+  nsresult CanAddURI(nsIURI* aURI, bool* canAdd);
+
+  /**
+   * We need to manage data used to determine a:visited status.
+   */
+  nsDataHashtable<nsStringHashKey, nsTArray<mozilla::dom::Link *> *> mListeners;
+  nsTPriorityQueue<nsString> mPendingLinkURIs;
+
+  /**
+   * Redirection (temporary and permanent) flags are sent with the redirected
+   * URI, not the original URI. Since we want to ignore the original URI, we
+   * need to cache the pending visit and make sure it doesn't redirect.
+   */
+  nsRefPtr<nsITimer> mTimer;
+  typedef nsAutoTArray<nsCOMPtr<nsIURI>, RECENTLY_VISITED_URI_SIZE> PendingVisitArray;
+  PendingVisitArray mPendingVisitURIs;
+
+  bool RemovePendingVisitURI(nsIURI* aURI);
+  void SaveVisitURI(nsIURI* aURI);
+
+  /**
+   * mRecentlyVisitedURIs remembers URIs which are recently added to the DB,
+   * to avoid saving these locations repeatedly in a short period.
+   */
+  typedef nsAutoTArray<nsCOMPtr<nsIURI>, RECENTLY_VISITED_URI_SIZE> RecentlyVisitedArray;
+  RecentlyVisitedArray mRecentlyVisitedURIs;
+  RecentlyVisitedArray::index_type mRecentlyVisitedURIsNextIndex;
+
+  void AppendToRecentlyVisitedURIs(nsIURI* aURI);
+  bool IsRecentlyVisitedURI(nsIURI* aURI);
+
+  /**
+   * mEmbedURIs remembers URIs which are explicitly not added to the DB,
+   * to avoid wasting time on these locations.
+   */
+  typedef nsAutoTArray<nsCOMPtr<nsIURI>, EMBED_URI_SIZE> EmbedArray;
+  EmbedArray::index_type mEmbedURIsNextIndex;
+  EmbedArray mEmbedURIs;
+
+  void AppendToEmbedURIs(nsIURI* aURI);
+  bool IsEmbedURI(nsIURI* aURI);
+
   nsCOMPtr<nsIEmbedAppService> mService;
 };
 
