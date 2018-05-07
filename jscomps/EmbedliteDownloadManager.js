@@ -193,7 +193,8 @@ EmbedliteDownloadManager.prototype = {
           case "cancelDownload":
             for (var key in DownloadView.prevState) {
               if (DownloadView.prevState[key].id === data.id) {
-                DownloadView.prevState[key].download.cancel();
+                // Finalization does cancel and remove partially downloaded data.
+                DownloadView.prevState[key].download.finalize(true);
               }
             }
             break;
