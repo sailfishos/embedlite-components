@@ -3,9 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-let Ci = Components.interfaces;
-let Cc = Components.classes;
-
 /*
  * SelectionPrototype - common base class used by both chrome and content selection logic.
  */
