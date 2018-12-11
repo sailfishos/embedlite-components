@@ -9,7 +9,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsIObserverService.h"
 #include "mozilla/embedlite/EmbedLog.h"
-
 #include "nsStringGlue.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIDOMWindow.h"
@@ -59,7 +58,6 @@ GetDOMWindowByNode(nsIDOMNode *aNode, nsIDOMWindow **aDOMWindow)
 NS_IMETHODIMP
 GetTopWindow(nsIDOMWindow* aWin, nsIDOMWindow **aDOMWindow)
 {
-    nsCOMPtr<nsIDOMWindow> window;
     nsCOMPtr<nsIWebNavigation> navNav(do_GetInterface(aWin));
     nsCOMPtr<nsIDocShellTreeItem> navItem(do_QueryInterface(navNav));
     NS_ENSURE_TRUE(navItem, NS_ERROR_FAILURE);
@@ -67,7 +65,10 @@ GetTopWindow(nsIDOMWindow* aWin, nsIDOMWindow **aDOMWindow)
     navItem->GetRootTreeItem(getter_AddRefs(rootItem));
     nsCOMPtr<nsIDOMWindow> rootWin(do_GetInterface(rootItem));
     NS_ENSURE_TRUE(rootWin, NS_ERROR_FAILURE);
-    rootWin->GetTop(getter_AddRefs(window));
+
+    nsCOMPtr<nsPIDOMWindow> pwindow(do_QueryInterface(rootWin));
+    nsCOMPtr<nsIDOMWindow> window = pwindow->GetTop();
+    getter_AddRefs(window);
     *aDOMWindow = window.forget().take();
     return NS_OK;
 }
@@ -100,13 +101,13 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
     mService->GetIDByWindow(window, &winid);
     NS_ENSURE_TRUE(winid , NS_ERROR_FAILURE);
     mService->EnterSecureJSContext();
-    nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(window);
 
     if (type.EqualsLiteral(MOZ_DOMMetaAdded)) {
         messageName.AssignLiteral("chrome:metaadded");
     } else if (type.EqualsLiteral(MOZ_DOMContentLoaded)) {
+        nsCOMPtr<nsIWebNavigation> webNav(do_GetInterface(DOMWindow));
         nsCOMPtr<nsIDOMDocument> ctDoc;
-        window->GetDocument(getter_AddRefs(ctDoc));
+        webNav->GetDocument(getter_AddRefs(ctDoc));
         nsString docURI;
         ctDoc->GetDocumentURI(docURI);
         if (!docURI.EqualsLiteral("about:blank")) {
@@ -126,8 +127,9 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
             return NS_OK;
         }
         disabledIface->GetHref(href);
+        nsCOMPtr<nsIWebNavigation> webNav(do_GetInterface(DOMWindow));
         nsCOMPtr<nsIDOMDocument> ctDoc;
-        window->GetDocument(getter_AddRefs(ctDoc));
+        webNav->GetDocument(getter_AddRefs(ctDoc));
         // ignore on frames and other documents
         nsCOMPtr<nsIDOMDocument> ownDoc;
         nsCOMPtr<nsIDOMNode> node = do_QueryInterface(origTarget);

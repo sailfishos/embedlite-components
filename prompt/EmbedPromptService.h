@@ -106,7 +106,7 @@ public:
         consumers.AppendElement(aCancelable);
     }
 
-    nsTArray<nsRefPtr<nsICancelable>> consumers;
+    nsTArray<RefPtr<nsICancelable>> consumers;
     nsIDOMWindow* mWin;
     nsCOMPtr<nsIChannel> mChannel;
     nsCOMPtr<nsIAuthInformation> mAuthInfo;

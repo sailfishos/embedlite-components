@@ -103,10 +103,10 @@ EmbedPromptFactory::GetPrompt(nsIDOMWindow* aParent, const nsIID& iid, void **re
 
     if (iid.Equals(NS_GET_IID(nsIAuthPrompt)) ||
         iid.Equals(NS_GET_IID(nsIAuthPrompt2))) {
-        nsRefPtr<EmbedAuthPromptService> service = new EmbedAuthPromptService(parent);
+        RefPtr<EmbedAuthPromptService> service = new EmbedAuthPromptService(parent);
         *result = service.forget().take();
     } else if (iid.Equals(NS_GET_IID(nsIPrompt))) {
-        nsRefPtr<EmbedPromptService> service = new EmbedPromptService(parent);
+        RefPtr<EmbedPromptService> service = new EmbedPromptService(parent);
         *result = service.forget().take();
     }
 
@@ -676,7 +676,7 @@ EmbedAuthPromptService::AsyncPromptAuth(nsIChannel* aChannel,
         return NS_ERROR_FAILURE;
     }
 
-    nsCOMPtr<nsAuthCancelableConsumer> consumer = new nsAuthCancelableConsumer(aCallback, aContext);
+    RefPtr<nsAuthCancelableConsumer> consumer = new nsAuthCancelableConsumer(aCallback, aContext);
 
     nsCString hostname, httpRealm;
     NS_ENSURE_SUCCESS(getAuthTarget(aChannel, authInfo, hostname, httpRealm), NS_ERROR_FAILURE);
@@ -905,7 +905,7 @@ EmbedAuthPromptService::DoResponseAsyncPrompt(EmbedAsyncAuthPrompt* prompt,
     }
 
     for (unsigned int i = 0; i < prompt->consumers.Length(); i++) {
-        nsRefPtr<nsAuthCancelableConsumer> consumer = static_cast<nsAuthCancelableConsumer*>(prompt->consumers[i].get());
+        RefPtr<nsAuthCancelableConsumer> consumer = static_cast<nsAuthCancelableConsumer*>(prompt->consumers[i].get());
         if (!consumer->mCallback) {
             // Not having a callback means that consumer didn't provide it
             // or canceled the notification.
