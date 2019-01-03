@@ -19,4 +19,5 @@ OTHER_FILES += \
     jsscripts/*.xml \
     jsscripts/sync/*.js \
     jscomps/*.js \
-    overrides/*
+    overrides/* \
+    configure.ac
