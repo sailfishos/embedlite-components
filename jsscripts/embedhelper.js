@@ -59,9 +59,9 @@ EmbedHelper.prototype = {
 
     ViewportHandler.init();
 
-    addEventListener("touchstart", this, true);
-    addEventListener("touchmove", this, true);
-    addEventListener("touchend", this, true);
+    addEventListener("touchstart", this, false);
+    addEventListener("touchmove", this, false);
+    addEventListener("touchend", this, false);
     addEventListener("DOMContentLoaded", this, true);
     addEventListener("DOMFormHasPassword", this, true);
     addEventListener("DOMAutoComplete", this, true);
@@ -154,6 +154,7 @@ EmbedHelper.prototype = {
   _viewportReadyToChange: false,
   _lastTarget: null,
   _lastTargetY: 0,
+  _touchEventDefaultPrevented: false,
 
   resetMaxLineBoxWidth: function() {
     let webNav = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
@@ -191,35 +192,38 @@ EmbedHelper.prototype = {
         break;
       }
       case "Gesture:SingleTap": {
-
         if (SelectionHandler.isActive) {
             SelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
         }
 
-        let element = this._touchElement;
-        if (element) {
-          try {
-            let [x, y] = [aMessage.json.x, aMessage.json.y];
-            this._sendMouseEvent("mousemove", element, x, y);
-            this._sendMouseEvent("mousedown", element, x, y);
-            this._sendMouseEvent("mouseup",   element, x, y);
-            // scrollToFocusedInput does its own checks to find out if an element should be zoomed into
-            this.scrollToFocusedInput();
-          } catch(e) {
-            Cu.reportError(e);
-          }
+        if (this._touchEventDefaultPrevented) {
+          this._touchEventDefaultPrevented = false;
           this._touchElement = null;
-        }
+        } else {
+          let element = this._touchElement;
+          if (element) {
+            try {
+              let [x, y] = [aMessage.json.x, aMessage.json.y];
+              this._sendMouseEvent("mousemove", element, x, y);
+              this._sendMouseEvent("mousedown", element, x, y);
+              this._sendMouseEvent("mouseup",   element, x, y);
+              // scrollToFocusedInput does its own checks to find out if an element should be zoomed into
+              this.scrollToFocusedInput();
+            } catch(e) {
+              Cu.reportError(e);
+            }
+            this._touchElement = null;
+          }
 
-        let uri = this._getLinkURI(element);
-        if (uri && (uri instanceof Ci.nsIURI)) {
-          let winid = Services.embedlite.getIDByWindow(content);
-          Services.embedlite.sendAsyncMessage(winid, "embed:linkclicked",
-                                              JSON.stringify({
-                                                               "uri": uri.asciiSpec
-                                                             }));
+          let uri = this._getLinkURI(element);
+          if (uri && (uri instanceof Ci.nsIURI)) {
+            let winid = Services.embedlite.getIDByWindow(content);
+            Services.embedlite.sendAsyncMessage(winid, "embed:linkclicked",
+                                                JSON.stringify({
+                                                                 "uri": uri.asciiSpec
+                                                              }));
+          }
         }
-
         break;
       }
       case "Gesture:DoubleTap": {
@@ -612,6 +616,7 @@ EmbedHelper.prototype = {
 
   _handleTouchEnd: function(aEvent) {
     this._viewportReadyToChange = true;
+    this._touchEventDefaultPrevented = (this._touchEventDefaultPrevented || aEvent.defaultPrevented);
     this._cancelTapHighlight();
   },
 
@@ -619,6 +624,9 @@ EmbedHelper.prototype = {
     if (this._touchElement) { // TODO: check if _highlightelement is enough and this can be dropped
       this._touchElement = null;
     }
+
+    this._touchEventDefaultPrevented = aEvent.defaultPrevented;
+
     if (!this.isBrowserContentDocumentDisplayed() || aEvent.touches.length > 1 || aEvent.defaultPrevented)
       return;
 
