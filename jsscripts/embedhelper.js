@@ -612,6 +612,23 @@ EmbedHelper.prototype = {
 
   _handleTouchEnd: function(aEvent) {
     this._viewportReadyToChange = true;
+
+    // Can only trigger if we have not seen touch moves e.i. we do have highlight element. Touch move
+    // cancels tap highlight and also here we call cancel tap highlight at the end.
+    if (this._highlightElement) {
+      let target = aEvent.target;
+      if (target) {
+        let uri = this._getLinkURI(target);
+        if (uri) {
+          try {
+            Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
+          } catch (e) {
+            dump("Speculative connection error: " + e + "\n")
+          }
+        }
+      }
+    }
+
     this._cancelTapHighlight();
   },
 
@@ -627,12 +644,6 @@ EmbedHelper.prototype = {
       return;
     }
 
-    let uri = this._getLinkURI(target);
-    if (uri) {
-      try {
-        Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
-      } catch (e) {}
-    }
     this._doTapHighlight(target);
   },
 
