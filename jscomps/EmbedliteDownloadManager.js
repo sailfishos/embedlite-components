@@ -31,7 +31,12 @@ let DownloadView = {
   prevState: {},
   counter: 0,
 
+  pajavasara: "moromoro",
+
   onDownloadAdded: function(download) {
+
+      dump("==================== DL onDownloadAdded\n")
+
     this.counter++;
     this.prevState[download] = {
       id: this.counter,
@@ -91,6 +96,8 @@ let DownloadView = {
   },
 
   onDownloadChanged: function(download) {
+      dump("==================== DL onDownloadChanged download: " + download + "\n")
+
     if (this.prevState[download].progress !== download.progress) {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
@@ -146,6 +153,9 @@ let DownloadView = {
   },
 
   onDownloadRemoved: function(download) {
+
+      dump("==================== DL onDownloadRemoved\n")
+
     delete this.prevState[download];
   }
 };
@@ -166,33 +176,51 @@ EmbedliteDownloadManager.prototype = {
   observe: function(aSubject, aTopic, aData) {
     switch (aTopic) {
       case "app-startup":
+          dump("==================== DL app-start\n");
         Services.obs.addObserver(this, "profile-after-change", false);
         break;
 
       case "profile-after-change":
+          dump("==================== DL profile-after\n");
+
         Services.obs.removeObserver(this, "profile-after-change");
         Services.obs.addObserver(this, "embedui:download", false);
         Task.spawn(function() {
           let list = yield Downloads.getList(Downloads.ALL);
           yield list.addView(DownloadView);
+            dump("==================== DL view added jep jep\n")
         }).then(null, Cu.reportError);
         break;
 
       case "embedui:download":
         var data = JSON.parse(aData);
-
         switch (data.msg) {
           case "retryDownload":
+              dump("======================== download " + data.msg + " id: " + data.id + "\n")
             for (var key in DownloadView.prevState) {
-              if (DownloadView.prevState[key].id === data.id) {
-                DownloadView.prevState[key].download.start();
+              dump("============== retry prev: " + DownloadView.prevState[key].id + "\n");
+                if (DownloadView.prevState[key].id === data.id) {
+
+                    dump("============== download start again\n");
+
+                    var dl = DownloadView.prevState[key].download
+                    for (var i in dl) {
+                        dump("============== download obj: " + i + "=" + dl[i] + "\n");
+
+                    }
+
+                    DownloadView.prevState[key].download.start();
               }
             }
             break;
 
           case "cancelDownload":
-            for (var key in DownloadView.prevState) {
-              if (DownloadView.prevState[key].id === data.id) {
+              dump("======================== download " + data.msg + " id: " + data.id + "\n")
+
+
+              for (var key in DownloadView.prevState) {
+              dump("============== cancel prev: " + DownloadView.prevState[key].id + "\n");
+                  if (DownloadView.prevState[key].id === data.id) {
                 // Finalization does cancel and remove partially downloaded data.
                 DownloadView.prevState[key].download.finalize(true);
               }
@@ -202,6 +230,7 @@ EmbedliteDownloadManager.prototype = {
           case "addDownload":
             Task.spawn(function() {
               let list = yield Downloads.getList(Downloads.ALL);
+dump("================================ add download.... about to create");
               let download = yield Downloads.createDownload({
                 source: data.from,
                 target: data.to

@@ -17,7 +17,10 @@ Cu.import("resource://gre/modules/Services.jsm");
 // HelperApp Launcher Dialog
 // -----------------------------------------------------------------------
 
-function HelperAppLauncherDialog() { }
+function HelperAppLauncherDialog() {
+
+dump("HelperAppLauncherDialog moro\n");
+}
 
 HelperAppLauncherDialog.prototype = {
   classID: Components.ID("{e9d277a0-268a-4ec2-bb8c-10fdf3e44611}"),
@@ -53,10 +56,16 @@ HelperAppLauncherDialog.prototype = {
     }
   },
 
+    promptForSaveToFileAsync: function hald_promptForSaveToFileAsync(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
+      let file = null;
+      let prefs = Services.prefs;
+      dump("HelperAppLauncherDialog promptForSaveToFileAsync\n");
+    },
+
   promptForSaveToFile: function hald_promptForSaveToFile(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
     let file = null;
     let prefs = Services.prefs;
-    dump("HelperAppLauncherDialog promptForSaveToFile\n");
+    dump("HelperAppLauncherDialog promptForSaveToFile... " + aForcePrompt + "\n");
 
     if (!aForcePrompt) {
       // Check to see if the user wishes to auto save to the default download

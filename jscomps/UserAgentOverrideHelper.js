@@ -156,7 +156,7 @@ var UserAgent = {
   onRequest: function(channel, defaultUA) {
     let ua = "";
     let uri = channel.URI;
-
+let o = uri
     // Prefer current uri over the loading principal's uri in case both have overrides.
     ua = uri && UserAgentOverrides.getOverrideForURI(uri)
 
@@ -170,7 +170,9 @@ var UserAgent = {
       }
     }
 
-    return this.getUserAgentForWindow(uri);
+    let a = this.getUserAgentForWindow(uri);
+    dump("=========================== uri: "+ (uri && uri.asciiHost) + " override: "  + a + " original: " + (o && o.asciiHost) + "\n")
+    return a;
   },
 
   getUserAgentForWindow: function ua_getUserAgentForWindow(aUri, aWindow) {
