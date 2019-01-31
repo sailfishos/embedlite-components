@@ -32,7 +32,7 @@ UserAgentOverrideHelper.prototype = {
         Services.obs.addObserver(this, VIEW_CREATED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         Services.prefs.addObserver(PREF_OVERRIDE, this, false);
-
+        UserAgent.init();
         break;
       }
       case "nsPref:changed": {
