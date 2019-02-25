@@ -231,6 +231,7 @@ EmbedHelper.prototype = {
         break;
       }
       case "Gesture:LongTap": {
+        this._cancelTapHighlight();
         let element = this._touchElement;
         if (element) {
           let [x, y] = [aMessage.json.x, aMessage.json.y];
@@ -618,18 +619,16 @@ EmbedHelper.prototype = {
     this._viewportReadyToChange = true;
     this._touchEventDefaultPrevented = (this._touchEventDefaultPrevented || aEvent.defaultPrevented);
 
-    // Can only trigger if there have not seen touch moves e.i. we do hae highlight element. Touch move
+    // Can only trigger if we have not seen touch moves i.e. we do have highlight element. Touch move
     // cancels tap highlight and also here we call cancel tap highlight at the end.
-    if (this._highlightElement && !this._touchEventDefaultPrevented) {
-      let target = aEvent.target;
-      if (target) {
-        let uri = this._getLinkURI(target);
-        if (uri) {
-          try {
-            Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
-          } catch (e) {
-            dump("Speculative connection error: " + e + "\n")
-          }
+    let target = this._highlightElement;
+    if (target && !this._touchEventDefaultPrevented) {
+      let uri = this._getLinkURI(target);
+      if (uri) {
+        try {
+          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
+        } catch (e) {
+          dump("Speculative connection error: " + e + "\n")
         }
       }
     }
