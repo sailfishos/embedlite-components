@@ -633,6 +633,7 @@ EmbedHelper.prototype = {
         }
       }
     }
+
     this._cancelTapHighlight();
   },
 
