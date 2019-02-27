@@ -13,6 +13,7 @@
 #include "nsIEmbedAppService.h"
 #include "nsIDOMWindow.h"
 #include "gfxRect.h"
+#include <InputData.h>
 
 #define MOZ_DOMTitleChanged "DOMTitleChanged"
 #define MOZ_DOMContentLoaded "DOMContentLoaded"
@@ -30,14 +31,11 @@ public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIDOMEVENTLISTENER
 
-    virtual void RequestContentRepaint(const mozilla::layers::FrameMetrics&);
-    virtual void HandleDoubleTap(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&);
-    virtual void HandleSingleTap(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&);
-    virtual void HandleLongTap(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&, uint64_t);
-    virtual void HandleLongTapUp(const mozilla::CSSPoint&, int32_t, const mozilla::layers::ScrollableLayerGuid&);
-    virtual void SendAsyncScrollDOMEvent(bool aIsRoot, const mozilla::CSSRect&, const mozilla::CSSSize&);
-    virtual void ScrollUpdate(const mozilla::CSSPoint&, float);
-    virtual void AcknowledgeScrollUpdate(const mozilla::layers::FrameMetrics::ViewID&, const uint32_t&) {};
+    void HandleDoubleTap(const mozilla::CSSPoint&, mozilla::Modifiers) override;
+    void HandleSingleTap(const mozilla::CSSPoint&, mozilla::Modifiers) override;
+    void HandleLongTap(const mozilla::CSSPoint&, mozilla::Modifiers, uint64_t) override;
+    void HandleScrollEvent(bool aIsRootScrollFrame, const mozilla::CSSRect&, const mozilla::CSSSize&) override;
+    void ScrollUpdate(const mozilla::CSSPoint&, float);
 
     nsCOMPtr<nsIDOMWindow> DOMWindow;
 private:
@@ -53,7 +51,6 @@ private:
     bool IsRectZoomedIn(mozilla::gfx::Rect aRect, mozilla::gfx::Rect aViewport);
 
     nsCOMPtr<nsIEmbedAppService> mService;
-    bool mGotViewPortUpdate;
     mozilla::gfx::Rect mViewport;
     mozilla::gfx::Rect mCssCompositedRect;
     mozilla::gfx::Rect mCssPageRect;

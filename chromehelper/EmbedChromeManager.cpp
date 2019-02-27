@@ -43,7 +43,7 @@ NS_IMPL_ISUPPORTS(EmbedChromeManager, nsIObserver, nsISupportsWeakReference)
 nsresult
 EmbedChromeManager::Init()
 {
-    nsresult rv;
+    nsresult rv = NS_OK;
     nsCOMPtr<nsIObserverService> observerService =
         do_GetService(NS_OBSERVERSERVICE_CONTRACTID);
 
@@ -93,7 +93,7 @@ EmbedChromeManager::WindowCreated(nsIDOMWindow* aWin)
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );
-    nsCOMPtr<EmbedChromeListener> listener = new EmbedChromeListener(aWin);
+    RefPtr<EmbedChromeListener> listener = new EmbedChromeListener(aWin);
     target->AddEventListener(NS_LITERAL_STRING(MOZ_DOMContentLoaded), listener,  PR_FALSE);
     target->AddEventListener(NS_LITERAL_STRING(MOZ_DOMLinkAdded), listener,  PR_FALSE);
     target->AddEventListener(NS_LITERAL_STRING(MOZ_DOMWillOpenModalDialog), listener,  PR_FALSE);
@@ -115,7 +115,7 @@ EmbedChromeManager::WindowDestroyed(nsIDOMWindow* aWin)
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );
-    nsCOMPtr<EmbedChromeListener> listener;
+    RefPtr<EmbedChromeListener> listener;
     int i = 0;
     for (i = 0; i < mArray.Count(); ++i) {
         if (mArray[i]->DOMWindow.get() == aWin) {

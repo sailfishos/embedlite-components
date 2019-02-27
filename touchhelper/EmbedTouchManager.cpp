@@ -97,7 +97,7 @@ EmbedTouchManager::WindowCreated(nsIDOMWindow* aWin)
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );
-    nsCOMPtr<EmbedTouchListener> listener = new EmbedTouchListener(aWin);
+    RefPtr<EmbedTouchListener> listener = new EmbedTouchListener(aWin);
     mArray.AppendObject(listener);
     mWindowCounter++;
     if (!mService) {
@@ -117,7 +117,7 @@ EmbedTouchManager::WindowDestroyed(nsIDOMWindow* aWin)
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );
-    nsCOMPtr<EmbedTouchListener> listener;
+    RefPtr<EmbedTouchListener> listener;
     int i = 0;
     for (i = 0; i < mArray.Count(); ++i) {
         if (mArray[i]->DOMWindow.get() == aWin) {

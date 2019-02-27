@@ -1,4 +1,7 @@
-%global min_xulrunner_version 38.8.0.18
+%global min_xulrunner_version 45.5.2.1
+
+%define system_nspr       1
+%define system_pixman     1
 
 # Don't depend on private xulrunner-qt5 libraries.
 %global privlibs             libfreebl3
@@ -25,8 +28,12 @@ License:    MPLv2
 URL:        https://github.com/tmeshkova/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  xulrunner-qt5-devel >= %{min_xulrunner_version}
-BuildRequires:  pkgconfig(nspr)
+%if %{system_nspr}
+BuildRequires:  pkgconfig(nspr) >= 4.13.1
+%endif
+%if %{system_pixman}
 BuildRequires:  pkgconfig(pixman-1)
+%endif
 BuildRequires:  python
 BuildRequires:  libtool
 BuildRequires:  automake

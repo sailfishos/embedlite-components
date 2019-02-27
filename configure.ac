@@ -88,6 +88,7 @@ PKG_CHECK_MODULES(ENGINE, libxul $NSPR,
     SDK_DIR=`pkg-config --variable=sdkdir libxul`
     IDL_DIR=`pkg-config --variable=idldir libxul`
     INCLUDE_DIR=`pkg-config --variable=includedir libxul`
+    ENGINE_CFLAGS="${ENGINE_CFLAGS} -I$INCLUDE_DIR/mozilla/dom"
 
     AS_IF([test "x$with_system_nspr" = "xyes"],
       [ENGINE_CFLAGS="${ENGINE_CFLAGS} `pkg-config --cflags-only-I nspr`"],
@@ -105,7 +106,7 @@ AC_SUBST(IDL_DIR)
 
 
 # Required flags
-CXXFLAGS="$CXXFLAGS -include mozilla-config.h -std=gnu++0x -fno-rtti -fvisibility=hidden "
+CXXFLAGS="$CXXFLAGS -include mozilla-config.h -std=gnu++0x -fno-rtti -fvisibility=hidden"
 # random warnings hide
 CXXFLAGS="$CXXFLAGS -Wno-attributes -Wno-ignored-qualifiers -Wall "
 CXXFLAGS="$CXXFLAGS -Wno-unused-parameter -Wpointer-arith -Woverloaded-virtual "

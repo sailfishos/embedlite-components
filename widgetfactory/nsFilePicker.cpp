@@ -6,7 +6,6 @@
 
 #include "nsFilePicker.h"
 #include "nsNetUtil.h"
-#include "nsIWidget.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsIEmbedLiteJSON.h"
 #include "nsNetUtil.h"
@@ -15,8 +14,10 @@
 #include "nsThreadUtils.h"
 #include "nsIVariant.h"
 #include "nsArrayEnumerator.h"
-#include "nsIDOMFile.h"
+#include <nsIFile.h>
 #include "nsIDOMWindowUtils.h"
+#include <nsISimpleEnumerator.h>   // for nsISimpleEnumerator
+#include <nsServiceManagerUtils.h> // for do_GetService()
 
 //-----------------------------
 
@@ -35,6 +36,9 @@ nsEmbedFilePicker::~nsEmbedFilePicker()
 
 NS_IMETHODIMP nsEmbedFilePicker::Init(nsIDOMWindow* parent, const nsAString& title, int16_t mode)
 {
+  NS_PRECONDITION(parent, "Null parent passed to filepicker, no file "
+                  "picker for you!");
+
   mWin = parent;
   mModalDepth = 0;
   mTitle.Assign(title);
@@ -284,7 +288,7 @@ nsEmbedFilePicker::OnMessageReceived(const char* messageName, const char16_t* me
 
   root->GetPropertyAsBool(NS_LITERAL_STRING("accepted"), &response.accepted);
   nsCOMPtr<nsIVariant> itemsvar;
-  nsresult rv = root->GetProperty(NS_LITERAL_STRING("items"), getter_AddRefs(itemsvar));
+  root->GetProperty(NS_LITERAL_STRING("items"), getter_AddRefs(itemsvar));
 
   uint16_t dataType = 0;
   itemsvar->GetDataType(&dataType);
@@ -326,7 +330,7 @@ nsEmbedFilePicker::OnMessageReceived(const char* messageName, const char16_t* me
 }
 
 NS_IMETHODIMP
-nsEmbedFilePicker::GetDomfile(nsIDOMFile * *aDomfile)
+nsEmbedFilePicker::GetDomfile(nsISupports * *aDomfile)
 {
   nsCOMPtr<nsIFile> localFile;
   nsresult rv = GetFile(getter_AddRefs(localFile));
@@ -339,7 +343,7 @@ nsEmbedFilePicker::GetDomfile(nsIDOMFile * *aDomfile)
 
   mService->EnterSecureJSContext();
   nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
-  nsCOMPtr<nsIDOMFile> file;
+  nsCOMPtr<nsISupports> file;
   utils->WrapDOMFile(localFile, getter_AddRefs(file));
   file.forget(aDomfile);
   mService->LeaveSecureJSContext();
@@ -375,7 +379,7 @@ public:
       return NS_ERROR_FAILURE;
     }
 
-    nsCOMPtr<nsIDOMFile> file;
+    nsCOMPtr<nsISupports> file;
     utils->WrapDOMFile(localFile, getter_AddRefs(file));
     file.forget(aResult);
     return NS_OK;
@@ -394,8 +398,6 @@ private:
   nsCOMPtr<nsIDOMWindowUtils> utils;
 };
 
-NS_IMPL_ISUPPORTS(nsBaseFilePickerEnumerator, nsISimpleEnumerator)
-
 NS_IMETHODIMP
 nsEmbedFilePicker::GetDomfiles(nsISimpleEnumerator * *aDomfiles)
 {
@@ -403,9 +405,11 @@ nsEmbedFilePicker::GetDomfiles(nsISimpleEnumerator * *aDomfiles)
   nsresult rv = GetFiles(getter_AddRefs(iter));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<nsBaseFilePickerEnumerator> retIter =
-    new nsBaseFilePickerEnumerator(iter, mWin);
+  RefPtr<nsBaseFilePickerEnumerator> retIter =
+          new nsBaseFilePickerEnumerator(iter, mWin);
 
   retIter.forget(aDomfiles);
   return NS_OK;
 }
+
+NS_IMPL_ISUPPORTS(nsBaseFilePickerEnumerator, nsISimpleEnumerator)
