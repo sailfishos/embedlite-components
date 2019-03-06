@@ -32,7 +32,10 @@ UserAgentOverrideHelper.prototype = {
         Services.obs.addObserver(this, VIEW_CREATED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         Services.prefs.addObserver(PREF_OVERRIDE, this, false);
-        UserAgent.init();
+        // Do not initialize UserAgent here because then UserAgentOverrides.jsm
+        // will receive desktop ua as a default user agent <= initialized too ealy.
+        // If initialized too early regular expression based user agent overrides will
+        // not work.
         break;
       }
       case "nsPref:changed": {
