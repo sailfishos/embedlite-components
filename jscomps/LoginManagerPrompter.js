@@ -120,6 +120,9 @@ LoginManagerPrompter.prototype = {
         this.log("===== initialized =====");
     },
 
+    setE10sData : function (aBrowser, aOpener) {
+      throw new Error("This should be filled in when EmbedLite is multiprocess");
+    },
 
     /*
      * promptToSavePassword
