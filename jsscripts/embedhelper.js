@@ -23,6 +23,9 @@ XPCOMUtils.defineLazyServiceGetter(this, "DOMUtils",
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
                                   "resource://gre/modules/LoginManagerContent.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerParent",
+                                  "resource://gre/modules/LoginManagerParent.jsm");
+
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
@@ -563,15 +566,14 @@ EmbedHelper.prototype = {
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
       case "DOMContentLoaded": {
-        if (LoginManagerContent.onContentLoaded) {
-          LoginManagerContent.onContentLoaded(aEvent);
-        }
+        LoginManagerParent.init();
         break;
       }
       case "DOMFormHasPassword": {
-        if (LoginManagerContent.onFormPassword) {
-          LoginManagerContent.onFormPassword(aEvent);
-        }
+        let form = aEvent.target;
+        let doc = form.ownerDocument;
+        let win = doc.defaultView;
+        LoginManagerContent.onDOMFormHasPassword(aEvent, win);
         break;
       }
       case "DOMAutoComplete":
