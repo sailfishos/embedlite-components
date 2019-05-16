@@ -24,8 +24,8 @@ Summary:    EmbedLite components Qt5
 Version:    1.19.29
 Release:    1
 Group:      Applications/Internet
-License:    MPLv2
-URL:        https://github.com/tmeshkova/embedlite-components
+License:    MPLv2.0
+URL:        https://git.sailfishos.org/mer-core/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  xulrunner-qt5-devel >= %{min_xulrunner_version}
 %if %{system_nspr}
