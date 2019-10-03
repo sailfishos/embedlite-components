@@ -68,4 +68,5 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 
 %files
 %defattr(-,root,root,-)
-%{_libdir}/mozembedlite/*
+%license COPYING
+%{_libdir}/mozembedlite
