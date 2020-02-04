@@ -44,8 +44,6 @@ jscomps/EmbedLiteWebAppInstall.js
 jscomps/PromptService.js
 jscomps/PrivateDataManager.js
 jscomps/EmbedliteDownloadManager.js
-jscomps/TelProtocolHandler.js
-jscomps/SmsProtocolHandler.js
 jscomps/MailtoProtocolHandler.js
 jscomps/GeoProtocolHandler.js
 jscomps/RtspProtocolHandler.js
@@ -64,7 +62,6 @@ rm -rf $TARGET_DIR/chrome/embedlite;
 mkdir -p $TARGET_DIR/chrome/embedlite/content/sync;
 ln -s $(pwd)/jsscripts/embedhelper.js $TARGET_DIR/chrome/embedlite/content/embedhelper.js;
 ln -s $(pwd)/jsscripts/OrientationChangeHandler.jsm $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.jsm;
-ln -s $(pwd)/jsscripts/TelURIParser.jsm $TARGET_DIR/chrome/embedlite/content/TelURIParser.jsm;
 ln -s $(pwd)/jsscripts/SelectHelper.js $TARGET_DIR/chrome/embedlite/content/SelectHelper.js;
 ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content/SelectAsyncHelper.js;
 ln -s $(pwd)/jsscripts/SelectionHandler.js $TARGET_DIR/chrome/embedlite/content/SelectionHandler.js;
