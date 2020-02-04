@@ -19,7 +19,6 @@ jscomps_manifest_DATA = \
 	PromptService.js \
 	PrivateDataManager.js \
 	EmbedliteDownloadManager.js \
-	MailtoProtocolHandler.js \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)

@@ -44,7 +44,6 @@ jscomps/EmbedLiteWebAppInstall.js
 jscomps/PromptService.js
 jscomps/PrivateDataManager.js
 jscomps/EmbedliteDownloadManager.js
-jscomps/MailtoProtocolHandler.js
 "
 
 for str in $FILES_LIST; do
