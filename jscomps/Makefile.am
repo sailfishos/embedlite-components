@@ -20,7 +20,6 @@ jscomps_manifest_DATA = \
 	PrivateDataManager.js \
 	EmbedliteDownloadManager.js \
 	MailtoProtocolHandler.js \
-	RtspProtocolHandler.js \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)

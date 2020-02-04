@@ -45,7 +45,6 @@ jscomps/PromptService.js
 jscomps/PrivateDataManager.js
 jscomps/EmbedliteDownloadManager.js
 jscomps/MailtoProtocolHandler.js
-jscomps/RtspProtocolHandler.js
 "
 
 for str in $FILES_LIST; do
