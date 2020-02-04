@@ -45,7 +45,6 @@ jscomps/PromptService.js
 jscomps/PrivateDataManager.js
 jscomps/EmbedliteDownloadManager.js
 jscomps/MailtoProtocolHandler.js
-jscomps/GeoProtocolHandler.js
 jscomps/RtspProtocolHandler.js
 "
 
