@@ -23,7 +23,6 @@ Name:       embedlite-components-qt5
 Summary:    EmbedLite components Qt5
 Version:    1.19.29
 Release:    1
-Group:      Applications/Internet
 License:    MPLv2.0
 URL:        https://git.sailfishos.org/mer-core/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
@@ -53,7 +52,7 @@ EmbedLite Components required for embeded browser UI
 NO_CONFIGURE=yes ./autogen.sh
 %configure --with-system-nspr --with-system-pixman
 
-make %{?jobs:-j%jobs}
+make %{?_smp_mflags}
 
 %install
 rm -rf %{buildroot}
