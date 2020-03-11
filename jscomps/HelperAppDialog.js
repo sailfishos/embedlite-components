@@ -27,30 +27,20 @@ HelperAppLauncherDialog.prototype = {
     // Check to see if we can open this file or not
     dump("HelperAppLauncherDialog show\n");
 
-    if (aLauncher.MIMEInfo.hasDefaultHandler) {
-      aLauncher.MIMEInfo.preferredAction = Ci.nsIMIMEInfo.useSystemDefault;
-      aLauncher.launchWithApplication(null, false);
-    } else {
-      let wasClicked = false;
-      let listener = {
-        observe: function(aSubject, aTopic, aData) {
-          if (aTopic == "alertclickcallback") {
-            wasClicked = true;
-            let win = Cc["@mozilla.org/appshell/window-mediator;1"].getService(Ci.nsIWindowMediator).getMostRecentWindow("navigator:browser");
-            if (win) {
-              win.BrowserUI.showPanel("downloads-container");
-            }
-  
-            aLauncher.saveToDisk(null, false);
-          } else {
-            if (!wasClicked) {
-              aLauncher.cancel(Cr.NS_BINDING_ABORTED);
-            }
-          }
-        }
-      };
-      this._notify(aLauncher, listener);
-    }
+    // See nsIMIMEInfo.idl, nsIExternalHelperAppService and uriloader/exthandler/nsExternalHelperAppService.cpp
+    // For now save them all.
+
+//    if (aLauncher.MIMEInfo.hasDefaultHandler) {
+//      aLauncher.MIMEInfo.preferredAction = Ci.nsIMIMEInfo.useSystemDefault;
+//      aLauncher.launchWithApplication(null, false);
+//    }
+    aLauncher.saveToDisk(null, false);
+  },
+
+  promptForSaveToFileAsync: function hald_promptForSaveToFileAsync(aLauncher, aWindowContext, aDefaultFileName,
+                                  aSuggestedFileExtension,
+                                  aForcePrompt) {
+    dump("HelperAppLauncherDialog promptForSaveToFileAsync -- not supported\n");
   },
 
   promptForSaveToFile: function hald_promptForSaveToFile(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
