@@ -19,6 +19,7 @@ function SelectionHandler() {
     addMessageListener("Browser:SelectionMoveStart", this);
     addMessageListener("Browser:SelectionMove", this);
     addMessageListener("Browser:SelectionMoveEnd", this);
+    addMessageListener("Browser:SelectionSelectAll", this);
     addMessageListener("Browser:SelectionUpdate", this);
     addMessageListener("Browser:SelectionClose", this);
     addMessageListener("Browser:SelectionCopy", this);
@@ -42,6 +43,7 @@ function SelectionHandler() {
     removeMessageListener("Browser:SelectionMoveStart", this);
     removeMessageListener("Browser:SelectionMove", this);
     removeMessageListener("Browser:SelectionMoveEnd", this);
+    removeMessageListener("Browser:SelectionSelectAll", this);
     removeMessageListener("Browser:SelectionUpdate", this);
     removeMessageListener("Browser:SelectionClose", this);
     removeMessageListener("Browser:SelectionCopy", this);
@@ -186,6 +188,25 @@ function SelectionHandler() {
     // Update the position of our selection monocles
     this._updateSelectionUI("update", true, true);
   }
+
+  /*
+   * Selection monocle start move event handler
+   */
+  this._onSelectionSelectAll = function _onSelectionSelectAll(aMsg) {
+    if (!this._contentWindow) {
+      this._onFail("_onSelectionSelectAll was called without proper view set up");
+      return;
+    }
+
+    if (this._targetElement instanceof Ci.nsIDOMNSEditableElement) {
+      this._targetElement.select()
+    } else if (this._contentWindow) {
+      this._contentWindow.getSelection().selectAllChildren(this._contentWindow.document.body);
+    }
+
+    // Update the position of our selection monocles
+    this._updateSelectionUI("end", true, true);
+}
   
   /*
    * Selection monocle move event handler
@@ -544,6 +565,10 @@ function SelectionHandler() {
 
       case "Browser:SelectionMoveEnd":
         this._onSelectionMoveEnd(json);
+        break;
+
+      case "Browser:SelectionSelectAll":
+        this._onSelectionSelectAll(json);
         break;
 
       case "Browser:SelectionCopy":
