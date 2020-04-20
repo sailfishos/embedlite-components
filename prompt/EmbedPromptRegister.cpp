@@ -54,7 +54,7 @@ EmbedPromptRegister::Init()
 
     nsCOMPtr<nsIFactory> oldFactory = do_GetClassObject("@mozilla.org/prompter;1");
     if (oldFactory) {
-        nsCID* cid = NULL;
+        nsCID* cid = nullptr;
         rv = cr->ContractIDToCID("@mozilla.org/prompter;1", &cid);
         if (!NS_FAILED(rv)) {
             rv = cr->UnregisterFactory(*cid, oldFactory.get());
@@ -76,7 +76,7 @@ EmbedPromptRegister::Init()
     }
     oldFactory = do_GetClassObject("@mozilla.org/alerts-service;1");
     if (oldFactory) {
-        nsCID* cid = NULL;
+        nsCID* cid = nullptr;
         rv = cr->ContractIDToCID("@mozilla.org/alerts-service;1", &cid);
         if (!NS_FAILED(rv)) {
             rv = cr->UnregisterFactory(*cid, oldFactory.get());

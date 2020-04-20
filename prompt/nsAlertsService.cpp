@@ -18,7 +18,7 @@
 
 using namespace mozilla;
 
-NS_IMPL_ISUPPORTS(nsEmbedAlertsService, nsIAlertsService, nsIAlertsProgressListener)
+NS_IMPL_ISUPPORTS(nsEmbedAlertsService, nsIAlertsService)
 
 nsEmbedAlertsService::nsEmbedAlertsService()
 {
@@ -40,7 +40,7 @@ NS_IMETHODIMP nsEmbedAlertsService::ShowAlertNotification(const nsAString& aImag
                                                           const nsAString& aAlertCookie, nsIObserver* aAlertListener,
                                                           const nsAString& aAlertName, const nsAString& aBidi,
                                                           const nsAString& aLang, const nsAString & data, nsIPrincipal *principal,
-                                                          bool aInPrivateBrowsing)
+                                                          bool aInPrivateBrowsing, bool aRequireInteraction)
 {
   printf(">>>>>>Func:%s::%d image:%s, title:%s, text:%s, clickable:%i, cookie:%s, name:%s\n", __PRETTY_FUNCTION__, __LINE__,
          NS_ConvertUTF16toUTF8(aImageUrl).get(),
@@ -53,7 +53,7 @@ NS_IMETHODIMP nsEmbedAlertsService::ShowAlertNotification(const nsAString& aImag
 
   // Do not display the alert. Instead call alertfinished and get out.
   if (aAlertListener)
-    aAlertListener->Observe(NULL, "alertclickcallback", PromiseFlatString(aAlertCookie).get());
+    aAlertListener->Observe(nullptr, "alertclickcallback", PromiseFlatString(aAlertCookie).get());
 
   return NS_OK;
 }
@@ -61,21 +61,5 @@ NS_IMETHODIMP nsEmbedAlertsService::ShowAlertNotification(const nsAString& aImag
 NS_IMETHODIMP nsEmbedAlertsService::CloseAlert(const nsAString & name, nsIPrincipal*)
 {
   printf("nsEmbedAlertsService::CloseAlert: name:%s", NS_ConvertUTF16toUTF8(name).get());
-  return NS_OK;
-}
-
-
-NS_IMETHODIMP nsEmbedAlertsService::OnProgress(const nsAString & aAlertName,
-                                          int64_t aProgress,
-                                          int64_t aProgressMax,
-                                          const nsAString & aAlertText)
-{
-  printf(">>>>>>Func:%s::%d\n", __PRETTY_FUNCTION__, __LINE__);
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsEmbedAlertsService::OnCancel(const nsAString & aAlertName)
-{
-  printf(">>>>>>Func:%s::%d\n", __PRETTY_FUNCTION__, __LINE__);
   return NS_OK;
 }

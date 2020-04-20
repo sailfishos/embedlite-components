@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+class nsPIDOMWindowOuter;
+
 class EmbedFilePickerResponse
 {
 public:
@@ -45,7 +47,7 @@ private:
     int mMode;
     int mFilterIndex;
     nsCOMPtr<nsIEmbedAppService> mService;
-    nsCOMPtr<nsIDOMWindow> mWin;
+    nsCOMPtr<nsPIDOMWindowOuter> mParent;
     nsString mTitle;
     nsString mDefaultName;
     nsCOMPtr<nsIFilePickerShownCallback> mCallback;

@@ -26,8 +26,8 @@ public:
     nsresult Init();
 private:
     virtual ~EmbedTouchManager();
-    void WindowCreated(nsIDOMWindow* aWin);
-    void WindowDestroyed(nsIDOMWindow* aWin);
+    void WindowCreated(mozIDOMWindowProxy* aWin);
+    void WindowDestroyed(mozIDOMWindowProxy* aWin);
     nsCOMPtr<nsIEmbedAppService> mService;
     int mWindowCounter;
     typedef nsCOMArray<EmbedTouchListener> ObserversArray;

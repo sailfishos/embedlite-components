@@ -26,6 +26,7 @@
 #include "nsNetCID.h"
 #include "nsIProtocolHandler.h"
 #include "nsIDOMWindow.h"
+#include "nsPIDOMWindow.h"
 #include "nsIEmbedLiteJSON.h"
 #include "nsIObserverService.h"
 #include "nsIWindowWatcher.h"
@@ -38,7 +39,7 @@
 
 using namespace mozilla::embedlite;
 
-EmbedPromptOuterObserver::EmbedPromptOuterObserver(IDestroyNotification* aNotifier, nsIDOMWindow* aWin)
+EmbedPromptOuterObserver::EmbedPromptOuterObserver(IDestroyNotification* aNotifier, mozIDOMWindowProxy *aWin)
   : mNotifier(aNotifier)
   , mWin(aWin)
 {
@@ -88,9 +89,9 @@ NS_IMPL_ISUPPORTS(EmbedPromptFactory, nsIPromptFactory)
 
 
 NS_IMETHODIMP
-EmbedPromptFactory::GetPrompt(nsIDOMWindow* aParent, const nsIID& iid, void **result)
+EmbedPromptFactory::GetPrompt(mozIDOMWindowProxy* aParent, const nsIID& iid, void **result)
 {
-    nsCOMPtr<nsIDOMWindow> parent(aParent);
+    nsCOMPtr<mozIDOMWindowProxy> parent(aParent);
     if (!parent) { // if no parent provided, consult the window watcher:
         nsresult rv;
         nsCOMPtr<nsIWindowWatcher> wwatcher = do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
@@ -115,7 +116,7 @@ EmbedPromptFactory::GetPrompt(nsIDOMWindow* aParent, const nsIID& iid, void **re
 
 // Prompt Service Implementation
 
-EmbedPromptService::EmbedPromptService(nsIDOMWindow* aWin)
+EmbedPromptService::EmbedPromptService(mozIDOMWindowProxy *aWin)
   : mWin(aWin)
   , mModalDepth(0)
 {
@@ -237,7 +238,8 @@ EmbedPromptService::AlertCheck(const char16_t* aDialogTitle,
 
     mService->EnterSecureJSContext();
 
-    nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(mWin);
+    nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(pidomWindow);
     NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
 
     rv = utils->EnterModalState();
@@ -322,7 +324,8 @@ EmbedPromptService::ConfirmCheck(const char16_t* aDialogTitle,
 
     mService->EnterSecureJSContext();
 
-    nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(mWin);
+    nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(pidomWindow);
     NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
 
     rv = utils->EnterModalState();
@@ -418,7 +421,8 @@ EmbedPromptService::Prompt(const char16_t* aDialogTitle,
 
     mService->EnterSecureJSContext();
 
-    nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(mWin);
+    nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(pidomWindow);
     NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
 
     rv = utils->EnterModalState();
@@ -505,7 +509,7 @@ EmbedPromptService::Select(const char16_t* aDialogTitle,
 
 // Prompt Auth Implementation
 
-EmbedAuthPromptService::EmbedAuthPromptService(nsIDOMWindow* aWin)
+EmbedAuthPromptService::EmbedAuthPromptService(mozIDOMWindowProxy* aWin)
   : mWin(aWin)
 {
     mService = do_GetService("@mozilla.org/embedlite-app-service;1");
@@ -795,7 +799,8 @@ EmbedAuthPromptService::DoSendAsyncPrompt(EmbedAsyncAuthPrompt* mPrompt)
         loginInfo->SetPassword(it->second.password);
         loginInfo->SetUsernameField(nsString());
         loginInfo->SetPasswordField(nsString());
-        loginMgr->AddLogin(loginInfo);
+        nsCOMPtr<nsILoginInfo> retValue;
+        loginMgr->AddLogin(loginInfo, getter_AddRefs(retValue));
     }
 
     DoResponseAsyncPrompt(mPrompt, it->second.accepted, it->second.username, it->second.password);
