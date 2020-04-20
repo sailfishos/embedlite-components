@@ -55,7 +55,7 @@ public:
 class EmbedPromptOuterObserver : public nsIObserver, public nsSupportsWeakReference
 {
 public:
-    EmbedPromptOuterObserver(IDestroyNotification* aNotifier, nsIDOMWindow* aWin);
+    EmbedPromptOuterObserver(IDestroyNotification* aNotifier, mozIDOMWindowProxy* aWin);
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSIOBSERVER
@@ -63,14 +63,14 @@ public:
 private:
     virtual ~EmbedPromptOuterObserver();
     IDestroyNotification* mNotifier;
-    nsCOMPtr<nsIDOMWindow> mWin;
+    nsCOMPtr<mozIDOMWindowProxy> mWin;
     nsCOMPtr<nsIObserverService> mService;
 };
 
 class EmbedPromptService : public nsIPrompt, public nsIEmbedMessageListener, public IDestroyNotification
 {
 public:
-    EmbedPromptService(nsIDOMWindow* aWin);
+    EmbedPromptService(mozIDOMWindowProxy* aWin);
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSIPROMPT
@@ -83,7 +83,7 @@ private:
     void CancelResponse();
     uint32_t CheckWinID();
 
-    nsCOMPtr<nsIDOMWindow> mWin;
+    nsCOMPtr<mozIDOMWindowProxy> mWin;
     int mModalDepth;
     nsCOMPtr<nsIEmbedAppService> mService;
     std::map<uint32_t, EmbedPromptResponse> mResponseMap;
@@ -101,13 +101,13 @@ public:
         , mAuthInfo(aAuthInfo)
         , mLevel(aLevel)
         , mInProgress(aInProgress)
-        , mService(NULL)
+        , mService(nullptr)
     {
         consumers.AppendElement(aCancelable);
     }
 
     nsTArray<RefPtr<nsICancelable>> consumers;
-    nsIDOMWindow* mWin;
+    mozIDOMWindowProxy* mWin;
     nsCOMPtr<nsIChannel> mChannel;
     nsCOMPtr<nsIAuthInformation> mAuthInfo;
     uint32_t mLevel;
@@ -120,7 +120,7 @@ public:
 class EmbedAuthPromptService : public nsIAuthPrompt2, public nsIEmbedMessageListener, public IDestroyNotification
 {
 public:
-    EmbedAuthPromptService(nsIDOMWindow* aWin);
+    EmbedAuthPromptService(mozIDOMWindowProxy *aWin);
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSIAUTHPROMPT2
@@ -140,7 +140,7 @@ private:
     void CancelResponse();
     uint32_t CheckWinID();
 
-    nsCOMPtr<nsIDOMWindow> mWin;
+    nsCOMPtr<mozIDOMWindowProxy> mWin;
     std::map<std::string, EmbedAsyncAuthPrompt*> asyncPrompts;
     std::map<void*, bool> asyncPromptInProgress;
     nsCOMPtr<nsIEmbedAppService> mService;

@@ -13,7 +13,6 @@
 #include "nsIEmbedAppService.h"
 #include "nsIDOMWindow.h"
 #include "gfxRect.h"
-#include <InputData.h>
 
 #define MOZ_DOMTitleChanged "DOMTitleChanged"
 #define MOZ_DOMContentLoaded "DOMContentLoaded"
@@ -23,11 +22,13 @@
 #define MOZ_DOMWindowClose "DOMWindowClose"
 #define MOZ_DOMMetaAdded "DOMMetaAdded"
 
+class nsPIDOMWindowOuter;
+
 class EmbedTouchListener : public nsIDOMEventListener,
                            public mozilla::embedlite::EmbedLiteContentController
 {
 public:
-    EmbedTouchListener(nsIDOMWindow* aWin);
+    EmbedTouchListener(mozIDOMWindowProxy *aParent);
     NS_DECL_ISUPPORTS
     NS_DECL_NSIDOMEVENTLISTENER
 
@@ -37,11 +38,11 @@ public:
     void HandleScrollEvent(bool aIsRootScrollFrame, const mozilla::CSSRect&, const mozilla::CSSSize&) override;
     void ScrollUpdate(const mozilla::CSSPoint&, float);
 
-    nsCOMPtr<nsIDOMWindow> DOMWindow;
+    nsCOMPtr<nsPIDOMWindowOuter> DOMWindow;
 private:
     virtual ~EmbedTouchListener();
 
-    void AnyElementFromPoint(nsIDOMWindow* aWindow, double aX, double aY, nsIDOMElement* *aElem);
+    void AnyElementFromPoint(mozIDOMWindowProxy* aWindow, double aX, double aY, nsIDOMElement* *aElem);
     bool ShouldZoomToElement(nsIDOMElement* aElement);
     void ZoomToElement(nsIDOMElement* aElement,
                        int aClickY = -1,

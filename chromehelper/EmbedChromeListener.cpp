@@ -28,7 +28,7 @@
 #include "nsIWebNavigation.h"
 #include "mozilla/dom/ScriptSettings.h"
 
-EmbedChromeListener::EmbedChromeListener(nsIDOMWindow* aWin)
+EmbedChromeListener::EmbedChromeListener(mozIDOMWindowProxy *aWin)
   :  DOMWindow(aWin)
   ,  mWindowCounter(0)
 {
@@ -42,38 +42,6 @@ EmbedChromeListener::~EmbedChromeListener()
 }
 
 NS_IMPL_ISUPPORTS(EmbedChromeListener, nsIDOMEventListener)
-
-nsresult
-GetDOMWindowByNode(nsIDOMNode *aNode, nsIDOMWindow **aDOMWindow)
-{
-    nsresult rv;
-    nsCOMPtr<nsIDOMDocument> ctDoc = do_QueryInterface(aNode, &rv);
-    NS_ENSURE_SUCCESS(rv , rv);
-    nsCOMPtr<nsIDOMWindow> targetWin;
-    rv = ctDoc->GetDefaultView(getter_AddRefs(targetWin));
-    NS_ENSURE_SUCCESS(rv , rv);
-    *aDOMWindow = targetWin.forget().take();
-    return rv;
-}
-
-NS_IMETHODIMP
-GetTopWindow(nsIDOMWindow* aWin, nsIDOMWindow **aDOMWindow)
-{
-    nsCOMPtr<nsIWebNavigation> navNav(do_GetInterface(aWin));
-    nsCOMPtr<nsIDocShellTreeItem> navItem(do_QueryInterface(navNav));
-    NS_ENSURE_TRUE(navItem, NS_ERROR_FAILURE);
-    nsCOMPtr<nsIDocShellTreeItem> rootItem;
-    navItem->GetRootTreeItem(getter_AddRefs(rootItem));
-    nsCOMPtr<nsIDOMWindow> rootWin(do_GetInterface(rootItem));
-    NS_ENSURE_TRUE(rootWin, NS_ERROR_FAILURE);
-
-    nsCOMPtr<nsPIDOMWindow> pwindow(do_QueryInterface(rootWin));
-    nsCOMPtr<nsIDOMWindow> window = pwindow->GetTop();
-    getter_AddRefs(window);
-    *aDOMWindow = window.forget().take();
-    return NS_OK;
-}
-
 
 NS_IMETHODIMP
 EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
@@ -95,11 +63,8 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
     nsCOMPtr<nsIWritablePropertyBag2> root;
     json->CreateObject(getter_AddRefs(root));
 
-    nsCOMPtr<nsIDOMWindow> docWin = do_GetInterface(DOMWindow);
-    nsCOMPtr<nsPIDOMWindow> window = do_GetInterface(DOMWindow);
-
     uint32_t winid;
-    mService->GetIDByWindow(window, &winid);
+    mService->GetIDByWindow(DOMWindow, &winid);
     NS_ENSURE_TRUE(winid , NS_ERROR_FAILURE);
     mozilla::dom::AutoNoJSAPI noJSAPI();
 

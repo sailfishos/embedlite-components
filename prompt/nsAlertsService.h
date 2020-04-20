@@ -9,11 +9,9 @@
 #include "nsIAlertsService.h"
 #include "nsCOMPtr.h"
 
-class nsEmbedAlertsService : public nsIAlertsService,
-                             public nsIAlertsProgressListener
+class nsEmbedAlertsService : public nsIAlertsService
 {
 public:
-  NS_DECL_NSIALERTSPROGRESSLISTENER
   NS_DECL_NSIALERTSSERVICE
   NS_DECL_ISUPPORTS
 
