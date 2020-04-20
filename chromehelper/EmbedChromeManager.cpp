@@ -71,11 +71,11 @@ EmbedChromeManager::Observe(nsISupports *aSubject,
 {
     nsresult rv;
     if (!strcmp(aTopic, "domwindowopened")) {
-        nsCOMPtr<nsIDOMWindow> win = do_QueryInterface(aSubject, &rv);
+        nsCOMPtr<mozIDOMWindowProxy> win = do_QueryInterface(aSubject, &rv);
         NS_ENSURE_SUCCESS(rv, NS_OK);
         WindowCreated(win);
     } else if (!strcmp(aTopic, "domwindowclosed")) {
-        nsCOMPtr<nsIDOMWindow> win = do_QueryInterface(aSubject, &rv);
+        nsCOMPtr<mozIDOMWindowProxy> win = do_QueryInterface(aSubject, &rv);
         NS_ENSURE_SUCCESS(rv, NS_OK);
         WindowDestroyed(win);
     } else {
@@ -86,10 +86,10 @@ EmbedChromeManager::Observe(nsISupports *aSubject,
 }
 
 void
-EmbedChromeManager::WindowCreated(nsIDOMWindow* aWin)
+EmbedChromeManager::WindowCreated(mozIDOMWindowProxy* aWin)
 {
     LOGT("WindowOpened: %p", aWin);
-    nsCOMPtr<nsPIDOMWindow> pidomWindow = do_GetInterface(aWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(aWin);
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );
@@ -108,10 +108,10 @@ EmbedChromeManager::WindowCreated(nsIDOMWindow* aWin)
 }
 
 void
-EmbedChromeManager::WindowDestroyed(nsIDOMWindow* aWin)
+EmbedChromeManager::WindowDestroyed(mozIDOMWindowProxy *aWin)
 {
     LOGT("WindowClosed: %p", aWin);
-    nsCOMPtr<nsPIDOMWindow> pidomWindow = do_GetInterface(aWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(aWin);
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );

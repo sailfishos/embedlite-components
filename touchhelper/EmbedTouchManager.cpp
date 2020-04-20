@@ -28,6 +28,7 @@
 #include "nsIFocusManager.h"
 #include "nsIDocShellTreeItem.h"
 #include "nsIWebNavigation.h"
+#include "nsPIDOMWindow.h"         // for nsPIDOMWindowOuter
 
 EmbedTouchManager::EmbedTouchManager()
   : mWindowCounter(0)
@@ -75,11 +76,11 @@ EmbedTouchManager::Observe(nsISupports *aSubject,
 {
     nsresult rv;
     if (!strcmp(aTopic, "embedliteviewcreated")) {
-        nsCOMPtr<nsIDOMWindow> win = do_QueryInterface(aSubject, &rv);
+        nsCOMPtr<mozIDOMWindowProxy> win = do_QueryInterface(aSubject, &rv);
         NS_ENSURE_SUCCESS(rv, NS_OK);
         WindowCreated(win);
     } else if (!strcmp(aTopic, "domwindowclosed")) {
-        nsCOMPtr<nsIDOMWindow> win = do_QueryInterface(aSubject, &rv);
+        nsCOMPtr<mozIDOMWindowProxy> win = do_QueryInterface(aSubject, &rv);
         NS_ENSURE_SUCCESS(rv, NS_OK);
         WindowDestroyed(win);
     } else {
@@ -90,10 +91,10 @@ EmbedTouchManager::Observe(nsISupports *aSubject,
 }
 
 void
-EmbedTouchManager::WindowCreated(nsIDOMWindow* aWin)
+EmbedTouchManager::WindowCreated(mozIDOMWindowProxy* aWin)
 {
     LOGT("WindowOpened: %p", aWin);
-    nsCOMPtr<nsPIDOMWindow> pidomWindow = do_GetInterface(aWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(aWin);
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );
@@ -110,10 +111,10 @@ EmbedTouchManager::WindowCreated(nsIDOMWindow* aWin)
 }
 
 void
-EmbedTouchManager::WindowDestroyed(nsIDOMWindow* aWin)
+EmbedTouchManager::WindowDestroyed(mozIDOMWindowProxy *aWin)
 {
     LOGT("WindowClosed: %p", aWin);
-    nsCOMPtr<nsPIDOMWindow> pidomWindow = do_GetInterface(aWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(aWin);
     NS_ENSURE_TRUE(pidomWindow, );
     nsCOMPtr<nsIDOMEventTarget> target = do_QueryInterface(pidomWindow->GetChromeEventHandler());
     NS_ENSURE_TRUE(target, );
