@@ -34,6 +34,7 @@
 #include "nsIDOMHTMLLIElement.h"
 #include "nsIDOMCSSStyleDeclaration.h"
 #include "nsIBaseWindow.h"
+#include "nsPIDOMWindow.h"         // for nsPIDOMWindowOuter
 #include "nsIDOMHTMLTextAreaElement.h"
 #include "nsIDOMHTMLBodyElement.h"
 #include "nsIDOMHTMLInputElement.h"
@@ -43,13 +44,13 @@
 
 using namespace mozilla;
 
-EmbedTouchListener::EmbedTouchListener(nsIDOMWindow* aWin)
-  : DOMWindow(aWin)
+EmbedTouchListener::EmbedTouchListener(mozIDOMWindowProxy* aParent)
+  : DOMWindow(nsPIDOMWindowOuter::From(aParent))
 {
     if (!mService) {
         mService = do_GetService("@mozilla.org/embedlite-app-service;1");
     }
-    mService->GetIDByWindow(aWin, &mTopWinid);
+    mService->GetIDByWindow(aParent, &mTopWinid);
 }
 
 EmbedTouchListener::~EmbedTouchListener()
@@ -78,7 +79,7 @@ void EmbedTouchListener::HandleScrollEvent(bool aIsRootScrollFrame,
 NS_IMETHODIMP
 EmbedTouchListener::HandleEvent(nsIDOMEvent* aEvent)
 {
-    nsString type;
+    nsAutoString type;
     if (aEvent) {
         aEvent->GetType(type);
     }
@@ -127,7 +128,7 @@ void EmbedTouchListener::HandleDoubleTap(const CSSPoint& aPoint, mozilla::Modifi
 }
 
 void
-EmbedTouchListener::AnyElementFromPoint(nsIDOMWindow* aWindow, double aX, double aY, nsIDOMElement* *aElem)
+EmbedTouchListener::AnyElementFromPoint(mozIDOMWindowProxy* aWindow, double aX, double aY, nsIDOMElement* *aElem)
 {
     mService->EnterSecureJSContext();
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(aWindow);
@@ -150,7 +151,7 @@ EmbedTouchListener::AnyElementFromPoint(nsIDOMWindow* aWindow, double aX, double
                 break;
             }
         }
-        nsCOMPtr<nsIDOMWindow> newWin;
+        nsCOMPtr<mozIDOMWindowProxy> newWin;
         contentDocument->GetDefaultView(getter_AddRefs(newWin));
         utils = do_GetInterface(newWin);
         if (NS_FAILED(utils->ElementFromPoint(aX, aY, true, true, getter_AddRefs(elem)))) {
@@ -255,12 +256,12 @@ static bool HasFrameElement(nsIDOMDocument* aDocument, nsIDOMElement* *aFrameEle
     if (!aDocument) {
         return false;
     }
-    nsCOMPtr<nsIDOMWindow> newWin;
+    nsCOMPtr<mozIDOMWindowProxy> newWin;
     if (NS_FAILED(aDocument->GetDefaultView(getter_AddRefs(newWin))) || !newWin) {
         return false;
     }
 
-    nsCOMPtr<nsPIDOMWindow> pwin = do_GetInterface(newWin);
+    nsCOMPtr<nsPIDOMWindowOuter> pwin = do_GetInterface(newWin);
     nsCOMPtr<nsIDOMElement> frameElement = pwin->GetFrameElement();
     if (!frameElement) {
         return false;
@@ -282,24 +283,23 @@ static void GetDefViewFrameElemOwnerDocument(nsIDOMDocument* aDocument, nsIDOMDo
     }
 }
 
-static bool _HasFrameElement(nsIDOMWindow* aWindow)
+static bool _HasFrameElement(nsPIDOMWindowOuter* aWindow)
 {
     if (!aWindow) {
         return false;
     }
-    nsCOMPtr<nsPIDOMWindow> pwin = do_GetInterface(aWindow);
-    nsCOMPtr<nsIDOMElement> frameElement = pwin->GetFrameElement();
+
+    nsCOMPtr<nsIDOMElement> frameElement = aWindow->GetFrameElement();
     if (!frameElement) {
         return false;
     }
     return true;
 }
 
-static void GetParentFrame(nsIDOMWindow* aWindow, nsPIDOMWindow** outWindow)
+static void GetParentFrame(nsPIDOMWindowOuter* aWindow, nsPIDOMWindowOuter** outWindow)
 {
     if (aWindow) {
-      nsCOMPtr<nsPIDOMWindow> pwin = do_GetInterface(aWindow);
-      nsCOMPtr<nsPIDOMWindow> newWin = pwin->GetParent();
+      nsCOMPtr<nsPIDOMWindowOuter> newWin = aWindow->GetParent();
       *outWindow = newWin.forget().take();
     }
 }
@@ -327,7 +327,7 @@ EmbedTouchListener::GetBoundingContentRect(nsIDOMElement* aElement)
             break;
     }
 
-    nsCOMPtr<nsIDOMWindow> newWin;
+    nsCOMPtr<mozIDOMWindowProxy> newWin;
     if (NS_FAILED(document->GetDefaultView(getter_AddRefs(newWin))) || !newWin) {
         return retRect;
     }
@@ -339,10 +339,10 @@ EmbedTouchListener::GetBoundingContentRect(nsIDOMElement* aElement)
     nsCOMPtr<nsIDOMClientRect> r;
     aElement->GetBoundingClientRect(getter_AddRefs(r));
 
-    nsCOMPtr<nsIDOMWindow> defView;
+    nsCOMPtr<mozIDOMWindowProxy> defView;
     origDocument->GetDefaultView(getter_AddRefs(defView));
-    nsCOMPtr<nsPIDOMWindow> pwin = do_GetInterface(defView);
-    for (nsCOMPtr<nsPIDOMWindow> frame = pwin; _HasFrameElement(frame) && frame != DOMWindow; GetParentFrame(frame, getter_AddRefs(frame))) {
+    nsCOMPtr<nsPIDOMWindowOuter> pwin = do_GetInterface(defView);
+    for (nsCOMPtr<nsPIDOMWindowOuter> frame = pwin; _HasFrameElement(frame) && frame != DOMWindow; GetParentFrame(frame, getter_AddRefs(frame))) {
       nsCOMPtr<nsIDOMElement> frElement = frame->GetFrameElement();
       if (frElement) {
         nsCOMPtr<nsIDOMClientRect> gr;

@@ -56,7 +56,7 @@ EmbedWidgetFactoryRegister::Init()
     }
     nsCOMPtr<nsIFactory> oldFactory = do_GetClassObject(filepickerCONTRACTID);
     if (oldFactory) {
-        nsCID* cid = NULL;
+        nsCID* cid = nullptr;
         rv = cr->ContractIDToCID(filepickerCONTRACTID, &cid);
         if (!NS_FAILED(rv)) {
             rv = cr->UnregisterFactory(*cid, oldFactory.get());
@@ -78,7 +78,7 @@ EmbedWidgetFactoryRegister::Init()
     }
     oldFactory = do_GetClassObject(clipBoardCONTRACTID);
     if (oldFactory) {
-        nsCID* cid = NULL;
+        nsCID* cid = nullptr;
         rv = cr->ContractIDToCID(clipBoardCONTRACTID, &cid);
         if (!NS_FAILED(rv)) {
             rv = cr->UnregisterFactory(*cid, oldFactory.get());

@@ -23,12 +23,12 @@
 class EmbedChromeListener : public nsIDOMEventListener
 {
 public:
-    EmbedChromeListener(nsIDOMWindow* aWin);
+    EmbedChromeListener(mozIDOMWindowProxy* aWin);
 
     NS_DECL_ISUPPORTS
     NS_DECL_NSIDOMEVENTLISTENER
 
-    nsCOMPtr<nsIDOMWindow> DOMWindow;
+    nsCOMPtr<mozIDOMWindowProxy> DOMWindow;
 private:
     virtual ~EmbedChromeListener();
 
