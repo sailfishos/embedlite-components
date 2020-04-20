@@ -15,6 +15,7 @@
 #include "nsIVariant.h"
 #include "nsArrayEnumerator.h"
 #include <nsIFile.h>
+#include <nsPIDOMWindow.h>         // for nsPIDOMWindowOuter
 #include "nsIDOMWindowUtils.h"
 #include <nsISimpleEnumerator.h>   // for nsISimpleEnumerator
 #include <nsServiceManagerUtils.h> // for do_GetService()
@@ -35,12 +36,12 @@ nsEmbedFilePicker::~nsEmbedFilePicker()
 {
 }
 
-NS_IMETHODIMP nsEmbedFilePicker::Init(nsIDOMWindow* parent, const nsAString& title, int16_t mode)
+NS_IMETHODIMP nsEmbedFilePicker::Init(mozIDOMWindowProxy* aParent, const nsAString& title, int16_t mode)
 {
   NS_PRECONDITION(parent, "Null parent passed to filepicker, no file "
                   "picker for you!");
 
-  mWin = parent;
+  mParent = nsPIDOMWindowOuter::From(aParent);
   mModalDepth = 0;
   mTitle.Assign(title);
   mDefaultName.Truncate();
@@ -188,7 +189,7 @@ NS_IMETHODIMP nsEmbedFilePicker::Show(int16_t* _retval)
   nsresult rv;
 
   mozilla::dom::AutoNoJSAPI noJSAPI();
-  nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
+  nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mParent);
   NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
 
   rv = utils->EnterModalState();
@@ -207,7 +208,7 @@ NS_IMETHODIMP nsEmbedFilePicker::Show(int16_t* _retval)
   mService->RemoveMessageListener("filepickerresponse", this);
 
   uint32_t winid;
-  mService->GetIDByWindow(mWin, &winid);
+  mService->GetIDByWindow(mParent, &winid);
 
   std::map<uint32_t, EmbedFilePickerResponse>::iterator it = mResponseMap.find(winid);
   if (it == mResponseMap.end()) {
@@ -230,7 +231,7 @@ EmbedFilePickerResponse
 nsEmbedFilePicker::GetResponse()
 {
   uint32_t winid;
-  mService->GetIDByWindow(mWin, &winid);
+  mService->GetIDByWindow(mParent, &winid);
 
   EmbedFilePickerResponse response;
   std::map<uint32_t, EmbedFilePickerResponse>::iterator it = mResponseMap.find(winid);
@@ -246,7 +247,7 @@ nsresult
 nsEmbedFilePicker::DoSendPrompt()
 {
   uint32_t winid;
-  mService->GetIDByWindow(mWin, &winid);
+  mService->GetIDByWindow(mParent, &winid);
 
   nsString sendString;
   // Just simple property bag support still
@@ -330,22 +331,22 @@ nsEmbedFilePicker::OnMessageReceived(const char* messageName, const char16_t* me
 }
 
 NS_IMETHODIMP
-nsEmbedFilePicker::GetDomfile(nsISupports * *aDomfile)
+nsEmbedFilePicker::GetDomFileOrDirectory(nsISupports * *aDomFileOrDirectory)
 {
   nsCOMPtr<nsIFile> localFile;
   nsresult rv = GetFile(getter_AddRefs(localFile));
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (!localFile) {
-    *aDomfile = nullptr;
+    *aDomFileOrDirectory = nullptr;
     return NS_OK;
   }
 
   mozilla::dom::AutoNoJSAPI noJSAPI();
-  nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
+  nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mParent);
   nsCOMPtr<nsISupports> file;
   utils->WrapDOMFile(localFile, getter_AddRefs(file));
-  file.forget(aDomfile);
+  file.forget(aDomFileOrDirectory);
 
   return NS_OK;
 }
@@ -355,10 +356,10 @@ class nsBaseFilePickerEnumerator : public nsISimpleEnumerator
 public:
   NS_DECL_ISUPPORTS
 
-  nsBaseFilePickerEnumerator(nsISimpleEnumerator* iterator, nsIDOMWindow* aWin)
+  nsBaseFilePickerEnumerator(nsISimpleEnumerator* iterator, nsPIDOMWindowOuter* aParent)
     : mIterator(iterator)
   {
-    utils = do_GetInterface(aWin);
+    utils = do_GetInterface(aParent);
   }
 
 
@@ -398,17 +399,16 @@ private:
 };
 
 NS_IMETHODIMP
-nsEmbedFilePicker::GetDomfiles(nsISimpleEnumerator * *aDomfiles)
+nsEmbedFilePicker::GetDomFileOrDirectoryEnumerator(nsISimpleEnumerator * *aDomfiles)
 {
   nsCOMPtr<nsISimpleEnumerator> iter;
   nsresult rv = GetFiles(getter_AddRefs(iter));
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<nsBaseFilePickerEnumerator> retIter =
-          new nsBaseFilePickerEnumerator(iter, mWin);
+          new nsBaseFilePickerEnumerator(iter, mParent);
 
   retIter.forget(aDomfiles);
   return NS_OK;
 }
-
 NS_IMPL_ISUPPORTS(nsBaseFilePickerEnumerator, nsISimpleEnumerator)
