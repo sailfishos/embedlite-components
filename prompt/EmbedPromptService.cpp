@@ -34,6 +34,7 @@
 #include "nsILoginInfo.h"
 #include "nsComponentManagerUtils.h"
 #include "nsMemory.h"
+#include "mozilla/dom/ScriptSettings.h"
 
 // Prompt Factory Implementation
 
@@ -236,7 +237,7 @@ EmbedPromptService::AlertCheck(const char16_t* aDialogTitle,
 
     nsresult rv(NS_OK);
 
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
 
     nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(mWin);
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(pidomWindow);
@@ -273,8 +274,6 @@ EmbedPromptService::AlertCheck(const char16_t* aDialogTitle,
     mResponseMap.erase(it);
 
     rv = utils->LeaveModalState();
-
-    mService->LeaveSecureJSContext();
 
     return NS_OK;
 }
@@ -322,7 +321,7 @@ EmbedPromptService::ConfirmCheck(const char16_t* aDialogTitle,
 
     nsresult rv(NS_OK);
 
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
 
     nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(mWin);
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(pidomWindow);
@@ -363,8 +362,6 @@ EmbedPromptService::ConfirmCheck(const char16_t* aDialogTitle,
     mResponseMap.erase(it);
 
     rv = utils->LeaveModalState();
-
-    mService->LeaveSecureJSContext();
 
     return NS_OK;
 }
@@ -419,7 +416,7 @@ EmbedPromptService::Prompt(const char16_t* aDialogTitle,
 
     nsresult rv(NS_OK);
 
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
 
     nsCOMPtr<nsPIDOMWindowOuter> pidomWindow = do_GetInterface(mWin);
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(pidomWindow);
@@ -466,8 +463,6 @@ EmbedPromptService::Prompt(const char16_t* aDialogTitle,
     mResponseMap.erase(it);
 
     rv = utils->LeaveModalState();
-
-    mService->LeaveSecureJSContext();
 
     return NS_OK;
 }

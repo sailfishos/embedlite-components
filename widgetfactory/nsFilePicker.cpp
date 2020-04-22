@@ -19,6 +19,7 @@
 #include "nsIDOMWindowUtils.h"
 #include <nsISimpleEnumerator.h>   // for nsISimpleEnumerator
 #include <nsServiceManagerUtils.h> // for do_GetService()
+#include "mozilla/dom/ScriptSettings.h"
 
 //-----------------------------
 
@@ -187,7 +188,7 @@ NS_IMETHODIMP nsEmbedFilePicker::Show(int16_t* _retval)
 
   nsresult rv;
 
-  mService->EnterSecureJSContext();
+  mozilla::dom::AutoNoJSAPI noJSAPI();
   nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mParent);
   NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
 
@@ -215,7 +216,6 @@ NS_IMETHODIMP nsEmbedFilePicker::Show(int16_t* _retval)
   }
 
   rv = utils->LeaveModalState();
-  mService->LeaveSecureJSContext();
 
   return rv;
 }
@@ -342,12 +342,11 @@ nsEmbedFilePicker::GetDomFileOrDirectory(nsISupports * *aDomFileOrDirectory)
     return NS_OK;
   }
 
-  mService->EnterSecureJSContext();
+  mozilla::dom::AutoNoJSAPI noJSAPI();
   nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mParent);
   nsCOMPtr<nsISupports> file;
   utils->WrapDOMFile(localFile, getter_AddRefs(file));
   file.forget(aDomFileOrDirectory);
-  mService->LeaveSecureJSContext();
 
   return NS_OK;
 }
