@@ -41,6 +41,7 @@
 #include "nsIDOMHTMLAnchorElement.h"
 #include "nsIDOMHTMLAreaElement.h"
 #include "nsIDOMHTMLImageElement.h"
+#include "mozilla/dom/ScriptSettings.h"
 
 using namespace mozilla;
 
@@ -130,7 +131,7 @@ void EmbedTouchListener::HandleDoubleTap(const CSSPoint& aPoint, mozilla::Modifi
 void
 EmbedTouchListener::AnyElementFromPoint(mozIDOMWindowProxy* aWindow, double aX, double aY, nsIDOMElement* *aElem)
 {
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(aWindow);
     nsCOMPtr<nsIDOMElement> elem;
     NS_ENSURE_SUCCESS(utils->ElementFromPoint(aX, aY, true, true, getter_AddRefs(elem)), );
@@ -164,7 +165,6 @@ EmbedTouchListener::AnyElementFromPoint(mozIDOMWindowProxy* aWindow, double aX, 
     if (elem) {
         NS_ADDREF(*aElem = elem);
     }
-    mService->LeaveSecureJSContext();
 
     return;
 }
@@ -332,7 +332,7 @@ EmbedTouchListener::GetBoundingContentRect(nsIDOMElement* aElement)
         return retRect;
     }
 
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(newWin);
     int32_t scrollX = 0, scrollY = 0;
     NS_ENSURE_SUCCESS(utils->GetScrollXY(false, &scrollX, &scrollY), retRect);
@@ -377,7 +377,6 @@ EmbedTouchListener::GetBoundingContentRect(nsIDOMElement* aElement)
     r->GetTop(&rtop);
     r->GetWidth(&rwidth);
     r->GetHeight(&rheight);
-    mService->LeaveSecureJSContext();
 
     return gfx::Rect(rleft + scrollX,
                      rtop + scrollY,
