@@ -33,6 +33,7 @@
 #include "nsILoginInfo.h"
 #include "nsComponentManagerUtils.h"
 #include "nsMemory.h"
+#include "mozilla/dom/ScriptSettings.h"
 
 // Prompt Factory Implementation
 
@@ -235,7 +236,7 @@ EmbedPromptService::AlertCheck(const char16_t* aDialogTitle,
 
     nsresult rv(NS_OK);
 
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
 
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
     NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
@@ -271,8 +272,6 @@ EmbedPromptService::AlertCheck(const char16_t* aDialogTitle,
     mResponseMap.erase(it);
 
     rv = utils->LeaveModalState();
-
-    mService->LeaveSecureJSContext();
 
     return NS_OK;
 }
@@ -320,7 +319,7 @@ EmbedPromptService::ConfirmCheck(const char16_t* aDialogTitle,
 
     nsresult rv(NS_OK);
 
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
 
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
     NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
@@ -360,8 +359,6 @@ EmbedPromptService::ConfirmCheck(const char16_t* aDialogTitle,
     mResponseMap.erase(it);
 
     rv = utils->LeaveModalState();
-
-    mService->LeaveSecureJSContext();
 
     return NS_OK;
 }
@@ -416,7 +413,7 @@ EmbedPromptService::Prompt(const char16_t* aDialogTitle,
 
     nsresult rv(NS_OK);
 
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
 
     nsCOMPtr<nsIDOMWindowUtils> utils = do_GetInterface(mWin);
     NS_ENSURE_TRUE(utils, NS_ERROR_FAILURE);
@@ -462,8 +459,6 @@ EmbedPromptService::Prompt(const char16_t* aDialogTitle,
     mResponseMap.erase(it);
 
     rv = utils->LeaveModalState();
-
-    mService->LeaveSecureJSContext();
 
     return NS_OK;
 }

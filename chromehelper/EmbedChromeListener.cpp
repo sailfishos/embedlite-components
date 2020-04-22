@@ -26,6 +26,7 @@
 #include "nsIFocusManager.h"
 #include "nsIDocShellTreeItem.h"
 #include "nsIWebNavigation.h"
+#include "mozilla/dom/ScriptSettings.h"
 
 EmbedChromeListener::EmbedChromeListener(nsIDOMWindow* aWin)
   :  DOMWindow(aWin)
@@ -100,7 +101,7 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
     uint32_t winid;
     mService->GetIDByWindow(window, &winid);
     NS_ENSURE_TRUE(winid , NS_ERROR_FAILURE);
-    mService->EnterSecureJSContext();
+    mozilla::dom::AutoNoJSAPI noJSAPI();
 
     if (type.EqualsLiteral(MOZ_DOMMetaAdded)) {
         messageName.AssignLiteral("chrome:metaadded");
@@ -123,7 +124,6 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
         bool disabled = true;
         disabledIface->GetMozDisabled(&disabled);
         if (!disabledIface || disabled) {
-            mService->LeaveSecureJSContext();
             return NS_OK;
         }
         disabledIface->GetHref(href);
@@ -135,7 +135,6 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
         nsCOMPtr<nsIDOMNode> node = do_QueryInterface(origTarget);
         node->GetOwnerDocument(getter_AddRefs(ownDoc));
         if (ownDoc != ctDoc) {
-          mService->LeaveSecureJSContext();
           return NS_OK;
         }
 
@@ -163,14 +162,12 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
         messageName.AssignLiteral("chrome:winopenclose");
         root->SetPropertyAsAString(NS_LITERAL_STRING("type"), type);
     } else {
-        mService->LeaveSecureJSContext();
         return NS_OK;
     }
 
     nsString outStr;
     json->CreateJSON(root, message);
     mService->SendAsyncMessage(winid, messageName.get(), message.get());
-    mService->LeaveSecureJSContext();
 
     return NS_OK;
 }
