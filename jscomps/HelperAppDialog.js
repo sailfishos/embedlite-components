@@ -12,6 +12,7 @@ const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 
 // -----------------------------------------------------------------------
 // HelperApp Launcher Dialog
@@ -40,105 +41,26 @@ HelperAppLauncherDialog.prototype = {
   promptForSaveToFileAsync: function hald_promptForSaveToFileAsync(aLauncher, aWindowContext, aDefaultFileName,
                                   aSuggestedFileExtension,
                                   aForcePrompt) {
-    dump("HelperAppLauncherDialog promptForSaveToFileAsync -- not supported\n");
-  },
+    dump("HelperAppLauncherDialog promptForSaveToFileAsync\n");
 
-  promptForSaveToFile: function hald_promptForSaveToFile(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
-    let file = null;
-    let prefs = Services.prefs;
-    dump("HelperAppLauncherDialog promptForSaveToFile\n");
-
-    if (!aForcePrompt) {
-      // Check to see if the user wishes to auto save to the default download
-      // folder without prompting. Note that preference might not be set.
-      let autodownload = true;
+    // Even if aForcePrompt is set, we don't know what to do with it, so just ignore it
+    Task.spawn(function* () {
+      let file = null;
       try {
-        autodownload = prefs.getBoolPref(PREF_BD_USEDOWNLOADDIR);
-      } catch (e) { }
-
-      if (autodownload) {
-        // Retrieve the user's default download directory
         let dnldMgr = Cc["@mozilla.org/download-manager;1"].getService(Ci.nsIDownloadManager);
         let defaultFolder = dnldMgr.userDownloadsDirectory;
 
-        try {
-          file = this.validateLeafName(defaultFolder, aDefaultFile, aSuggestedFileExt);
-        }
-        catch (e) {
-        }
-
-        // Check to make sure we have a valid directory, otherwise, prompt
-        if (file) {
-          return file;
-        }
+        file = this.validateLeafName(defaultFolder, aDefaultFileName, aSuggestedFileExtension);
+      } finally {
+        // The file argument will be null in case any exception occurred.
+        aLauncher.saveDestinationAvailable(file);
       }
-    }
+    }.bind(this)).catch(Cu.reportError);
+  },
 
-    // Use file picker to show dialog.
-    let picker = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
-    let windowTitle = "";
-    let parent = aContext.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
-    picker.init(parent, windowTitle, Ci.nsIFilePicker.modeSave);
-    picker.defaultString = aDefaultFile;
-
-    if (aSuggestedFileExt) {
-      // aSuggestedFileExtension includes the period, so strip it
-      picker.defaultExtension = aSuggestedFileExt.substring(1);
-    }
-    else {
-      try {
-        picker.defaultExtension = aLauncher.MIMEInfo.primaryExtension;
-      }
-      catch (e) { }
-    }
-
-    var wildCardExtension = "*";
-    if (aSuggestedFileExt) {
-      wildCardExtension += aSuggestedFileExt;
-      picker.appendFilter(aLauncher.MIMEInfo.description, wildCardExtension);
-    }
-
-    picker.appendFilters(Ci.nsIFilePicker.filterAll);
-
-    // Default to lastDir if it is valid, otherwise use the user's default
-    // downloads directory.  userDownloadsDirectory should always return a
-    // valid directory, so we can safely default to it.
-    var dnldMgr = Cc["@mozilla.org/download-manager;1"].getService(Ci.nsIDownloadManager);
-    picker.displayDirectory = dnldMgr.userDownloadsDirectory;
-
-    // The last directory preference may not exist, which will throw.
-    try {
-      let lastDir = prefs.getComplexValue("browser.download.lastDir", Ci.nsILocalFile);
-      if (isUsableDirectory(lastDir)) {
-        picker.displayDirectory = lastDir;
-      }
-    }
-    catch (e) { }
-
-    if (picker.show() == Ci.nsIFilePicker.returnCancel) {
-      // null result means user cancelled.
-      return null;
-    }
-
-    // Be sure to save the directory the user chose through the Save As...
-    // dialog  as the new browser.download.dir since the old one
-    // didn't exist.
-    file = picker.file;
-
-    if (file) {
-      try {
-        // Remove the file so that it's not there when we ensure non-existence later;
-        // this is safe because for the file to exist, the user would have had to
-        // confirm that he wanted the file overwritten.
-        if (file.exists())
-          file.remove(false);
-      }
-      catch (e) { }
-      var newDir = file.parent.QueryInterface(Ci.nsILocalFile);
-      prefs.setComplexValue("browser.download.lastDir", Ci.nsILocalFile, newDir);
-      file = this.validateLeafName(newDir, file.leafName, null);
-    }
-    return file;
+  promptForSaveToFile: function hald_promptForSaveToFile(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
+    dump("HelperAppLauncherDialog promptForSaveToFile -- not supported\n");
+    throw Cr.NS_ERROR_NOT_AVAILABLE;
   },
 
   validateLeafName: function hald_validateLeafName(aLocalFile, aLeafName, aFileExt) {
