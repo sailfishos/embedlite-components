@@ -5,7 +5,7 @@ libwidgetfactory_la_SOURCES = \
     EmbedWidgetFactoryRegister.cpp \
     nsFilePicker.cpp \
     EmbedliteGenericFactory.cpp \
-    nsEmbedChildModule.cpp \
+    nsEmbedWidgetFactoryModule.cpp \
     nsClipboard.cpp \
     $(NULL)
 
