@@ -21,11 +21,14 @@ contract @mozilla.org/login-manager/prompter;1 {72de694e-6c88-11e2-a4ee-6b515bdf
 component {e9d277a0-268a-4ec2-bb8c-10fdf3e44611} HelperAppDialog.js
 contract @mozilla.org/helperapplauncherdialog;1 {e9d277a0-268a-4ec2-bb8c-10fdf3e44611}
 
-
 # EmbedPrefService.js
 component {4c5563a0-94eb-11e2-a5f4-7f3c5758e2ae} EmbedPrefService.js
 contract @mozilla.org/embedlite-pref-service;1 {4c5563a0-94eb-11e2-a5f4-7f3c5758e2ae}
 category app-startup EmbedPrefService service,@mozilla.org/embedlite-pref-service;1
+
+# FilePicker.js
+component {18a4e042-7c7c-424b-a583-354e68553a7f} FilePicker.js
+contract @mozilla.org/filepicker;1 {18a4e042-7c7c-424b-a583-354e68553a7f}
 
 # ContentPermissionPrompt.js
 component {C6E8C44D-9F39-4AF7-BCC0-76E38A8310F5} ContentPermissionPrompt.js

@@ -6,11 +6,17 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cc = Components.classes;
 
+// Ported from Android FF esr52 sha1 2aba798852e4c1976f09181ceeebd68cef372cf1
+
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
 Cu.importGlobalProperties(['File']);
+
+XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
+                                    "@mozilla.org/embedlite-app-service;1",
+                                    "nsIEmbedAppService");
 
 function FilePicker() {
 }
@@ -22,7 +28,7 @@ FilePicker.prototype = {
   _domWin: null,
   _defaultExtension: null,
   _displayDirectory: null,
-  _filePath: null,
+  _fileItems: null,
   _promptActive: false,
   _filterIndex: 0,
   _addToRecentDocs: false,
@@ -122,11 +128,11 @@ FilePicker.prototype = {
   },
 
   get file() {
-    if (!this._filePath) {
+    if (!this._fileItems) {
         return null;
     }
 
-    return new FileUtils.File(this._filePath);
+    return new FileUtils.File(this._fileItems);
   },
 
   get fileURL() {
@@ -135,7 +141,7 @@ FilePicker.prototype = {
   },
 
   get files() {
-    return this.getEnumerator([this.file], function(file) {
+    return this.getEnumerator(this._fileItems, function(file) {
       return file;
     });
   },
@@ -158,7 +164,7 @@ FilePicker.prototype = {
 
   get domFileOrDirectoryEnumerator() {
     let win = this._domWin;
-    return this.getEnumerator([this.file], function(file) {
+    return this.getEnumerator(this._fileItems, function(file) {
       if (win) {
         let utils = win.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
         return utils.wrapDOMFile(file);
@@ -195,13 +201,15 @@ FilePicker.prototype = {
       thread.processNextEvent(true);
     delete this._promptActive;
 
+    Services.embedlite.removeMessageListener("filepickerresponse", this);
+
     if (this._domWin) {
       let winUtils = this._domWin.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
       winUtils.leaveModalState();
       this.fireDialogEvent(this._domWin, "DOMModalDialogClosed");
     }
 
-    if (this._filePath)
+    if (this._fileItems)
       return Ci.nsIFilePicker.returnOK;
 
     return Ci.nsIFilePicker.returnCancel;
@@ -214,52 +222,47 @@ FilePicker.prototype = {
 
   _sendMessage: function() {
     let msg = {
-      type: "FilePicker:Show",
-      guid: this.guid,
+      type: "embed:filepicker",
+      winId: Services.embedlite.getIDByWindow(this._domWin),
       title: this._title,
+      mode: this._mode
     };
-
-    // Knowing the window lets us destroy any temp files when the tab is closed
-    // Other consumers of the file picker may have to either wait for Android
-    // to clean up the temp dir (not guaranteed) or clean up after themselves.
-    let win = Services.wm.getMostRecentWindow('navigator:browser');
-    let tab = win.BrowserApp.getTabForWindow(this._domWin.top)
-    if (tab) {
-      msg.tabId = tab.id;
-    }
 
     if (!this._extensionsFilter && !this._mimeTypeFilter) {
       // If neither filters is set show anything we can.
-      msg.mode = "mimeType";
       msg.mimeType = "*/*";
     } else if (this._extensionsFilter) {
-      msg.mode = "extension";
-      msg.extensions = this._extensionsFilter;
+      msg.mimeType = this._extensionsFilter;
     } else {
-      msg.mode = "mimeType";
       msg.mimeType = this._mimeTypeFilter;
     }
 
-    this.sendMessageToJava(msg);
+    this.sendMessageToEmbed(msg);
   },
 
-  sendMessageToJava: function(aMsg) {
-    Services.androidBridge.handleGeckoMessage(aMsg);
+  sendMessageToEmbed: function(aMsg) {
+    Services.embedlite.sendAsyncMessage(aMsg.winId, aMsg.type, JSON.stringify(aMsg));
+    Services.embedlite.addMessageListener("filepickerresponse", this);
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  onMessageReceived: function(aMessageName, aData) {
     let data = JSON.parse(aData);
-    if (data.guid != this.guid)
-      return;
 
-    this._filePath = null;
-    if (data.file)
-      this._filePath = data.file;
+    let winId = data.winId;
+    let accepted = data.accepted;
+    let items = data.items;
+
+    this._fileItems = null;
+
+    // Only store filePath if items contains data.
+    if (data.items && data.items.length > 0 && data.items[0])
+      this._fileItems = data.items;
 
     this._promptActive = false;
 
     if (this._callback) {
-      this._callback.done(this._filePath ? Ci.nsIFilePicker.returnOK : Ci.nsIFilePicker.returnCancel);
+      this._callback.done(this._fileItems && accepted ? Ci.nsIFilePicker.returnOK : Ci.nsIFilePicker.returnCancel);
+      Services.embedlite.removeMessageListener("filepickerresponse", this);
     }
     delete this._callback;
   },
@@ -276,7 +279,7 @@ FilePicker.prototype = {
         if (this.mIndex >= this.mFiles.length) {
           throw Components.results.NS_ERROR_FAILURE;
         }
-        return mapFunction(this.mFiles[this.mIndex++]);
+        return mapFunction(new FileUtils.File(this.mFiles[this.mIndex++]));
       }
     };
   },
@@ -296,7 +299,7 @@ FilePicker.prototype = {
   },
 
   classID: Components.ID("{18a4e042-7c7c-424b-a583-354e68553a7f}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIFilePicker, Ci.nsIObserver])
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIFilePicker, Ci.nsIEmbedMessageListener])
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([FilePicker]);
