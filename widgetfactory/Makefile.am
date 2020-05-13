@@ -3,7 +3,6 @@ libbz_LTLIBRARIES = libwidgetfactory.la
 
 libwidgetfactory_la_SOURCES = \
     EmbedWidgetFactoryRegister.cpp \
-    nsFilePicker.cpp \
     EmbedliteGenericFactory.cpp \
     nsEmbedWidgetFactoryModule.cpp \
     nsClipboard.cpp \
