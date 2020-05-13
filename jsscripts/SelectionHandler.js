@@ -307,7 +307,7 @@ function SelectionHandler() {
     if (tapInSelection && selectedText.length) {
       let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"]
                         .getService(Ci.nsIClipboardHelper);
-      clipboard.copyString(selectedText, this._contentWindow.document);
+      clipboard.copyString(selectedText);
       success = true;
     }
     sendSyncMessage("Content:SelectionCopied", { succeeded: success });
