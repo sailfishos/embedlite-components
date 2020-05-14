@@ -6,6 +6,7 @@ jscomps_manifest_DATA = \
 	LoginManagerPrompter.js \
 	HelperAppDialog.js \
 	EmbedPrefService.js \
+	FilePicker.js \
 	ContentPermissionPrompt.js \
 	EmbedLiteGlobalHelper.js \
 	EmbedLiteConsoleListener.js \

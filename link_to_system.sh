@@ -30,6 +30,7 @@ jscomps/AlertsService.js
 jscomps/LoginManagerPrompter.js
 jscomps/HelperAppDialog.js
 jscomps/EmbedPrefService.js
+jscomps/FilePicker.js
 jscomps/ContentPermissionPrompt.js
 jscomps/EmbedLiteGlobalHelper.js
 jscomps/EmbedLiteConsoleListener.js

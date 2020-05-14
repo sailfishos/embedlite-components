@@ -4,7 +4,7 @@ libbz_LTLIBRARIES = libprompt.la
 libprompt_la_SOURCES = \
     EmbedPromptRegister.cpp \
     EmbedPromptService.cpp \
-    nsEmbedChildModule.cpp \
+    nsEmbedPromptModule.cpp \
     ../widgetfactory/EmbedliteGenericFactory.cpp \
     nsAlertsService.cpp \
     $(NULL)
