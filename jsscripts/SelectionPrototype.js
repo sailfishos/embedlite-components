@@ -18,7 +18,7 @@ this.kContentSelector = 2;
 // Define elements that bound phone number containers.
 const PHONE_NUMBER_CONTAINERS = "td,div";
 
-dump("### SelectionPrototype.js loaded\n");
+Logger.debug("JSScript: SelectionPrototype.js loaded");
 
 /*
   http://mxr.mozilla.org/mozilla-central/source/docshell/base/nsIDocShell.idl
@@ -117,7 +117,7 @@ SelectionPrototype.prototype = {
    * our behavior. 
    */
   sendAsync: function sendAsync(aMsg, aJson) {
-    Util.dumpLn("Base sendAsync called on SelectionPrototype. This is a no-op.");
+    Logger.debug("Base sendAsync called on SelectionPrototype. This is a no-op.");
   },
 
   /*************************************************
@@ -765,7 +765,7 @@ SelectionPrototype.prototype = {
       selCtrl.scrollSelectionIntoView(Ci.nsISelectionController.SELECTION_NORMAL,
                                       Ci.nsISelectionController.SELECTION_FOCUS_REGION,
                                       Ci.nsISelectionController.SCROLL_SYNCHRONOUS);
-    } catch (ex) { Util.dumpLn(ex);}
+    } catch (ex) { Logger.debug(ex);}
   },
 
   _updateInputFocus: function _updateInputFocus(aMarker) {
@@ -870,7 +870,7 @@ SelectionPrototype.prototype = {
         selection.addRange(range);
       }
     } catch (ex) {
-      Util.dumpLn("exception while modifying selection:", ex.message);
+      Logger.warn("exception while modifying selection:", ex.message);
       this._onFail("_handleSelectionPoint failed.");
       return false;
     }
@@ -895,7 +895,7 @@ SelectionPrototype.prototype = {
         // relative to frame
         let rects = selection.getRangeAt(range).getClientRects();
         for (let idx = 0; idx < rects.length; idx++) {
-          // Util.dumpLn("[" + idx + "]", aFramePoint.xPos, aFramePoint.yPos, rects[idx].left,
+          // Logger.debug("[" + idx + "]", aFramePoint.xPos, aFramePoint.yPos, rects[idx].left,
           // rects[idx].top, rects[idx].right, rects[idx].bottom);
           if (Util.pointWithinDOMRect(aFramePoint.xPos, aFramePoint.yPos, rects[idx])) {
             result = true;
@@ -927,7 +927,7 @@ SelectionPrototype.prototype = {
         }
       }
     } catch (ex) {
-      Util.dumpLn("error shrinking selection:", ex.message);
+      Logger.debug("error shrinking selection:", ex.message);
     }
     return result;
   },
@@ -942,11 +942,11 @@ SelectionPrototype.prototype = {
   _updateUIMarkerRects: function _updateUIMarkerRects(aSelection) {
     this._cache = this._extractUIRects(aSelection.getRangeAt(0));
     if (this. _debugOptions.dumpRanges)  {
-       Util.dumpLn("start:", "(" + this._cache.start.xPos + "," +
+       Logger.debug("start:", "(" + this._cache.start.xPos + "," +
                    this._cache.start.yPos + ")");
-       Util.dumpLn("end:", "(" + this._cache.end.xPos + "," +
+       Logger.debug("end:", "(" + this._cache.end.xPos + "," +
                    this._cache.end.yPos + ")");
-       Util.dumpLn("caret:", "(" + this._cache.caret.xPos + "," +
+       Logger.debug("caret:", "(" + this._cache.caret.xPos + "," +
                    this._cache.caret.yPos + ")");
     }
     this._restrictSelectionRectToEditBounds();
@@ -977,12 +977,12 @@ SelectionPrototype.prototype = {
           seldata.start.yPos = rects[idx].bottom + this._contentOffset.y;
           seldata.caret = seldata.start;
           startSet = true;
-          if (this. _debugOptions.dumpRanges) Util.dumpLn("start set");
+          if (this. _debugOptions.dumpRanges) Logger.debug("start set");
         }
         if (!Util.isEmptyDOMRect(rects[idx])) {
           seldata.end.xPos = rects[idx].right + this._contentOffset.x;
           seldata.end.yPos = rects[idx].bottom + this._contentOffset.y;
-          if (this. _debugOptions.dumpRanges) Util.dumpLn("end set");
+          if (this. _debugOptions.dumpRanges) Logger.debug("end set");
         }
       }
 
@@ -1114,16 +1114,16 @@ SelectionPrototype.prototype = {
    */
 
   _debugDumpSelection: function _debugDumpSelection(aNote, aSel) {
-    Util.dumpLn("--" + aNote + "--");
-    Util.dumpLn("anchor:", aSel.anchorNode, aSel.anchorOffset);
-    Util.dumpLn("focus:", aSel.focusNode, aSel.focusOffset);
+    Logger.debug("--" + aNote + "--");
+    Logger.debug("anchor:", aSel.anchorNode, aSel.anchorOffset);
+    Logger.debug("focus:", aSel.focusNode, aSel.focusOffset);
   },
 
   _debugDumpChildNodes: function _dumpChildNodes(aNode, aSpacing) {
     for (let idx = 0; idx < aNode.childNodes.length; idx++) {
       let node = aNode.childNodes.item(idx);
       for (let spaceIdx = 0; spaceIdx < aSpacing; spaceIdx++) dump(" ");
-      Util.dumpLn("[" + idx + "]", node);
+      Logger.debug("[" + idx + "]", node);
       this._debugDumpChildNodes(node, aSpacing + 1);
     }
   },
@@ -1131,11 +1131,11 @@ SelectionPrototype.prototype = {
   _setDebugElementRect: function _setDebugElementRect(e, aScrollOffset, aColor) {
     try {
       if (e == null) {
-        Util.dumpLn("_setDebugElementRect(): passed in null element");
+        Logger.debug("_setDebugElementRect(): passed in null element");
         return;
       }
       if (e.offsetWidth == 0 || e.offsetHeight== 0) {
-        Util.dumpLn("_setDebugElementRect(): passed in flat rect");
+        Logger.debug("_setDebugElementRect(): passed in flat rect");
         return;
       }
       // e.offset values are positioned relative to the view.
@@ -1146,7 +1146,7 @@ SelectionPrototype.prototype = {
           bottom:e.offsetTop + e.offsetHeight - aScrollOffset.y,
           color:aColor, id: e.id });
     } catch(ex) {
-      Util.dumpLn("_setDebugElementRect():", ex.message);
+      Logger.warn("_setDebugElementRect():", ex.message);
     }
   },
 

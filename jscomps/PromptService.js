@@ -9,6 +9,8 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // Whitelist of methods we remote - to check against malicious data.
 // For example, it would be dangerous to allow content to show auth prompts.
 const REMOTABLE_METHODS = {
@@ -24,6 +26,7 @@ const REMOTABLE_METHODS = {
 var gPromptService = null;
 
 function PromptService() {
+  Logger.debug("JSComp: PromptService.js loaded");
   gPromptService = this;
 }
 
@@ -35,8 +38,8 @@ PromptService.prototype = {
   /* ----------  nsIPromptFactory  ---------- */
   // XXX Copied from nsPrompter.js.
   getPrompt: function getPrompt(domWin, iid) {
-    dump("Get Document Caller 1Win:" + domWin + "\n");
-    dump("Get Document Caller 2Win:" + Services.ww.activeWindow + "\n");
+    Logger.debug("Get Document Caller 1Win:", domWin);
+    Logger.debug("Get Document Caller 2Win:", Services.ww.activeWindow);
     let targetWin = domWin ? domWin : Services.ww.activeWindow;
     let doc = this.getDocument(targetWin);
     if (!doc) {
@@ -57,7 +60,7 @@ PromptService.prototype = {
   },
 
   getDocument: function getDocument(callerWin) {
-    dump("Get Document Caller Win:" + callerWin + "\n");
+    Logger.debug("Get Document Caller Win:", callerWin);
     let targetWin = callerWin ? callerWin : Services.ww.activeWindow;
     var winid = Services.embedlite.getIDByWindow(targetWin);
     let win = Services.embedlite.getContentWindowByID(winid);
@@ -68,7 +71,7 @@ PromptService.prototype = {
   // if we can show in-document popups, or to the fallback service otherwise.
   callProxy: function(aMethod, aArguments) {
     let prompt;
-    dump("PSP >>>>>>>>> proxy:\n");
+    Logger.debug("PromptService callProxy");
     let domWin = aArguments[0];
     let targetWin = domWin ? domWin : Services.ww.activeWindow;
     let doc = this.getDocument(targetWin);

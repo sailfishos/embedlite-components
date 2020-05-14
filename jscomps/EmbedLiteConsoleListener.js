@@ -12,11 +12,16 @@ Components.utils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyServiceGetter(Services, 'env',
                                   '@mozilla.org/process/environment;1',
                                   'nsIEnvironment');
+
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // Common helper service
 
 function SPConsoleListener(dumpStdOut) {
   this._dumpToStdOut = dumpStdOut;
   this._cacheLogs = true;
+
+  Logger.debug("JSComp: EmbedLiteConsoleListener.js loaded");
 }
 
 SPConsoleListener.prototype = {

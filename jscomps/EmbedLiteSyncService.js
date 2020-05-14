@@ -10,6 +10,7 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 function EmbedLiteSyncServiceImpotUtils()
 {
@@ -34,6 +35,7 @@ function EmbedLiteSyncServiceImpotUtils()
 
 function EmbedLiteSyncService()
 {
+  Logger.debug("JSComp: EmbedLiteSyncService.js loaded");
 }
 
 
@@ -44,13 +46,13 @@ EmbedLiteSyncService.prototype = {
     switch(aTopic) {
       // Engine DownloadManager notifications
       case "app-startup": {
-        dump("EmbedLiteSyncService app-startup\n");
+        Logger.debug("EmbedLiteSyncService app-startup");
         Services.prefs.setCharPref("services.sync.registerEngines", "Tab,Bookmarks,Form,History,Password,Prefs");
         Services.obs.addObserver(this, "embedui:initsync", true);
         break;
       }
       case "embedui:initsync": {
-        dump("EmbedLiteSyncService embedui:initsync\n");
+        Logger.debug("EmbedLiteSyncService embedui:initsync");
         var data = JSON.parse(aData);
         EmbedLiteSyncServiceImpotUtils();
         Service.login(data.username, data.password, data.key);
@@ -80,35 +82,35 @@ EmbedLiteSyncService.prototype = {
   embedLiteSyncServiceFetchBookmarks: function () {
     this._embedLiteSyncServiceFetch("bookmarks", PlacesItem, function(item) {
       if (item.type == "bookmark") {
-        dump("Title: " + item.title + ", Uri: " + item.bmkUri + "\n");
+        Logger.debug("Title:", item.title, "Uri:", item.bmkUri);
       }
     });
   },
 
   embedLiteSyncServiceFetchHistory: function () {
     this._embedLiteSyncServiceFetch("history", HistoryRec, function(item) {
-      dump("Title: " +  item.title + ", Uri:" +  item.histUri + "\n");
+      Logger.debug("Title:", item.title, "Uri:", item.histUri);
     });
   },
 
   embedLiteSyncServiceFetchTabs: function () {
     this._embedLiteSyncServiceFetch("tabs", TabSetRecord, function(item) {
-      dump('Tab:' + JSON.stringify(item) + "\n");
+      Logger.debug("Tab:", JSON.stringify(item));
     });
   },
   embedLiteSyncServiceFetchForms: function () {
     this._embedLiteSyncServiceFetch("forms", FormRec, function(item) {
-      dump('Forms:' + JSON.stringify(item) + "\n");
+      Logger.debug("Forms:", JSON.stringify(item));
     });
   },
   embedLiteSyncServiceFetchPassword: function () {
     this._embedLiteSyncServiceFetch("passwords", LoginRec, function(item) {
-      dump('Login:' + JSON.stringify(item) + "\n");
+      Logger.debug("Login:", JSON.stringify(item));
     });
   },
   embedLiteSyncServiceFetchPrefs: function () {
     this._embedLiteSyncServiceFetch("prefs", PrefRec, function(item) {
-      dump('Pref:' + JSON.stringify(item) + "\n");
+      Logger.debug("Pref:", JSON.stringify(item));
     });
   },
 

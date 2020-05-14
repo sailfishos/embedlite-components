@@ -14,11 +14,15 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // -----------------------------------------------------------------------
 // HelperApp Launcher Dialog
 // -----------------------------------------------------------------------
 
-function HelperAppLauncherDialog() { }
+function HelperAppLauncherDialog() {
+  Logger.debug("JSComp: HelperAppDialog.js loaded");
+}
 
 HelperAppLauncherDialog.prototype = {
   classID: Components.ID("{e9d277a0-268a-4ec2-bb8c-10fdf3e44611}"),
@@ -26,7 +30,7 @@ HelperAppLauncherDialog.prototype = {
 
   show: function hald_show(aLauncher, aContext, aReason) {
     // Check to see if we can open this file or not
-    dump("HelperAppLauncherDialog show\n");
+    Logger.debug("HelperAppLauncherDialog show");
 
     // See nsIMIMEInfo.idl, nsIExternalHelperAppService and uriloader/exthandler/nsExternalHelperAppService.cpp
     // For now save them all.
@@ -41,7 +45,7 @@ HelperAppLauncherDialog.prototype = {
   promptForSaveToFileAsync: function hald_promptForSaveToFileAsync(aLauncher, aWindowContext, aDefaultFileName,
                                   aSuggestedFileExtension,
                                   aForcePrompt) {
-    dump("HelperAppLauncherDialog promptForSaveToFileAsync\n");
+    Logger.debug("HelperAppLauncherDialog promptForSaveToFileAsync");
 
     // Even if aForcePrompt is set, we don't know what to do with it, so just ignore it
     Task.spawn(function* () {
@@ -59,12 +63,12 @@ HelperAppLauncherDialog.prototype = {
   },
 
   promptForSaveToFile: function hald_promptForSaveToFile(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
-    dump("HelperAppLauncherDialog promptForSaveToFile -- not supported\n");
+    Logger.debug("HelperAppLauncherDialog promptForSaveToFile -- not supported");
     throw Cr.NS_ERROR_NOT_AVAILABLE;
   },
 
   validateLeafName: function hald_validateLeafName(aLocalFile, aLeafName, aFileExt) {
-    dump("HelperAppLauncherDialog validateLeafName\n");
+    Logger.debug("HelperAppLauncherDialog validateLeafName");
 
     if (!(aLocalFile && this.isUsableDirectory(aLocalFile)))
       return null;
@@ -82,7 +86,7 @@ HelperAppLauncherDialog.prototype = {
   },
 
   makeFileUnique: function hald_makeFileUnique(aLocalFile) {
-    dump("HelperAppLauncherDialog makeFileUnique\n");
+    Logger.debug("HelperAppLauncherDialog makeFileUnique");
     try {
       // Note - this code is identical to that in
       //   toolkit/content/contentAreaUtils.js.
@@ -107,7 +111,7 @@ HelperAppLauncherDialog.prototype = {
       aLocalFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0600);
     }
     catch (e) {
-      dump("*** exception in validateLeafName: " + e + "\n");
+      Logger.debug("*** HelperAppLauncherDialog exception in validateLeafName:", e);
 
       if (e.result == Cr.NS_ERROR_FILE_ACCESS_DENIED)
         throw e;
@@ -121,7 +125,7 @@ HelperAppLauncherDialog.prototype = {
   },
 
   isUsableDirectory: function hald_isUsableDirectory(aDirectory) {
-    dump("HelperAppLauncherDialog isUsableDirectory\n");
+    Logger.debug("HelperAppLauncherDialog isUsableDirectory");
     return aDirectory.exists() && aDirectory.isDirectory() && aDirectory.isWritable();
   },
 

@@ -10,9 +10,12 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // Common helper service
 function EmbedLiteSearchEngine()
 {
+  Logger.debug("JSComp: EmbedLiteSearchEngine.js loaded");
 }
 
 EmbedLiteSearchEngine.prototype = {

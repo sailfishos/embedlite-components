@@ -59,7 +59,7 @@ OrientationChangeHandler.prototype = {
                                                            }));
         that.orientationChangeSent = true;
       } catch (e) {
-        dump("EmbedLiteOrientationChangeHandler: Failed to report orientation change " + e + "\n")
+        Logger.warn("EmbedLiteOrientationChangeHandler: Failed to report orientation change", e)
       }
     }
 
@@ -109,7 +109,7 @@ OrientationChangeHandler.prototype = {
                                                            }));
       }
     } catch (e) {
-      dump("EmbedLiteOrientationChangeHandler: Report initial orientation " + e + "\n")
+      Logger.warn("EmbedLiteOrientationChangeHandler: Report initial orientation failed", e)
     }
   },
 

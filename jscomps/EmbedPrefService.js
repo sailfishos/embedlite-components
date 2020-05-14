@@ -9,13 +9,15 @@ const Cr = Components.results;
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // -----------------------------------------------------------------------
 // Download Manager UI
 // -----------------------------------------------------------------------
 
 function EmbedPrefService()
 {
-  dump("PREFS SERVICE INITAILIZED\n");
+  Logger.debug("JSComp: EmbedPrefService.js loaded");
 }
 
 EmbedPrefService.prototype = {
@@ -65,7 +67,7 @@ EmbedPrefService.prototype = {
     switch(aTopic) {
       // Engine DownloadManager notifications
       case "app-startup": {
-        dump("EmbedPrefService app-startup\n");
+        Logger.debug("EmbedPrefService app-startup");
         Services.obs.addObserver(this, "embedui:prefs", true);
         Services.obs.addObserver(this, "embedui:saveprefs", true);
         Services.obs.addObserver(this, "embedui:allprefs", true);
@@ -77,10 +79,10 @@ EmbedPrefService.prototype = {
       }
       case "embedui:prefs": {
         var data = JSON.parse(aData);
-        dump("UI Wants some prefs back: " + data.msg + "\n");
+        Logger.debug("UI Wants some prefs back:", data.msg);
         let retPrefs = [];
         for (let pref of data.prefs) {
-            dump("pref: " + pref + "\n");
+            Logger.debug("pref:", pref);
             switch (Services.prefs.getPrefType(pref)) {
                 case Services.prefs.PREF_BOOL:
                     retPrefs.push({ name: pref, value: Services.prefs.getBoolPref(pref)});

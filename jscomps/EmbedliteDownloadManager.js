@@ -23,6 +23,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "Services",
 XPCOMUtils.defineLazyModuleGetter(this, "Task",
                                   "resource://gre/modules/Task.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadViewer
 
@@ -73,7 +75,7 @@ let DownloadView = {
     }
 
     if (download.error) {
-      dump("EmbedliteDownloadManager error: " + download.error.message + "\n");
+      Logger.warn("EmbedliteDownloadManager error:", download.error.message);
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-fail",
@@ -112,7 +114,7 @@ let DownloadView = {
     this.prevState[download].succeeded = download.succeeded;
 
     if (!this.prevState[download].error && download.error) {
-      dump("EmbedliteDownloadManager error: " + download.error.message + "\n");
+      Logger.debug("EmbedliteDownloadManager error:", download.error.message);
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-fail",
@@ -155,7 +157,7 @@ let DownloadView = {
 
 function EmbedliteDownloadManager()
 {
-  dump("EmbedliteDownloadManager initialized\n");
+  Logger.debug("JSComp: EmbedliteDownloadManager.js loaded");
 }
 
 EmbedliteDownloadManager.prototype = {

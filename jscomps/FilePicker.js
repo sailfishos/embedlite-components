@@ -18,7 +18,10 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
                                     "nsIEmbedAppService");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 function FilePicker() {
+  Logger.debug("JSComp: FilePicker.js loaded");
 }
 
 FilePicker.prototype = {

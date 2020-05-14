@@ -30,8 +30,6 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
                                     "nsIEmbedAppService");
 
-dump("###################################### embedhelper.js loaded\n");
-
 var globalObject = null;
 var gScreenWidth = 0;
 var gScreenHeight = 0;
@@ -57,7 +55,7 @@ EmbedHelper.prototype = {
   _fastFind: null,
   _init: function()
   {
-    dump("Init Called:" + this + "\n");
+    Logger.debug("EmbedHelper init called");
 
     ViewportHandler.init();
 
@@ -319,7 +317,7 @@ EmbedHelper.prototype = {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
           webNav.sessionHistory.PurgeHistory(1);
         } catch (e) {
-            dump("Warning: couldn't PurgeHistory. Was it a file download?\n");
+            Logger.warn("Warning: couldn't PurgeHistory. Was it a file download?", e);
         }
 
         // Use same default value as there is in nsSHistory.cpp of Gecko.
@@ -340,7 +338,7 @@ EmbedHelper.prototype = {
             try {
                 uri = ioService.newURI(link, null, null);
             } catch (e) {
-                dump("Warning: no protocol provided for uri '" + link + "'. Assuming http...\n");
+                Logger.debug("Warning: no protocol provided for uri '" + link + "'. Assuming http..." + e);
                 uri = ioService.newURI("http://" + link, null, null);
             }
             let historyEntry = Cc["@mozilla.org/browser/session-history-entry;1"].createInstance(Ci.nsISHEntry);
@@ -348,13 +346,13 @@ EmbedHelper.prototype = {
             shist.addEntry(historyEntry, true);
         });
         if (index < 0) {
-            dump("Warning: session history entry index out of bounds: " + index + ". Returning index 0.\n");
+            Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
             webNav.sessionHistory.getEntryAtIndex(0, true);
             index = 0;
         } else if (index >= webNav.sessionHistory.count) {
             let lastIndex = webNav.sessionHistory.count - 1;
-            dump("Warning: session history entry index out of bound: " + index + ". There are " + webNav.sessionHistory.count +
-                 " item(s) in the session history. Returning index " + lastIndex + ".\n");
+            Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + webNav.sessionHistory.count +
+                 " item(s) in the session history. Returning index " + lastIndex);
             webNav.sessionHistory.getEntryAtIndex(lastIndex, true);
             index = lastIndex;
         } else {
@@ -367,7 +365,7 @@ EmbedHelper.prototype = {
         try {
             initialURI = ioService.newURI(links[index], null, null);
         } catch (e) {
-            dump("Warning: couldn't construct initial URI. Assuming a http:// URI is provided\n");
+            Logger.debug("Warning: couldn't construct initial URI. Assuming a http:// URI is provided");
             initialURI = ioService.newURI("http://" + links[index], null, null);
         }
         docShell.setCurrentURI(initialURI);
@@ -381,7 +379,7 @@ EmbedHelper.prototype = {
         break;
       }
       default: {
-        dump("Child Script: Message: name:" + aMessage.name + ", json:" + JSON.stringify(aMessage.json) + "\n");
+        Logger.debug("Child Script: Message: name:", aMessage.name, "json:", JSON.stringify(aMessage.json));
         break;
       }
     }
@@ -629,7 +627,7 @@ EmbedHelper.prototype = {
         try {
           Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
         } catch (e) {
-          dump("Speculative connection error: " + e + "\n")
+          Logger.warn("Speculative connection error:", e)
         }
       }
     }
@@ -772,15 +770,15 @@ EmbedHelper.prototype = {
   },
 
   _dumpViewport: function() {
-    dump("--------------- Viewport data ----------------------- \n")
+    Logger.debug("--------------- Viewport data -----------------------")
     this._dumpObject(this._viewportData)
-    dump("--------------- Viewport data dumpped --------------- \n")
+    Logger.debug("--------------- Viewport data dumpped ---------------")
   },
 
   _dumpVkbMetrics: function() {
-    dump("--------------- Vkb metrics ----------------------- \n")
+    Logger.debug("--------------- Vkb metrics -----------------------")
     this._dumpObject(this.vkbOpenCompositionMetrics)
-    dump("--------------- Vkb metrics dumpped --------------- \n")
+    Logger.debug("--------------- Vkb metrics dumpped ---------------")
   },
 
   _dumpObject: function(object) {
@@ -788,14 +786,14 @@ EmbedHelper.prototype = {
       for (var i in object) {
         if (typeof(object[i]) == "object") {
           for (var j in object[i]) {
-            dump("   " + i + " " + j + ": " + object[i][j] + "\n")
+            Logger.debug("   ", i, j, ":", object[i][j])
           }
         } else {
-          dump(i + ": " + object[i] + "\n")
+          Logger.debug(i, ":", object[i])
         }
       }
     } else {
-      dump("Nothing to dump\n")
+      Logger.debug("Nothing to dump")
     }
   }
 };
@@ -855,7 +853,7 @@ var ViewportHandler = {
     if (viewport) {
       this._zoom = viewport.cssPageRect.width / viewport.cssCompositedRect.width;
     } else {
-      dump("Updated with an invalid viewport")
+      Logger.debug("Updated with an invalid viewport")
     }
   },
 
@@ -1076,6 +1074,7 @@ ViewportMetadata.prototype = {
   }
 };
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Util.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandler.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js");
@@ -1085,3 +1084,4 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelpe
 
 globalObject = new EmbedHelper();
 
+Logger.debug("Frame script: embedhelper.js loaded");
