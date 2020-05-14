@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "../logger/EmbedComponentsLog.h"
+
 #include "nsXULAppAPI.h"
 
 #include "nsAlertsService.h"
@@ -31,7 +33,7 @@ nsEmbedAlertsService::~nsEmbedAlertsService()
 bool nsEmbedAlertsService::ShouldShowAlert()
 {
   bool result = true;
-  printf(">>>>>>Func:%s::%d\n", __PRETTY_FUNCTION__, __LINE__);
+  LOGT("");
   return result;
 }
 
@@ -42,14 +44,14 @@ NS_IMETHODIMP nsEmbedAlertsService::ShowAlertNotification(const nsAString& aImag
                                                           const nsAString& aLang, const nsAString & data, nsIPrincipal *principal,
                                                           bool aInPrivateBrowsing, bool aRequireInteraction)
 {
-  printf(">>>>>>Func:%s::%d image:%s, title:%s, text:%s, clickable:%i, cookie:%s, name:%s\n", __PRETTY_FUNCTION__, __LINE__,
-         NS_ConvertUTF16toUTF8(aImageUrl).get(),
-         NS_ConvertUTF16toUTF8(aAlertTitle).get(),
-         NS_ConvertUTF16toUTF8(aAlertText).get(),
-         aAlertTextClickable,
-         NS_ConvertUTF16toUTF8(aAlertCookie).get(),
-         NS_ConvertUTF16toUTF8(aAlertName).get()
-        );
+  LOGT("image: '%s', title: '%s', text: '%s', clickable: %i, cookie: '%s', name: '%s'", __PRETTY_FUNCTION__, __LINE__,
+       NS_ConvertUTF16toUTF8(aImageUrl).get(),
+       NS_ConvertUTF16toUTF8(aAlertTitle).get(),
+       NS_ConvertUTF16toUTF8(aAlertText).get(),
+       aAlertTextClickable,
+       NS_ConvertUTF16toUTF8(aAlertCookie).get(),
+       NS_ConvertUTF16toUTF8(aAlertName).get()
+       );
 
   // Do not display the alert. Instead call alertfinished and get out.
   if (aAlertListener)
@@ -60,6 +62,6 @@ NS_IMETHODIMP nsEmbedAlertsService::ShowAlertNotification(const nsAString& aImag
 
 NS_IMETHODIMP nsEmbedAlertsService::CloseAlert(const nsAString & name, nsIPrincipal*)
 {
-  printf("nsEmbedAlertsService::CloseAlert: name:%s", NS_ConvertUTF16toUTF8(name).get());
+  LOGT("name: '%s'", NS_ConvertUTF16toUTF8(name).get());
   return NS_OK;
 }

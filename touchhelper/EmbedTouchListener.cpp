@@ -5,10 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "EmbedTouchListener.h"
+#include "../logger/EmbedComponentsLog.h"
 
 #include "nsServiceManagerUtils.h"
 #include "nsIObserverService.h"
-#include "mozilla/embedlite/EmbedLog.h"
 
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIDOMWindow.h"

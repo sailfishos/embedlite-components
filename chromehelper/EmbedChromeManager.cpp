@@ -4,15 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define LOG_COMPONENT "EmbedChromeManager"
-#include "mozilla/embedlite/EmbedLog.h"
-
 #include "EmbedChromeManager.h"
 #include "EmbedChromeListener.h"
+#include "../logger/EmbedComponentsLog.h"
 
 #include "nsServiceManagerUtils.h"
 #include "nsIObserverService.h"
-
 #include "nsStringGlue.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIDOMWindow.h"
