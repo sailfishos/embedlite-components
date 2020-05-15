@@ -1,3 +1,3 @@
 [submodule "search-engines"]
 	path = search-engines
-	url = ssh://git@git.merproject.org:2222/mer-core/embedlite-components-search-engines.git
+	url = https://git.sailfishos.org/mer-core/embedlite-components-search-engines.git
