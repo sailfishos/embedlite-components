@@ -4,11 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define LOG_COMPONENT "EmbedTouchManager"
-#include "mozilla/embedlite/EmbedLog.h"
-
 #include "EmbedTouchManager.h"
 #include "EmbedTouchListener.h"
+#include "../logger/EmbedComponentsLog.h"
 
 #include "nsServiceManagerUtils.h"
 #include "nsIObserverService.h"

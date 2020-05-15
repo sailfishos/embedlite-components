@@ -4,12 +4,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-dump("###################################### SelectAsyncHelper.js loaded\n");
+Logger.debug("JSScript: SelectAsyncHelper.js loaded");
 
 var globalObject = null;
 
 function debug(msg) {
-  // dump("SelectAsyncHelper.js - " + msg + "\n");
+  Logger.debug("SelectAsyncHelper.js -", msg);
 }
 
 function isMenu(aElement) {

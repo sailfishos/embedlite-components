@@ -16,10 +16,13 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",
                                    "nsIEmbedAppService");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // Common helper service
 
 function EmbedLiteFaviconService()
 {
+  Logger.debug("JSComp: EmbedLiteFaviconService.js loaded");
 }
 
 function resolveGeckoURI(aURI) {

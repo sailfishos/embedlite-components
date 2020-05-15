@@ -17,6 +17,8 @@ XPCOMUtils.defineLazyServiceGetter(Services, "uuidgenerator",
                                     "@mozilla.org/uuid-generator;1",
                                     "nsIUUIDGenerator");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 /* ==================== LoginManagerPrompter ==================== */
 /*
  * LoginManagerPrompter
@@ -27,6 +29,7 @@ XPCOMUtils.defineLazyServiceGetter(Services, "uuidgenerator",
  * found in HTML forms.
  */
 function LoginManagerPrompter() {
+  Logger.debug("JSComp: LoginManagerPrompter.js loaded");
 }
 
 LoginManagerPrompter.prototype = {
@@ -97,8 +100,8 @@ LoginManagerPrompter.prototype = {
         if (!this._debug)
             return;
 
-        dump("Pwmgr Prompter: " + message + "\n");
-        Services.console.logStringMessage("Pwmgr Prompter: " + message);
+        Logger.debug("LoginManagerPrompter:", message);
+        Services.console.logStringMessage("LoginManagerPrompter: " + message);
     },
 
 
@@ -133,16 +136,16 @@ LoginManagerPrompter.prototype = {
     },
 
     onMessageReceived: function(messageName, message) {
-        dump("LoginManagerPrompter.js on message received: top:" + messageName + ", msg:" + message + "\n");
+        Logger.debug("LoginManagerPrompter.js on message received: top:", messageName, "msg:", message);
         var ret = JSON.parse(message);
         // Send Request
         if (!ret.id) {
-            dump("request id not defined in response\n");
+            Logger.debug("request id not defined in response");
             return;
         }
         let request = this._pendingRequests[ret.id];
         if (!request) {
-            dump("Wrong request id:" + ret.id + "\n");
+            Logger.debug("LoginManagerPrompter.js Wrong request id:", ret.id);
             return;
         }
         request[ret.buttonidx].callback();

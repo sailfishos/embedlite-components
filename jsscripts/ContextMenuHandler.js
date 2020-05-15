@@ -4,7 +4,7 @@
 
 const kXLinkNamespace = "http://www.w3.org/1999/xlink";
 
-dump("### ContextMenuHandler.js loaded\n");
+Logger.debug("JSScript: ContextMenuHandler.js loaded");
 
 var ContextMenuHandler = {
   _types: [],
@@ -116,7 +116,7 @@ var ContextMenuHandler = {
       if (edit) {
         edit.editor.paste(Ci.nsIClipboard.kGlobalClipboard);
       } else {
-        Util.dumpLn("error: target element does not support nsIDOMNSEditableElement");
+        Logger.warn("error: target element does not support nsIDOMNSEditableElement");
       }
     }
     this.reset();
@@ -132,7 +132,7 @@ var ContextMenuHandler = {
       if (edit) {
         edit.editor.cut();
       } else {
-        Util.dumpLn("error: target element does not support nsIDOMNSEditableElement");
+        Logger.warn("error: target element does not support nsIDOMNSEditableElement");
       }
     }
     this.reset();
@@ -144,7 +144,7 @@ var ContextMenuHandler = {
       if (edit) {
         edit.editor.copy();
       } else {
-        Util.dumpLn("error: target element does not support nsIDOMNSEditableElement");
+        Logger.warn("error: target element does not support nsIDOMNSEditableElement");
       }
     } else {
       let selectionText = this._previousState.string;
@@ -211,7 +211,7 @@ var ContextMenuHandler = {
                                                         Ci.nsISupportsCString));
           }
         } catch (ex) {
-          Util.dumpLn(ex.message);
+          Logger.warn(ex.message);
           // Failure to get type and content-disposition off the image is non-fatal
         }
       }

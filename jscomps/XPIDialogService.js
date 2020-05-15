@@ -8,11 +8,15 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // -----------------------------------------------------------------------
 // Web Install Prompt service
 // -----------------------------------------------------------------------
 
-function WebInstallPrompt() { }
+function WebInstallPrompt() {
+  Logger.debug("JSComp: XPIDialogService.js loaded");
+}
 
 WebInstallPrompt.prototype = {
   classID: Components.ID("{ce2d8764-c366-11e2-8e71-1bb058e7ef52}"),

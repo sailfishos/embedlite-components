@@ -91,36 +91,14 @@ let Util = {
     }, Ci.nsIThread.DISPATCH_NORMAL);
   },
 
-  /*
-   * Console printing utilities
-   */
-
-  dumpf: function dumpf(str) {
-    let args = arguments;
-    let i = 1;
-    dump(str.replace(/%s/g, function() {
-      if (i >= args.length) {
-        throw "dumps received too many placeholders and not enough arguments";
-      }
-      return args[i++].toString();
-    }));
-  },
-
-  // Like dump, but each arg is handled and there's an automatic newline
-  dumpLn: function dumpLn() {
-    for (let i = 0; i < arguments.length; i++)
-      dump(arguments[i] + " ");
-    dump("\n");
-  },
-
   dumpElement: function dumpElement(aElement) {
-    this.dumpLn(aElement.id);
+    Logger.debug(aElement.id);
   },
 
   dumpElementTree: function dumpElementTree(aElement) {
     let node = aElement;
     while (node) {
-      this.dumpLn("node:", node, "id:", node.id, "class:", node.classList);
+      Logger.debug("node:", node, "id:", node.id, "class:", node.classList);
       node = node.parentNode;
     }
   },
@@ -131,7 +109,7 @@ let Util = {
 
   highlightElement: function highlightElement(aElement) {
     if (aElement == null) {
-      this.dumpLn("aElement is null");
+      Logger.debug("aElement is null");
       return;
     }
     aElement.style.border = "2px solid red";
@@ -282,7 +260,7 @@ let Util = {
   // Dumps the details of a dom rect to the console
   dumpDOMRect: function dumpDOMRect(aMsg, aRect) {
     try {
-      Util.dumpLn(aMsg,
+      Logger.debug(aMsg,
                   "left:" + Math.round(aRect.left) + ",",
                   "top:" + Math.round(aRect.top) + ",",
                   "right:" + Math.round(aRect.right) + ",",
@@ -290,7 +268,7 @@ let Util = {
                   "width:" + Math.round(aRect.right - aRect.left) + ",",
                   "height:" + Math.round(aRect.bottom - aRect.top) );
     } catch (ex) {
-      Util.dumpLn("dumpDOMRect:", ex.message);
+      Logger.debug("dumpDOMRect:", ex.message);
     }
   },
 
@@ -496,7 +474,7 @@ let Util = {
   copyImageToClipboard: function Util_copyImageToClipboard(aImageLoadingContent) {
     let image = aImageLoadingContent.QueryInterface(Ci.nsIImageLoadingContent);
     if (!image) {
-      Util.dumpLn("copyImageToClipboard error: image is not an nsIImageLoadingContent");
+      Logger.debug("copyImageToClipboard error: image is not an nsIImageLoadingContent");
       return;
     }
     try {
@@ -511,7 +489,7 @@ let Util = {
       let clip = Cc["@mozilla.org/widget/clipboard;1"].getService(Ci.nsIClipboard);
       clip.setData(xferable, null, Ci.nsIClipboard.kGlobalClipboard);
     } catch (e) {
-      Util.dumpLn(e.message);
+      Logger.log(e.message);
     }
   },
 };
@@ -584,4 +562,3 @@ Util.Timeout.prototype = {
     return this._type !== null;
   }
 };
-

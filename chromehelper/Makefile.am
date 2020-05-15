@@ -5,6 +5,7 @@ libchromehelper_la_SOURCES = \
     EmbedChromeListener.cpp \
     EmbedChromeManager.cpp \
     nsEmbedChromeModule.cpp \
+    ../logger/EmbedComponentsLog.cpp \
     $(NULL)
 
 libchromehelper_la_CPPFLAGS = \

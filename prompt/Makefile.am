@@ -6,6 +6,7 @@ libprompt_la_SOURCES = \
     EmbedPromptService.cpp \
     nsEmbedPromptModule.cpp \
     ../widgetfactory/EmbedliteGenericFactory.cpp \
+    ../logger/EmbedComponentsLog.cpp \
     nsAlertsService.cpp \
     $(NULL)
 

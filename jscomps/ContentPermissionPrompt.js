@@ -14,10 +14,14 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
                                     "nsIEmbedAppService");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 const kEntities = { "geolocation": "geolocation",
                     "desktop-notification": "desktopNotification" };
 
-function ContentPermissionPrompt() {}
+function ContentPermissionPrompt() {
+  Logger.debug("JSComp: ContentPermissionPrompt.js loaded");
+}
 
 ContentPermissionPrompt.prototype = {
   classID: Components.ID("{C6E8C44D-9F39-4AF7-BCC0-76E38A8310F5}"),

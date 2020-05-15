@@ -5,6 +5,7 @@ libtouchhelper_la_SOURCES = \
     nsEmbedTouchModule.cpp \
     EmbedTouchManager.cpp \
     EmbedTouchListener.cpp \
+    ../logger/EmbedComponentsLog.cpp \
     $(NULL)
 
 libtouchhelper_la_CPPFLAGS = \

@@ -9,7 +9,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Geometry.jsm");
 
-dump("###################################### SelectHelper.js loaded\n");
+Logger.debug("JSScript: SelectHelper.js loaded");
 
 var globalObject = null;
 
@@ -17,7 +17,7 @@ let HTMLOptionElement = Ci.nsIDOMHTMLOptionElement;
 let useAsync = false;
 
 function debug(msg) {
-//  dump("SelectHelper.js - " + msg + "\n");
+  Logger.debug("SelectHelper.js -", msg);
 }
 
 function SelectHelper() {
@@ -66,7 +66,7 @@ SelectHelper.prototype = {
   },
 
   receiveMessage: function receiveMessage(aMessage) {
-    dump("Child Script: Message: name:" + aMessage.name + ", json:" + JSON.stringify(aMessage.json) + "\n");
+    Logger.debug("Child Script: Message: name:", aMessage.name, "json:", JSON.stringify(aMessage.json));
     this._recvStopWaiting(aMessage);
   },
 
@@ -83,7 +83,7 @@ SelectHelper.prototype = {
     // come to us, but not to process them
     if (this._uiBusy || !this._isMenu(aTarget) || aTarget.disabled)
         return;
-    dump("Click handled by SelectHelper\n")
+    Logger.debug("Click handled by SelectHelper")
     this._uiBusy = true;
     this.show(aTarget);
     this._uiBusy = false;

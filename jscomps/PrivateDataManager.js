@@ -9,11 +9,15 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 function debug(aMsg) {
-  dump("PrivateDataManager.js: " + aMsg + "\n");
+  Logger.debug("PrivateDataManager.js:", aMsg);
 }
 
-function PrivateDataManager() {}
+function PrivateDataManager() {
+  Logger.debug("JSComp: PrivateDataManager.js loaded");
+}
 
 PrivateDataManager.prototype = {
   classID: Components.ID("{6a7dd2ef-b7c8-4ab5-8c35-c0e5d7557ccf}"),

@@ -8,11 +8,15 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // -----------------------------------------------------------------------
 // Alerts Service
 // -----------------------------------------------------------------------
 
-function AlertsService() { }
+function AlertsService() {
+  Logger.debug("JSComp: AlertsService.js loaded");
+}
 
 AlertsService.prototype = {
   classID: Components.ID("{b98ab6b8-6c88-11e2-99bc-6745f7369235}"),

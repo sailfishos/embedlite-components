@@ -5,7 +5,7 @@
 //let Ci = Components.interfaces;
 //let Cc = Components.classes;
 
-dump("### SelectionHandler.js loaded\n");
+Logger.debug("JSScript: SelectionHandler.js loaded");
 
 function SelectionHandler() {
   SelectionPrototype.call(this);
@@ -298,7 +298,7 @@ function SelectionHandler() {
                           tap.xPos < this._cache.selection.right) &&
                          (tap.yPos > this._cache.selection.top &&
                           tap.yPos < this._cache.selection.bottom);
-    // Util.dumpLn(tapInSelection,
+    // Logger.debug(tapInSelection,
     //             tap.xPos, tap.yPos, "|", this._cache.selection.left,
     //             this._cache.selection.right, this._cache.selection.top,
     //             this._cache.selection.bottom);
@@ -351,7 +351,7 @@ function SelectionHandler() {
    */
   this._onFail = function _onFail(aDbgMessage) {
     if (aDbgMessage && aDbgMessage.length > 0)
-      Util.dumpLn(aDbgMessage);
+      Logger.debug(aDbgMessage);
     this.sendAsync("Content:SelectionFail");
     this._clearSelection();
     this.closeSelection();
@@ -486,7 +486,7 @@ function SelectionHandler() {
         0, 0, 0,
         this._domWinUtils.QUERY_CONTENT_FLAG_USE_XP_LINE_BREAK);
     if (!rect || !rect.succeeded) {
-      Util.dumpLn("no caret was present, unexpected.");
+      Logger.warn("no caret was present, unexpected.");
       return 0;
     }
 
@@ -523,7 +523,7 @@ function SelectionHandler() {
 
   this.receiveMessage = function sh_receiveMessage(aMessage) {
     if (this._debugEvents && aMessage.name != "Browser:SelectionMove") {
-      Util.dumpLn("SelectionHandler:", aMessage.name);
+      Logger.debug("SelectionHandler:", aMessage.name);
     }
     let json = aMessage.json;
     switch (aMessage.name) {

@@ -6,6 +6,8 @@ const Ci = Components.interfaces;
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 let modules = {
   // about:
   "": {
@@ -33,7 +35,9 @@ let modules = {
   }
 }
 
-function AboutRedirector() {}
+function AboutRedirector() {
+  Logger.debug("JSComp: AboutRedirector.js loaded");
+}
 AboutRedirector.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
   classID: Components.ID("{59f3da9a-6c88-11e2-b875-33d1bd379849}"),

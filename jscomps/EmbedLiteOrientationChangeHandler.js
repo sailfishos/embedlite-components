@@ -15,8 +15,11 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",
                                    "nsIEmbedAppService");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 function EmbedLiteOrientationChangeHandler()
 {
+  Logger.debug("JSComp: EmbedLiteOrientationChangeHandler.js loaded");
 }
 
 EmbedLiteOrientationChangeHandler.prototype = {

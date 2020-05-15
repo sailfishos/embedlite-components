@@ -3,10 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#define LOG_COMPONENT "EmbedPromptService"
-#include "mozilla/embedlite/EmbedLog.h"
-
 #include "EmbedPromptService.h"
+#include "../logger/EmbedComponentsLog.h"
 
 #include "nsStringGlue.h"
 #include "nsIAuthPrompt.h"
@@ -912,10 +910,10 @@ EmbedAuthPromptService::DoResponseAsyncPrompt(EmbedAsyncAuthPrompt* prompt,
             continue;
         }
         if (confirmed) {
-            // printf("Ok, calling onAuthAvailable to finish auth.\n");
+            LOGT("Ok, calling onAuthAvailable to finish auth.");
             consumer->mCallback->OnAuthAvailable(consumer->mContext, prompt->mAuthInfo);
         } else {
-            // printf("Cancelled, calling onAuthCancelled to finish auth.\n");
+            LOGT("Cancelled, calling onAuthCancelled to finish auth.");
             consumer->mCallback->OnAuthCancelled(consumer->mContext, true);
         }
     }

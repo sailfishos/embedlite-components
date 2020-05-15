@@ -15,10 +15,13 @@ const PREF_OVERRIDE       = "general.useragent.override";
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 // Common helper service
 
 function UserAgentOverrideHelper()
 {
+  Logger.debug("JSComp: UserAgentOverrideHelper.js loaded");
 }
 
 UserAgentOverrideHelper.prototype = {
@@ -28,7 +31,7 @@ UserAgentOverrideHelper.prototype = {
     switch(aTopic) {
       // Engine DownloadManager notifications
       case APP_STARTUP: {
-        dump("UserAgentOverrideHelper app-startup\n");
+        Logger.debug("UserAgentOverrideHelper app-startup");
         Services.obs.addObserver(this, VIEW_CREATED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         Services.prefs.addObserver(PREF_OVERRIDE, this, false);
@@ -50,7 +53,7 @@ UserAgentOverrideHelper.prototype = {
       }
 
       case XPCOM_SHUTDOWN: {
-        dump("UserAgentOverrideHelper " + XPCOM_SHUTDOWN + "\n");
+        Logger.debug("UserAgentOverrideHelper", XPCOM_SHUTDOWN);
         Services.obs.removeObserver(this, XPCOM_SHUTDOWN, false);
         UserAgent.uninit();
         break;
@@ -201,7 +204,7 @@ var UserAgent = {
     switch (aTopic) {
       case "DesktopMode:Change": {
         //let args = JSON.parse(aData);
-        //dump("UserAgentOverrideHelper observe:" + aTopic + "\n");
+        //Logger.debug("UserAgentOverrideHelper observe:", Topic);
         break;
       }
       case "nsPref:changed": {
