@@ -3,14 +3,12 @@ TEMPLATE = subdirs
 SOURCES += chromehelper/*.cpp \
     logger/*.cpp \
     history/*.cpp \
-    prompt/*.cpp \
     touchhelper/*.cpp \
     widgetfactory/*.cpp
 
 HEADERS += chromehelper/*.h \
     logger/*.h \
     history/*.h \
-    prompt/*.h \
     touchhelper/*.h \
     widgetfactory/*.h
 
