@@ -8,7 +8,13 @@ var Cc = Components.classes;
 var Ci = Components.interfaces;
 
 Components.utils.import("resource://gre/modules/Services.jsm");
-Components.utils.import("resource://gre/modules/Messaging.jsm");
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
+XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
+                                    "@mozilla.org/embedlite-app-service;1",
+                                    "nsIEmbedAppService");
+
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 this.EXPORTED_SYMBOLS = ["Prompt"];
 
@@ -19,15 +25,10 @@ function log(msg) {
 function Prompt(aOptions) {
   this.window = "window" in aOptions ? aOptions.window : null;
 
-  this.msg = { async: true };
-
-  if (this.window) {
-    let window = Services.wm.getMostRecentWindow("navigator:browser");
-    var tab = window.BrowserApp.getTabForWindow(this.window);
-    if (tab) {
-      this.msg.tabId = tab.id;
-    }
-  }
+  this.msg = {
+    async: true,
+    winId: Services.embedlite.getIDByWindow(this.window)
+  };
 
   if (aOptions.priority === 1)
     this.msg.type = "Prompt:ShowTop"
@@ -51,12 +52,41 @@ function Prompt(aOptions) {
 }
 
 Prompt.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIEmbedMessageListener]),
+  onMessageReceived: function(messageName, message) {
+    let data = JSON.parse(message);
+
+    if (this.callback) {
+      this.callback(data)
+    }
+
+    Services.embedlite.removeMessageListener(this.getResponseName(), this);
+  },
+
   setHint: function(aHint) {
     if (!aHint)
       delete this.msg.hint;
     else
       this.msg.hint = aHint;
     return this;
+  },
+
+  getMessageName: function() {
+    let hint = this.msg && this.msg.hint
+
+    if (!hint)
+      Logger.warn("Prompt.jsm is doomed to fail without a hint");
+
+    return "embed:" + hint;
+  },
+
+  getResponseName: function() {
+    let hint = this.msg && this.msg.hint;
+
+    if (!hint)
+      Logger.warn("Prompt.jsm is doomed to fail without a hint (for response)");
+
+    return hint + "response";
   },
 
   addButton: function(aOptions) {
@@ -176,10 +206,8 @@ Prompt.prototype = {
   },
 
   _innerShow: function() {
-    Messaging.sendRequestForResult(this.msg).then((data) => {
-      if (this.callback)
-        this.callback(data);
-    });
+    Services.embedlite.addMessageListener(this.getResponseName(), this);
+    Services.embedlite.sendAsyncMessage(this.msg.winId, this.getMessageName(), JSON.stringify(this.msg));
   },
 
   _setListItems: function(aItems) {

@@ -9,17 +9,21 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 XPCOMUtils.defineLazyModuleGetter(this, "Prompt",
-                                  "resource://gre/modules/Prompt.jsm");
+                                  "chrome://embedlite/content/Prompt.jsm");
 
 var gPromptService = null;
 
 function PromptService() {
   gPromptService = this;
+  Logger.debug("JSComp: PromptService.js loaded");
 }
 
 PromptService.prototype = {
-  classID: Components.ID("{9a61149b-2276-4a0a-b79c-be994ad106cf}"),
+  inModalState: false,
+  classID: Components.ID("{44df5fae-c5a1-11e2-8e91-1ff32ee4f840}"),
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
 
@@ -148,10 +152,17 @@ InternalPrompt.prototype = {
    * for a response
    */
   showPrompt: function showPrompt(aPrompt) {
+    if (gPromptService.inModalState) {
+      return {
+        "accepted": false
+      };
+    }
+
     if (this._domWin) {
       PromptUtils.fireDialogEvent(this._domWin, "DOMWillOpenModalDialog");
       let winUtils = this._domWin.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
       winUtils.enterModalState();
+      gPromptService.inModalState = true;
     }
 
     let retval = null;
@@ -168,6 +179,7 @@ InternalPrompt.prototype = {
       let winUtils = this._domWin.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
       winUtils.leaveModalState();
       PromptUtils.fireDialogEvent(this._domWin, "DOMModalDialogClosed");
+      gPromptService.inModalState = false;
     }
 
     return retval;
@@ -220,26 +232,28 @@ InternalPrompt.prototype = {
 
   alertCheck: function alertCheck(aTitle, aText, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, [ PromptUtils.getLocaleString("OK") ]);
+    p.setHint("alert");
     this.addCheckbox(p, aCheckMsg, aCheckState);
     let data = this.showPrompt(p);
-    if (aCheckState && data.button > -1)
-      aCheckState.value = data.checkbox0;
+    if (aCheckState)
+      aCheckState.value = data.checkvalue || false;
   },
 
   confirm: function confirm(aTitle, aText) {
     let p = this._getPrompt(aTitle, aText);
     p.setHint("confirm");
     let data = this.showPrompt(p);
-    return (data.button == 0);
+    return data.accepted;
   },
 
   confirmCheck: function confirmCheck(aTitle, aText, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
+    p.setHint("confirm");
     this.addCheckbox(p, aCheckMsg, aCheckState);
     let data = this.showPrompt(p);
-    let ok = data.button == 0;
-    if (aCheckState && data.button > -1)
-      aCheckState.value = data.checkbox0;
+    let ok = data.accepted;
+    if (aCheckState)
+      aCheckState.value = data.checkvalue || false;
     return ok;
   },
 
@@ -283,11 +297,12 @@ InternalPrompt.prototype = {
     }
 
     let p = this._getPrompt(aTitle, aText, buttons);
+    p.setHint("confirm");
     this.addCheckbox(p, aCheckMsg, aCheckState);
     let data = this.showPrompt(p);
-    if (aCheckState && data.button > -1)
-      aCheckState.value = data.checkbox0;
-    return data.button;
+    if (aCheckState)
+      aCheckState.value = data.checkvalue || false;;
+    return data.accepted;
   },
 
   nsIPrompt_prompt: function nsIPrompt_prompt(aTitle, aText, aValue, aCheckMsg, aCheckState) {
@@ -297,44 +312,46 @@ InternalPrompt.prototype = {
     this.addCheckbox(p, aCheckMsg, aCheckState);
     let data = this.showPrompt(p);
 
-    let ok = data.button == 0;
-    if (aCheckState && data.button > -1)
-      aCheckState.value = data.checkbox0;
+    let ok = data.accepted;
+    if (aCheckState)
+      aCheckState.value = data.checkvalue || false;
     if (ok)
-      aValue.value = data.textbox0;
+      aValue.value = data.promptvalue || "";
     return ok;
   },
 
   nsIPrompt_promptPassword: function nsIPrompt_promptPassword(
       aTitle, aText, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
+    p.setHint("prompt");
     this.addPassword(p, aPassword.value, true, PromptUtils.getLocaleString("password", "passwdmgr"));
     this.addCheckbox(p, aCheckMsg, aCheckState);
     let data = this.showPrompt(p);
 
-    let ok = data.button == 0;
-    if (aCheckState && data.button > -1)
-      aCheckState.value = data.checkbox0;
+    let ok = data.accepted;
+    if (aCheckState)
+      aCheckState.value = data.checkvalue || false;
     if (ok)
-      aPassword.value = data.password0;
+      aPassword.value = data.password0 || "";
     return ok;
   },
 
   nsIPrompt_promptUsernameAndPassword: function nsIPrompt_promptUsernameAndPassword(
       aTitle, aText, aUsername, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
+    p.setHint("prompt");
     this.addTextbox(p, aUsername.value, true, PromptUtils.getLocaleString("username", "passwdmgr"));
     this.addPassword(p, aPassword.value, false, PromptUtils.getLocaleString("password", "passwdmgr"));
     this.addCheckbox(p, aCheckMsg, aCheckState);
     let data = this.showPrompt(p);
 
-    let ok = data.button == 0;
-    if (aCheckState && data.button > -1)
-      aCheckState.value = data.checkbox0;
+    let ok = data.accepted;
+    if (aCheckState)
+      aCheckState.value = data.checkvalue || false;
 
     if (ok) {
-      aUsername.value = data.textbox0;
-      aPassword.value = data.password0;
+      aUsername.value = data.textbox0 || "";
+      aPassword.value = data.password0 || "";
     }
     return ok;
   },
