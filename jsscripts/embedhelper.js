@@ -217,8 +217,8 @@ EmbedHelper.prototype = {
 
           let uri = this._getLinkURI(element);
           if (uri && (uri instanceof Ci.nsIURI)) {
-            let winid = Services.embedlite.getIDByWindow(content);
-            Services.embedlite.sendAsyncMessage(winid, "embed:linkclicked",
+            let winId = Services.embedlite.getIDByWindow(content);
+            Services.embedlite.sendAsyncMessage(winId, "embed:linkclicked",
                                                 JSON.stringify({
                                                                  "uri": uri.asciiSpec
                                                               }));
@@ -272,7 +272,7 @@ EmbedHelper.prototype = {
       }
       case "embedui:zoomToRect": {
         if (aMessage.data) {
-          let winid = Services.embedlite.getIDByWindow(content);
+          let winId = Services.embedlite.getIDByWindow(content);
           // This is a hackish way as zoomToRect does not work if x-value has not changed or viewport has not been scaled (zoom animation).
           // Thus, we're missing animation when viewport has not been scaled.
           let scroll = this._viewportData && this._viewportData.cssCompositedRect.width === aMessage.data.width;
@@ -280,7 +280,7 @@ EmbedHelper.prototype = {
           if (scroll) {
             content.scrollTo(aMessage.data.x, aMessage.data.y);
           } else {
-            Services.embedlite.zoomToRect(winid, aMessage.data.x, aMessage.data.y, aMessage.data.width, aMessage.data.height);
+            Services.embedlite.zoomToRect(winId, aMessage.data.x, aMessage.data.y, aMessage.data.width, aMessage.data.height);
           }
         }
         break;
@@ -518,8 +518,8 @@ EmbedHelper.prototype = {
     aAllowZoom = !Util.fuzzyEquals(rect.w, this._viewportData.cssCompositedRect.width)
 
     if (aAllowZoom) {
-      var winid = Services.embedlite.getIDByWindow(content);
-      Services.embedlite.zoomToRect(winid, rect.x, rect.y, rect.w, rect.h);
+      var winId = Services.embedlite.getIDByWindow(content);
+      Services.embedlite.zoomToRect(winId, rect.x, rect.y, rect.w, rect.h);
     } else {
       content.scrollTo(rect.x, rect.y);
     }
@@ -602,9 +602,9 @@ EmbedHelper.prototype = {
 
   _handleFullScreenChanged: function(aEvent) {
     let window = aEvent.target.defaultView;
-    let winid = Services.embedlite.getIDByWindow(window);
+    let winId = Services.embedlite.getIDByWindow(window);
     this.inFullScreen = aEvent.target.mozFullScreen;
-    Services.embedlite.sendAsyncMessage(winid, "embed:fullscreenchanged",
+    Services.embedlite.sendAsyncMessage(winId, "embed:fullscreenchanged",
                                         JSON.stringify({
                                                          "fullscreen": aEvent.target.mozFullScreen
                                                        }));

@@ -116,8 +116,8 @@ ContentPermissionPrompt.prototype = {
     let entityName = kEntities[perm.type];
 
     Services.embedlite.addMessageListener("embedui:permissions", this);
-    var winid = Services.embedlite.getIDByWindow(request.window);
-    Services.embedlite.sendAsyncMessage(winid, "embed:permissions",
+    var winId = Services.embedlite.getIDByWindow(request.window);
+    Services.embedlite.sendAsyncMessage(winId, "embed:permissions",
                                         JSON.stringify({title: entityName,
                                                         host: request.principal.URI.host,
                                                         id: reqkey}));

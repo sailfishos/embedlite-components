@@ -179,9 +179,9 @@ LoginManagerPrompter.prototype = {
         }
 
         Services.embedlite.addMessageListener("embedui:login", this);
-        var winid = Services.embedlite.getIDByWindow(notifyWin);
+        var winId = Services.embedlite.getIDByWindow(notifyWin);
         let uniqueid = this._getRandomId();
-        Services.embedlite.sendAsyncMessage(winid, "embed:login",
+        Services.embedlite.sendAsyncMessage(winId, "embed:login",
                                             JSON.stringify(
                                                 {
                                                     name: aName,

@@ -118,8 +118,8 @@ var WebappsUI = {
         }).bind(this));
         break;
       case "webapps-sync-uninstall":
-        let winid = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
-        Services.embedlite.sendAsyncMessage(winid, "WebApps:Uninstall", JSON.stringify({
+        let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+        Services.embedlite.sendAsyncMessage(winId, "WebApps:Uninstall", JSON.stringify({
           origin: data.origin
         }));
         break;
@@ -168,13 +168,13 @@ var WebappsUI = {
 //    if (!showPrompt || Services.prompt.confirm(null, "Install Web App", name + "\n" + aData.app.origin)) {
     if (!showPrompt || Services.ww.activeWindow.confirm(name + "\n" + aData.app.origin)) {
       // Get a profile for the app to be installed in. We'll download everything before creating the icons.
-      let winid = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+      let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
       let message = JSON.stringify({
           name: manifest.name,
           manifestURL: aData.app.manifestURL,
           origin: aData.app.origin
       });
-      let response = Services.embedlite.sendSyncMessage(winid, "WebApps:PreInstall", message);
+      let response = Services.embedlite.sendSyncMessage(winId, "WebApps:PreInstall", message);
       profilePath = JSON.parse(response).path;
       let file = null;
       if (profilePath) {
@@ -211,7 +211,7 @@ var WebappsUI = {
                   let source = Services.io.newURI(fullsizeIcon, "UTF8", null);
                   persist.saveURI(source, null, null, null, null, iconFile, null);
 
-                  Services.embedlite.sendAsyncMessage(winid, "WebApps:PostInstall", JSON.stringify({
+                  Services.embedlite.sendAsyncMessage(winId, "WebApps:PostInstall", JSON.stringify({
                     name: manifest.name,
                     manifestURL: aData.app.manifestURL,
                     origin: aData.app.origin,
@@ -259,8 +259,8 @@ var WebappsUI = {
   },
 
   openURL: function openURL(aManifestURL, aOrigin) {
-    let winid = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
-    Services.embedlite.sendAsyncMessage(winid, "WebApps:Open", JSON.stringify({
+    let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+    Services.embedlite.sendAsyncMessage(winId, "WebApps:Open", JSON.stringify({
       manifestURL: aManifestURL,
       origin: aOrigin
     }));

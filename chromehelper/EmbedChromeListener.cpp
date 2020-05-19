@@ -63,9 +63,9 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
     nsCOMPtr<nsIWritablePropertyBag2> root;
     json->CreateObject(getter_AddRefs(root));
 
-    uint32_t winid;
-    mService->GetIDByWindow(DOMWindow, &winid);
-    NS_ENSURE_TRUE(winid , NS_ERROR_FAILURE);
+    uint32_t winId;
+    mService->GetIDByWindow(DOMWindow, &winId);
+    NS_ENSURE_TRUE(winId , NS_ERROR_FAILURE);
     mozilla::dom::AutoNoJSAPI noJSAPI();
 
     if (type.EqualsLiteral(MOZ_DOMMetaAdded)) {
@@ -132,7 +132,7 @@ EmbedChromeListener::HandleEvent(nsIDOMEvent* aEvent)
 
     nsString outStr;
     json->CreateJSON(root, message);
-    mService->SendAsyncMessage(winid, messageName.get(), message.get());
+    mService->SendAsyncMessage(winId, messageName.get(), message.get());
 
     return NS_OK;
 }
