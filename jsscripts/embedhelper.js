@@ -953,16 +953,6 @@ var ViewportHandler = {
 
 // Ported from Metro code base. SHA1 554eff3a212d474f5a883
 let ContentScroll =  {
-  // The most recent offset set by APZC for the root scroll frame
-  _scrollOffset: { x: 0, y: 0 },
-
-  init: function() {
-    addMessageListener("Content:SetWindowSize", this);
-
-    addEventListener("pagehide", this, false);
-    addEventListener("MozScrolledAreaChanged", this, false);
-  },
-
   getScrollOffset: function(aWindow) {
     let cwu = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
     let scrollX = {}, scrollY = {};
@@ -974,53 +964,9 @@ let ContentScroll =  {
     if (aElement.parentNode == aElement.ownerDocument)
       return this.getScrollOffset(aElement.ownerDocument.defaultView);
     return { x: aElement.scrollLeft, y: aElement.scrollTop };
-  },
-
-  receiveMessage: function(aMessage) {
-    let json = aMessage.json;
-    switch (aMessage.name) {
-      case "Content:SetWindowSize": {
-        let cwu = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-        cwu.setCSSViewport(json.width, json.height);
-        sendAsyncMessage("Content:SetWindowSize:Complete", {});
-        break;
-      }
-    }
-  },
-
-  handleEvent: function(aEvent) {
-    switch (aEvent.type) {
-      case "pagehide":
-        this._scrollOffset = { x: 0, y: 0 };
-        break;
-
-      case "MozScrolledAreaChanged": {
-        let doc = aEvent.originalTarget;
-        if (content != doc.defaultView) // We are only interested in root scroll pane changes
-          return;
-
-        sendAsyncMessage("MozScrolledAreaChanged", {
-          width: aEvent.width,
-          height: aEvent.height,
-          left: aEvent.x + content.scrollX
-        });
-
-        // Send event only after painting to make sure content views in the parent process have
-        // been updated.
-        addEventListener("MozAfterPaint", function afterPaint() {
-          removeEventListener("MozAfterPaint", afterPaint, false);
-          sendAsyncMessage("Content:UpdateDisplayPort");
-        }, false);
-
-        break;
-      }
-    }
   }
 };
 this.ContentScroll = ContentScroll;
-
-ContentScroll.init();
-
 
 /**
  * An object which represents the page's preferred viewport properties:
