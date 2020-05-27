@@ -49,12 +49,12 @@ var gProgressListener = {
       return;
     }
     let iconPath = domDoc.documentURIObject.prePath + "/favicon.ico";
-    let winid = Services.embedlite.getIDByWindow(aWebProgress.DOMWindow);
+    let winId = Services.embedlite.getIDByWindow(aWebProgress.DOMWindow);
     NetUtil.asyncFetch(iconPath, function(aInputStream, aStatusCode, aRequest) {
       if (!Components.isSuccessCode(aStatusCode) || aRequest.contentType == "text/html") {
         return;
       }
-      Services.embedlite.sendAsyncMessage(winid, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(iconPath)}));
+      Services.embedlite.sendAsyncMessage(winId, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(iconPath)}));
     });
   },
   onSecurityChange: function() { },
@@ -67,12 +67,12 @@ var gProgressListener = {
 
 function EventLinkListener(aWindow)
 {
-  this._winID = Services.embedlite.getIDByWindow(aWindow);
-  this._targetWindow = Services.embedlite.getContentWindowByID(this._winID);
+  this._winId = Services.embedlite.getIDByWindow(aWindow);
+  this._targetWindow = Services.embedlite.getContentWindowByID(this._winId);
 }
 
 EventLinkListener.prototype = {
-  _winID: -1,
+  _winId: -1,
   _targetWindow: null,
   handleEvent: function Input_handleEvent(aEvent) {
     switch (aEvent.type) {
@@ -100,7 +100,7 @@ EventLinkListener.prototype = {
         if (list.indexOf("[icon]") == -1)
           return;
 
-        Services.embedlite.sendAsyncMessage(this._winID, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(target.href)}));
+        Services.embedlite.sendAsyncMessage(this._winId, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(target.href)}));
         break;
     }
   },

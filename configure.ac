@@ -122,7 +122,6 @@ AC_OUTPUT([
     Makefile
     history/Makefile
     chromehelper/Makefile
-    prompt/Makefile
     jscomps/Makefile
     touchhelper/Makefile
     jsscripts/Makefile

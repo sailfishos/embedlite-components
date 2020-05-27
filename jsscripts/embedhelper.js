@@ -217,8 +217,8 @@ EmbedHelper.prototype = {
 
           let uri = this._getLinkURI(element);
           if (uri && (uri instanceof Ci.nsIURI)) {
-            let winid = Services.embedlite.getIDByWindow(content);
-            Services.embedlite.sendAsyncMessage(winid, "embed:linkclicked",
+            let winId = Services.embedlite.getIDByWindow(content);
+            Services.embedlite.sendAsyncMessage(winId, "embed:linkclicked",
                                                 JSON.stringify({
                                                                  "uri": uri.asciiSpec
                                                               }));
@@ -272,7 +272,7 @@ EmbedHelper.prototype = {
       }
       case "embedui:zoomToRect": {
         if (aMessage.data) {
-          let winid = Services.embedlite.getIDByWindow(content);
+          let winId = Services.embedlite.getIDByWindow(content);
           // This is a hackish way as zoomToRect does not work if x-value has not changed or viewport has not been scaled (zoom animation).
           // Thus, we're missing animation when viewport has not been scaled.
           let scroll = this._viewportData && this._viewportData.cssCompositedRect.width === aMessage.data.width;
@@ -280,7 +280,7 @@ EmbedHelper.prototype = {
           if (scroll) {
             content.scrollTo(aMessage.data.x, aMessage.data.y);
           } else {
-            Services.embedlite.zoomToRect(winid, aMessage.data.x, aMessage.data.y, aMessage.data.width, aMessage.data.height);
+            Services.embedlite.zoomToRect(winId, aMessage.data.x, aMessage.data.y, aMessage.data.width, aMessage.data.height);
           }
         }
         break;
@@ -518,8 +518,8 @@ EmbedHelper.prototype = {
     aAllowZoom = !Util.fuzzyEquals(rect.w, this._viewportData.cssCompositedRect.width)
 
     if (aAllowZoom) {
-      var winid = Services.embedlite.getIDByWindow(content);
-      Services.embedlite.zoomToRect(winid, rect.x, rect.y, rect.w, rect.h);
+      var winId = Services.embedlite.getIDByWindow(content);
+      Services.embedlite.zoomToRect(winId, rect.x, rect.y, rect.w, rect.h);
     } else {
       content.scrollTo(rect.x, rect.y);
     }
@@ -602,9 +602,9 @@ EmbedHelper.prototype = {
 
   _handleFullScreenChanged: function(aEvent) {
     let window = aEvent.target.defaultView;
-    let winid = Services.embedlite.getIDByWindow(window);
+    let winId = Services.embedlite.getIDByWindow(window);
     this.inFullScreen = aEvent.target.mozFullScreen;
-    Services.embedlite.sendAsyncMessage(winid, "embed:fullscreenchanged",
+    Services.embedlite.sendAsyncMessage(winId, "embed:fullscreenchanged",
                                         JSON.stringify({
                                                          "fullscreen": aEvent.target.mozFullScreen
                                                        }));
@@ -953,16 +953,6 @@ var ViewportHandler = {
 
 // Ported from Metro code base. SHA1 554eff3a212d474f5a883
 let ContentScroll =  {
-  // The most recent offset set by APZC for the root scroll frame
-  _scrollOffset: { x: 0, y: 0 },
-
-  init: function() {
-    addMessageListener("Content:SetWindowSize", this);
-
-    addEventListener("pagehide", this, false);
-    addEventListener("MozScrolledAreaChanged", this, false);
-  },
-
   getScrollOffset: function(aWindow) {
     let cwu = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
     let scrollX = {}, scrollY = {};
@@ -974,53 +964,9 @@ let ContentScroll =  {
     if (aElement.parentNode == aElement.ownerDocument)
       return this.getScrollOffset(aElement.ownerDocument.defaultView);
     return { x: aElement.scrollLeft, y: aElement.scrollTop };
-  },
-
-  receiveMessage: function(aMessage) {
-    let json = aMessage.json;
-    switch (aMessage.name) {
-      case "Content:SetWindowSize": {
-        let cwu = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-        cwu.setCSSViewport(json.width, json.height);
-        sendAsyncMessage("Content:SetWindowSize:Complete", {});
-        break;
-      }
-    }
-  },
-
-  handleEvent: function(aEvent) {
-    switch (aEvent.type) {
-      case "pagehide":
-        this._scrollOffset = { x: 0, y: 0 };
-        break;
-
-      case "MozScrolledAreaChanged": {
-        let doc = aEvent.originalTarget;
-        if (content != doc.defaultView) // We are only interested in root scroll pane changes
-          return;
-
-        sendAsyncMessage("MozScrolledAreaChanged", {
-          width: aEvent.width,
-          height: aEvent.height,
-          left: aEvent.x + content.scrollX
-        });
-
-        // Send event only after painting to make sure content views in the parent process have
-        // been updated.
-        addEventListener("MozAfterPaint", function afterPaint() {
-          removeEventListener("MozAfterPaint", afterPaint, false);
-          sendAsyncMessage("Content:UpdateDisplayPort");
-        }, false);
-
-        break;
-      }
-    }
   }
 };
 this.ContentScroll = ContentScroll;
-
-ContentScroll.init();
-
 
 /**
  * An object which represents the page's preferred viewport properties:

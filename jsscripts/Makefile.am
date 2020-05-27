@@ -9,6 +9,7 @@ jsscripts_manifest_DATA = \
 	SelectionPrototype.js \
 	Util.js \
 	ContextMenuHandler.js \
+	Prompt.jsm \
 	$(NULL)
 
 sync_engine_manifestdir=$(libdir)/mozembedlite/chrome/embedlite/content/sync
