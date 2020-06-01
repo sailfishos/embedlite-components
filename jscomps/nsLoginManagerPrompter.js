@@ -12,6 +12,8 @@ const { PromptUtils } = Cu.import("resource://gre/modules/SharedPromptUtils.jsm"
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
                                   "resource://gre/modules/LoginHelper.jsm");
 
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
 const LoginInfo =
       Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
                              "nsILoginInfo", "init");
@@ -33,6 +35,8 @@ const PROMPT_NEVER = 3;
  * Invoked by [toolkit/components/prompts/src/nsPrompter.js]
  */
 function LoginManagerPromptFactory() {
+  Logger.debug("JSComp: LoginManagerPromptFactory loaded");
+
   Services.obs.addObserver(this, "quit-application-granted", true);
   Services.obs.addObserver(this, "passwordmgr-crypto-login", true);
   Services.obs.addObserver(this, "passwordmgr-crypto-loginCanceled", true);
@@ -40,7 +44,7 @@ function LoginManagerPromptFactory() {
 
 LoginManagerPromptFactory.prototype = {
 
-  classID : Components.ID("{749e62f4-60ae-4569-a8a2-de78b649660e}"),
+  classID : Components.ID("{72de694e-6c88-11e2-a4ee-6b515bdf0cb7}"),
   QueryInterface : XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIObserver, Ci.nsISupportsWeakReference]),
 
   _asyncPrompts : {},
@@ -237,7 +241,9 @@ XPCOMUtils.defineLazyGetter(this.LoginManagerPromptFactory.prototype, "log", () 
  * nsILoginManagerPrompter: Used by Login Manager for saving/changing logins
  * found in HTML forms.
  */
-function LoginManagerPrompter() {}
+function LoginManagerPrompter() {
+  Logger.debug("JSComp: LoginManagerPrompter.js loaded");
+}
 
 LoginManagerPrompter.prototype = {
 
@@ -300,7 +306,7 @@ LoginManagerPrompter.prototype = {
   // Whether we are in private browsing mode
   get _inPrivateBrowsing() {
     if (this._chromeWindow) {
-      return PrivateBrowsingUtils.isWindowPrivate(this._chromeWindow);
+      return PrivateBrowsingUtils.isContentWindowPrivate(this._chromeWindow);
     }
     // If we don't that we're in private browsing mode if the caller did
     // not provide a window.  The callers which really care about this
@@ -741,9 +747,8 @@ LoginManagerPrompter.prototype = {
       // needs to be set explicitly using setBrowser
       this._browser = null;
     } else {
-      let {win, browser} = this._getChromeWindow(aWindow);
-      this._chromeWindow = win;
-      this._browser = browser;
+      this._chromeWindow = aWindow;
+      this._browser = null;
     }
     this._opener = null;
     this._factory = aFactory || null;
@@ -1693,8 +1698,8 @@ LoginManagerPrompter.prototype = {
 }; // end of LoginManagerPrompter implementation
 
 XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "log", () => {
-  let logger = LoginHelper.createLogger("LoginManagerPrompter");
-  return logger.log.bind(logger);
+  let logger = Logger
+  return logger.debug.bind(logger);
 });
 
 var component = [LoginManagerPromptFactory, LoginManagerPrompter];
