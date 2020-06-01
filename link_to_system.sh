@@ -26,7 +26,7 @@ EmbedLiteBinComponents.manifest
 jscomps/EmbedLiteJSComponents.manifest
 jscomps/AboutRedirector.js
 jscomps/AlertsService.js
-jscomps/LoginManagerPrompter.js
+jscomps/nsLoginManagerPrompter.js
 jscomps/HelperAppDialog.js
 jscomps/EmbedPrefService.js
 jscomps/FilePicker.js
