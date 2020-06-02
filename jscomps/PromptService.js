@@ -323,23 +323,23 @@ InternalPrompt.prototype = {
   nsIPrompt_promptPassword: function nsIPrompt_promptPassword(
       aTitle, aText, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
-    p.setHint("prompt");
+    p.setHint("auth");
     this.addPassword(p, aPassword.value, true, PromptUtils.getLocaleString("password", "passwdmgr"));
     this.addCheckbox(p, aCheckMsg, aCheckState);
     let data = this.showPrompt(p);
 
     let ok = data.accepted;
     if (aCheckState)
-      aCheckState.value = data.checkvalue || false;
+      aCheckState.value = data.dontsave || false;
     if (ok)
-      aPassword.value = data.password0 || "";
+      aPassword.value = data.password || "";
     return ok;
   },
 
   nsIPrompt_promptUsernameAndPassword: function nsIPrompt_promptUsernameAndPassword(
       aTitle, aText, aUsername, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
-    p.setHint("prompt");
+    p.setHint("auth");
     this.addTextbox(p, aUsername.value, true, PromptUtils.getLocaleString("username", "passwdmgr"));
     this.addPassword(p, aPassword.value, false, PromptUtils.getLocaleString("password", "passwdmgr"));
     this.addCheckbox(p, aCheckMsg, aCheckState);
@@ -347,11 +347,11 @@ InternalPrompt.prototype = {
 
     let ok = data.accepted;
     if (aCheckState)
-      aCheckState.value = data.checkvalue || false;
+      aCheckState.value = data.dontsave || false;
 
     if (ok) {
-      aUsername.value = data.textbox0 || "";
-      aPassword.value = data.password0 || "";
+      aUsername.value = data.username || "";
+      aPassword.value = data.password || "";
     }
     return ok;
   },
@@ -390,7 +390,6 @@ InternalPrompt.prototype = {
     let check = { value: false };
     let hostname, realm;
     [hostname, realm, aUser] = PromptUtils.getHostnameAndRealm(aPasswordRealm);
-
     let canSave = PromptUtils.canSaveLogin(hostname, aSavePassword);
     if (canSave) {
       // Look for existing logins.
@@ -401,9 +400,9 @@ InternalPrompt.prototype = {
     // (eslint-disable: see bug 1177904)
     let ok = false;
     if (aUser)
-      ok = this.nsIPrompt_promptUsernameAndPassword(aTitle, aText, aUser, aPass, checkMsg, check); // eslint-disable-line no-undef
+      ok = this.nsIPrompt_promptUsernameAndPassword(aTitle, hostname, aUser, aPass, checkMsg, check); // eslint-disable-line no-undef
     else
-      ok = this.nsIPrompt_promptPassword(aTitle, aText, aPass, checkMsg, check); // eslint-disable-line no-undef
+      ok = this.nsIPrompt_promptPassword(aTitle, hostname, aPass, checkMsg, check); // eslint-disable-line no-undef
 
     if (ok && canSave && check.value)
       PromptUtils.savePassword(hostname, realm, aUser, aPass);
@@ -437,9 +436,9 @@ InternalPrompt.prototype = {
 
     let ok = canAutologin;
     if (!ok && aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD)
-      ok = this.nsIPrompt_promptPassword(null, message, password, checkMsg, check);
+      ok = this.nsIPrompt_promptPassword(message, hostname, password, checkMsg, check);
     else if (!ok)
-      ok = this.nsIPrompt_promptUsernameAndPassword(null, message, username, password, checkMsg, check);
+      ok = this.nsIPrompt_promptUsernameAndPassword(message, hostname, username, password, checkMsg, check);
 
     PromptUtils.setAuthInfo(aAuthInfo, username.value, password.value);
 
@@ -558,10 +557,8 @@ InternalPrompt.prototype = {
 
 var PromptUtils = {
   getLocaleString: function pu_getLocaleString(aKey, aService) {
-    if (aService == "passwdmgr")
-      return this.cleanUpLabel(this.passwdBundle.GetStringFromName(aKey));
-
-    return this.cleanUpLabel(this.bundle.GetStringFromName(aKey));
+    // This will not localize anything.
+    return aKey;
   },
 
   //
@@ -710,20 +707,7 @@ var PromptUtils = {
       realm += this.ellipsis;
     }
 
-    let text;
-    if (isProxy) {
-      text = this.bundle.formatStringFromName("EnterLoginForProxy3", [realm, displayHost], 2);
-    } else if (isPassOnly) {
-      text = this.bundle.formatStringFromName("EnterPasswordFor", [username, displayHost], 2);
-    } else if (isCrossOrig) {
-      text = this.bundle.formatStringFromName("EnterUserPasswordForCrossOrigin2", [displayHost], 1);
-    } else if (!realm) {
-      text = this.bundle.formatStringFromName("EnterUserPasswordFor2", [displayHost], 1);
-    } else {
-      text = this.bundle.formatStringFromName("EnterLoginForRealm3", [realm, displayHost], 2);
-    }
-
-    return text;
+    return realm;
   },
 
   // JS port of http://mxr.mozilla.org/mozilla-central/source/embedding/components/windowwatcher/nsPromptUtils.h#89
