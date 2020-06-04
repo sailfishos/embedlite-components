@@ -128,18 +128,19 @@ InternalPrompt.prototype = {
     return p;
   },
 
-  addCheckbox: function addCheckbox(aPrompt, aCheckMsg, aCheckState) {
-    // Don't bother to check for aCheckSate. For nsIPomptService interfaces, aCheckState is an
+  addCheckbox: function addCheckbox(prompt, checkMsg, checkState, hint) {
+    // Don't bother to check for aCheckSate. For nsIPomptService interfaces, checkState is an
     // out param and is required to be defined. If we've gotten here without it, something
     // has probably gone wrong and we should fail
-    if (aCheckMsg) {
-      aPrompt.addCheckbox({
-        label: PromptUtils.cleanUpLabel(aCheckMsg),
-        checked: aCheckState.value
+    if (checkMsg) {
+      prompt.addCheckbox({
+        label: PromptUtils.cleanUpLabel(checkMsg),
+        checked: checkState.value,
+        hint: hint
       });
     }
 
-    return aPrompt;
+    return prompt;
   },
 
   addTextbox: function(prompt, value, autofocus, hint) {
@@ -243,7 +244,7 @@ InternalPrompt.prototype = {
   alertCheck: function alertCheck(aTitle, aText, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, [ PromptUtils.getLocaleString("OK") ]);
     p.setHint("alert");
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
     if (aCheckState)
       aCheckState.value = data.checkvalue || false;
@@ -259,7 +260,7 @@ InternalPrompt.prototype = {
   confirmCheck: function confirmCheck(aTitle, aText, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("confirm");
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
     let ok = data.accepted;
     if (aCheckState)
@@ -308,7 +309,7 @@ InternalPrompt.prototype = {
 
     let p = this._getPrompt(aTitle, aText, buttons);
     p.setHint("confirm");
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
     if (aCheckState)
       aCheckState.value = data.checkvalue || false;;
@@ -319,7 +320,7 @@ InternalPrompt.prototype = {
     let p = this._getPrompt(aTitle, aText, null, aCheckMsg, aCheckState);
     p.setHint("prompt");
     this.addTextbox(p, aValue.value, true);
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
 
     let ok = data.accepted;
@@ -334,13 +335,16 @@ InternalPrompt.prototype = {
       aTitle, aText, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
     this.addPassword(p, aPassword.value, true, PromptUtils.getLocaleString("password", "passwdmgr"));
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
     let data = this.showPrompt(p);
 
     let ok = data.accepted;
+    // True if we should remember login
     if (aCheckState)
-      aCheckState.value = data.dontsave || false;
+      aCheckState.value = data.remember || false;
+
     if (ok)
       aPassword.value = data.password || "";
     return ok;
@@ -350,14 +354,16 @@ InternalPrompt.prototype = {
       aTitle, aText, aUsername, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
     this.addTextbox(p, aUsername.value, true, PromptUtils.getLocaleString("username", "passwdmgr"));
     this.addPassword(p, aPassword.value, false, PromptUtils.getLocaleString("password", "passwdmgr"));
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
     let data = this.showPrompt(p);
 
     let ok = data.accepted;
+    // True if we should remember login
     if (aCheckState)
-      aCheckState.value = data.dontsave || false;
+      aCheckState.value = data.remember || false;
 
     if (ok) {
       aUsername.value = data.username || "";
