@@ -8,6 +8,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -26,6 +27,14 @@ PromptService.prototype = {
   classID: Components.ID("{44df5fae-c5a1-11e2-8e91-1ff32ee4f840}"),
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
+
+  inPrivateBrowsing: function(domWin) {
+    if (domWin) {
+      return PrivateBrowsingUtils.isContentWindowPrivate(domWin);
+    }
+
+    return true;
+  },
 
   /* ----------  nsIPromptFactory  ---------- */
   // XXX Copied from nsPrompter.js.
@@ -97,6 +106,7 @@ PromptService.prototype = {
 
 function InternalPrompt(aDomWin) {
   this._domWin = aDomWin;
+  this._privateBrowsing = gPromptService.inPrivateBrowsing(this._domWin);
 }
 
 InternalPrompt.prototype = {
@@ -390,7 +400,8 @@ InternalPrompt.prototype = {
     let check = { value: false };
     let hostname, realm;
     [hostname, realm, aUser] = PromptUtils.getHostnameAndRealm(aPasswordRealm);
-    let canSave = PromptUtils.canSaveLogin(hostname, aSavePassword);
+
+    let canSave = PromptUtils.canSaveLogin(hostname, aSavePassword, this._privateBrowsing);
     if (canSave) {
       // Look for existing logins.
       let foundLogins = PromptUtils.pwmgr.findLogins({}, hostname, null, realm);
@@ -420,7 +431,7 @@ InternalPrompt.prototype = {
     let [hostname, httpRealm] = PromptUtils.getAuthTarget(aChannel, aAuthInfo);
     let foundLogins = PromptUtils.pwmgr.findLogins({}, hostname, null, httpRealm);
 
-    let canSave = PromptUtils.canSaveLogin(hostname, null);
+    let canSave = PromptUtils.canSaveLogin(hostname, null, this._privateBrowsing);
     if (canSave)
       [checkMsg, check] = PromptUtils.getUsernameAndPassword(foundLogins, username, password);
 
@@ -431,7 +442,8 @@ InternalPrompt.prototype = {
     let canAutologin = false;
     if (aAuthInfo.flags & Ci.nsIAuthInformation.AUTH_PROXY &&
         !(aAuthInfo.flags & Ci.nsIAuthInformation.PREVIOUS_FAILED) &&
-        Services.prefs.getBoolPref("signon.autologin.proxy"))
+        Services.prefs.getBoolPref("signon.autologin.proxy") &&
+        !this._privateBrowsing)
       canAutologin = true;
 
     let ok = canAutologin;
@@ -608,8 +620,8 @@ var PromptUtils = {
     return [formattedHostname, formattedHostname + pathname, uri.username];
   },
 
-  canSaveLogin: function pu_canSaveLogin(aHostname, aSavePassword) {
-    let canSave = !this._inPrivateBrowsing && this.pwmgr.getLoginSavingEnabled(aHostname)
+  canSaveLogin: function pu_canSaveLogin(aHostname, aSavePassword, aPrivateBrowsing) {
+    let canSave = !aPrivateBrowsing && this.pwmgr.getLoginSavingEnabled(aHostname)
     if (aSavePassword)
       canSave = canSave && (aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_PERMANENTLY)
     return canSave;
