@@ -1,6 +1,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2020 Open Mobile Platform LLC.
+ */
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -17,8 +20,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // Common helper service
 
-function SPConsoleListener(dumpStdOut) {
-  this._dumpToStdOut = dumpStdOut;
+function SPConsoleListener() {
   this._cacheLogs = true;
 
   Logger.debug("JSComp: EmbedLiteConsoleListener.js loaded");
@@ -27,10 +29,10 @@ function SPConsoleListener(dumpStdOut) {
 SPConsoleListener.prototype = {
   _cacheLogs: true,
   _startupCachedLogs: [],
-  _dumpToStdOut: false,
   observe: function(msg) {
-    if (this._dumpToStdOut) {
-      dump("CONSOLE: " + JSON.stringify(msg) + "\n");
+    if (Logger.enabled) {
+      Logger.debug("CONSOLE message:");
+      Logger.debug(msg);
     } else {
       if (this._cacheLogs) {
         this._startupCachedLogs.push(msg);
@@ -61,28 +63,26 @@ function EmbedLiteConsoleListener()
 
 EmbedLiteConsoleListener.prototype = {
   classID: Components.ID("{6b21b5a8-9816-11e2-86f8-fb54170a814d}"),
-  _enabled: false,
   _listener: null,
+
+  formatStackFrame: function(aFrame) {
+    let functionName = aFrame.functionName || '<anonymous>';
+    return '    at ' + functionName +
+           ' (' + aFrame.filename + ':' + aFrame.lineNumber +
+           ':' + aFrame.columnNumber + ')';
+  },
 
   observe: function (aSubject, aTopic, aData) {
     switch(aTopic) {
       // Engine DownloadManager notifications
       case "app-startup": {
-        let dumpToStdOut = false;
         var runConsoleEnv = 0;
-        try {
-          runConsoleEnv = Services.env.get('EMBED_CONSOLE');
-          dumpToStdOut = runConsoleEnv == 1;
-        } catch (e) {}
-        var runConsolePref = 0;
-        try {
-          runConsolePref = Services.prefs.getIntPref("embedlite.console_log.enabled");
-          dumpToStdOut = runConsolePref == 1;
-        } catch (e) {/*pref is missing*/ }
-        if (runConsolePref > 0 || runConsoleEnv > 0) {
-          this._listener = new SPConsoleListener(dumpToStdOut);
+        if (Logger.stackTraceEnabled)
+          Services.obs.addObserver(this, 'console-api-log-event', false);
+
+        if (Logger.enabled) {
+          this._listener = new SPConsoleListener();
           Services.console.registerListener(this._listener);
-          this._enabled = true;
           Services.obs.addObserver(this, "embedui:logger", true);
         }
         break;
@@ -90,15 +90,32 @@ EmbedLiteConsoleListener.prototype = {
       case "embedui:logger": {
         var data = JSON.parse(aData);
         if (data.enabled) {
-          if (this._enabled) {
+          if (Logger.enabled) {
             this._listener.flushCache();
           } else {
             Services.console.registerListener(this._listener);
           }
-        } else if (!data.enabled && this._enabled) {
+        } else if (!data.enabled && Logger.enabled) {
           Services.console.unregisterListener(this._listener);
           this._listener.clearCache();
         }
+        break;
+      }
+      case "console-api-log-event": {
+        let message = aSubject.wrappedJSObject;
+        let args = message.arguments;
+        let stackTrace = '';
+
+        if (message.stacktrace &&
+            (message.level == 'assert' || message.level == 'error' || message.level == 'trace')) {
+          stackTrace = Array.map(message.stacktrace, this.formatStackFrame).join('\n');
+        } else {
+          stackTrace = this.formatStackFrame(message);
+        }
+
+        args.push('\n' + stackTrace);
+
+        Logger.debug("Content JS:", message.filename, "function:", message.functionName, "message:", args.join(" "));
         break;
       }
     }
