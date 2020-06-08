@@ -8,6 +8,7 @@ const Cu = Components.utils;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -26,6 +27,14 @@ PromptService.prototype = {
   classID: Components.ID("{44df5fae-c5a1-11e2-8e91-1ff32ee4f840}"),
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService, Ci.nsIPromptService2]),
+
+  inPrivateBrowsing: function(domWin) {
+    if (domWin) {
+      return PrivateBrowsingUtils.isContentWindowPrivate(domWin);
+    }
+
+    return true;
+  },
 
   /* ----------  nsIPromptFactory  ---------- */
   // XXX Copied from nsPrompter.js.
@@ -97,6 +106,7 @@ PromptService.prototype = {
 
 function InternalPrompt(aDomWin) {
   this._domWin = aDomWin;
+  this._privateBrowsing = gPromptService.inPrivateBrowsing(this._domWin);
 }
 
 InternalPrompt.prototype = {
@@ -118,18 +128,19 @@ InternalPrompt.prototype = {
     return p;
   },
 
-  addCheckbox: function addCheckbox(aPrompt, aCheckMsg, aCheckState) {
-    // Don't bother to check for aCheckSate. For nsIPomptService interfaces, aCheckState is an
+  addCheckbox: function addCheckbox(prompt, checkMsg, checkState, hint) {
+    // Don't bother to check for aCheckSate. For nsIPomptService interfaces, checkState is an
     // out param and is required to be defined. If we've gotten here without it, something
     // has probably gone wrong and we should fail
-    if (aCheckMsg) {
-      aPrompt.addCheckbox({
-        label: PromptUtils.cleanUpLabel(aCheckMsg),
-        checked: aCheckState.value
+    if (checkMsg) {
+      prompt.addCheckbox({
+        label: PromptUtils.cleanUpLabel(checkMsg),
+        checked: checkState.value,
+        hint: hint
       });
     }
 
-    return aPrompt;
+    return prompt;
   },
 
   addTextbox: function(prompt, value, autofocus, hint) {
@@ -233,7 +244,7 @@ InternalPrompt.prototype = {
   alertCheck: function alertCheck(aTitle, aText, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, [ PromptUtils.getLocaleString("OK") ]);
     p.setHint("alert");
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
     if (aCheckState)
       aCheckState.value = data.checkvalue || false;
@@ -249,7 +260,7 @@ InternalPrompt.prototype = {
   confirmCheck: function confirmCheck(aTitle, aText, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("confirm");
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
     let ok = data.accepted;
     if (aCheckState)
@@ -298,7 +309,7 @@ InternalPrompt.prototype = {
 
     let p = this._getPrompt(aTitle, aText, buttons);
     p.setHint("confirm");
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
     if (aCheckState)
       aCheckState.value = data.checkvalue || false;;
@@ -309,7 +320,7 @@ InternalPrompt.prototype = {
     let p = this._getPrompt(aTitle, aText, null, aCheckMsg, aCheckState);
     p.setHint("prompt");
     this.addTextbox(p, aValue.value, true);
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
 
     let ok = data.accepted;
@@ -324,13 +335,16 @@ InternalPrompt.prototype = {
       aTitle, aText, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
     this.addPassword(p, aPassword.value, true, PromptUtils.getLocaleString("password", "passwdmgr"));
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
     let data = this.showPrompt(p);
 
     let ok = data.accepted;
+    // True if we should remember login
     if (aCheckState)
-      aCheckState.value = data.dontsave || false;
+      aCheckState.value = data.remember || false;
+
     if (ok)
       aPassword.value = data.password || "";
     return ok;
@@ -340,14 +354,16 @@ InternalPrompt.prototype = {
       aTitle, aText, aUsername, aPassword, aCheckMsg, aCheckState) {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
     this.addTextbox(p, aUsername.value, true, PromptUtils.getLocaleString("username", "passwdmgr"));
     this.addPassword(p, aPassword.value, false, PromptUtils.getLocaleString("password", "passwdmgr"));
-    this.addCheckbox(p, aCheckMsg, aCheckState);
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
     let data = this.showPrompt(p);
 
     let ok = data.accepted;
+    // True if we should remember login
     if (aCheckState)
-      aCheckState.value = data.dontsave || false;
+      aCheckState.value = data.remember || false;
 
     if (ok) {
       aUsername.value = data.username || "";
@@ -390,7 +406,8 @@ InternalPrompt.prototype = {
     let check = { value: false };
     let hostname, realm;
     [hostname, realm, aUser] = PromptUtils.getHostnameAndRealm(aPasswordRealm);
-    let canSave = PromptUtils.canSaveLogin(hostname, aSavePassword);
+
+    let canSave = PromptUtils.canSaveLogin(hostname, aSavePassword, this._privateBrowsing);
     if (canSave) {
       // Look for existing logins.
       let foundLogins = PromptUtils.pwmgr.findLogins({}, hostname, null, realm);
@@ -420,7 +437,7 @@ InternalPrompt.prototype = {
     let [hostname, httpRealm] = PromptUtils.getAuthTarget(aChannel, aAuthInfo);
     let foundLogins = PromptUtils.pwmgr.findLogins({}, hostname, null, httpRealm);
 
-    let canSave = PromptUtils.canSaveLogin(hostname, null);
+    let canSave = PromptUtils.canSaveLogin(hostname, null, this._privateBrowsing);
     if (canSave)
       [checkMsg, check] = PromptUtils.getUsernameAndPassword(foundLogins, username, password);
 
@@ -431,7 +448,8 @@ InternalPrompt.prototype = {
     let canAutologin = false;
     if (aAuthInfo.flags & Ci.nsIAuthInformation.AUTH_PROXY &&
         !(aAuthInfo.flags & Ci.nsIAuthInformation.PREVIOUS_FAILED) &&
-        Services.prefs.getBoolPref("signon.autologin.proxy"))
+        Services.prefs.getBoolPref("signon.autologin.proxy") &&
+        !this._privateBrowsing)
       canAutologin = true;
 
     let ok = canAutologin;
@@ -608,8 +626,8 @@ var PromptUtils = {
     return [formattedHostname, formattedHostname + pathname, uri.username];
   },
 
-  canSaveLogin: function pu_canSaveLogin(aHostname, aSavePassword) {
-    let canSave = !this._inPrivateBrowsing && this.pwmgr.getLoginSavingEnabled(aHostname)
+  canSaveLogin: function pu_canSaveLogin(aHostname, aSavePassword, aPrivateBrowsing) {
+    let canSave = !aPrivateBrowsing && this.pwmgr.getLoginSavingEnabled(aHostname)
     if (aSavePassword)
       canSave = canSave && (aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_PERMANENTLY)
     return canSave;

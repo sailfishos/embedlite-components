@@ -71,6 +71,14 @@ Prompt.prototype = {
     return this;
   },
 
+  setPrivateBrowsing: function(aPrivateBrowsing) {
+    if (!aPrivateBrowsing)
+      delete this.msg.privateBrowsing;
+    else
+      this.msg.privateBrowsing = aPrivateBrowsing;
+    return this;
+  },
+
   getMessageName: function() {
     let hint = this.msg && this.msg.hint
 
@@ -114,6 +122,7 @@ Prompt.prototype = {
     return this._addInput({
       type: "checkbox",
       label: aOptions.label,
+      hint: aOptions.hint,
       checked: aOptions.checked,
       id: aOptions.id
     });
