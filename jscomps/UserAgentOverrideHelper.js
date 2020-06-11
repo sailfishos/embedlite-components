@@ -119,39 +119,6 @@ var UserAgent = {
     return this._customUA ? this._customUA : this.DESKTOP_UA;
   },
 
-  getUserAgentForUriAndTab: function ua_getUserAgentForUriAndTab(aUri) {
-    // Not all schemes have a host member.
-    if (aUri && (aUri.schemeIs("http") || aUri.schemeIs("https"))) {
-      let ua = this.getDefaultUserAgent();
-      if (this.GOOGLE_DOMAIN.test(aUri.host)) {
-        if (this.GOOGLE_MAPS_DOMAIN.test(aUri.host)) {
-            return ua.replace("X11", "Android").replace("Linux", "Android");
-        }
-
-        // Send the phone UA to google
-        if (!ua.contains("Mobile")) {
-          return ua.replace("X11", "Android").replace("Unix", "Android").replace("Linux", "Mobile");
-        }
-      } else if (this.YOUTUBE_DOMAIN.test(aUri.host)) {
-        // Send the phone UA to google
-        if (!ua.contains("Safari")) {
-          ua = ua + " like Safari/538.1";
-        }
-        if (!ua.contains("Android")) {
-          // Nexus 7 Android chrome has best capabilities
-          return ua.replace("Linux", "Android 4.4.2").replace("Unix", "Android 4.4.2").replace("Mobile", "");
-        }
-      } else if (this.NOKIA_HERE_DOMAIN.test(aUri.host)) {
-        // Send the phone UA to here
-        if (!ua.contains("Mobile")) {
-          return ua.replace("X11", "Android").replace("Unix", "Android").replace("Linux", "Mobile");
-        }
-      }
-    }
-
-    return "";
-  },
-
   uninit: function ua_uninit() {
     Services.obs.removeObserver(this, "DesktopMode:Change");
     Services.prefs.removeObserver(PREF_OVERRIDE, this);
@@ -189,12 +156,6 @@ var UserAgent = {
 
     if (ua) {
       return ua;
-    } else if (aUri) {
-      ua = this.getUserAgentForUriAndTab(aUri);
-    }
-
-    if (ua) {
-      return ua
     }
 
     return this.getDefaultUserAgent();
