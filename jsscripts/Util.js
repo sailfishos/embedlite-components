@@ -188,9 +188,8 @@ let Util = {
 
     // If a body element is editable and the body is the child of an
     // iframe or div we can assume this is an advanced HTML editor
-    if ((aElement instanceof Ci.nsIDOMHTMLIFrameElement) &&
-//            ||
-//         aElement instanceof HTMLDivElement) &&
+    if ((aElement instanceof Ci.nsIDOMHTMLIFrameElement ||
+         this.isTypeOf(aElement, "HTMLDivElement")) &&
         aElement.contentDocument &&
         this.isEditableContent(aElement.contentDocument.body)) {
       return true;
@@ -222,11 +221,10 @@ let Util = {
     return (aElement instanceof Ci.nsIDOMHTMLParagraphElement ||
             aElement instanceof Ci.nsIDOMHTMLLIElement ||
             aElement instanceof Ci.nsIDOMHTMLPreElement ||
-            aElement instanceof Ci.nsIDOMHTMLBodyElement);
-      // Test agaist webidl of HTMLDivElement
-      // aElement instanceof HTMLDivElement ||
-      // aElement instanceof HTMLHeadingElement ||
-      // aElement instanceof HTMLTableCellElement ||
+            aElement instanceof Ci.nsIDOMHTMLBodyElement ||
+            this.isTypeOf(aElement, "HTMLDivElement") ||
+            this.isTypeOf(aElement, "HTMLHeadingElement") ||
+            this.isTypeOf(aElement, "HTMLTableCellElement"));
   },
 
   isMedia: function isMedia(aElement) {
