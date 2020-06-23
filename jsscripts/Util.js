@@ -229,6 +229,17 @@ let Util = {
       // aElement instanceof HTMLTableCellElement ||
   },
 
+  isMedia: function isMedia(aElement) {
+    return (aElement instanceof Ci.nsIDOMHTMLMediaElement ||
+            this.isTypeOf(aElement, "HTMLVideoElement") ||
+            aElement.getAttribute("playable") == "true")
+  },
+
+  isTypeOf: function isTypeOf(aElement, type) {
+    let protoType = Object.prototype.toString.call(aElement);
+    return protoType === "[object " + type + "]";
+  },
+
   /*
    * Rect and nsIDOMRect utilities
    */

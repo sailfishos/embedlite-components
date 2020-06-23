@@ -4,6 +4,8 @@
 
 const kXLinkNamespace = "http://www.w3.org/1999/xlink";
 
+let Node = Ci.nsIDOMNode;
+
 Logger.debug("JSScript: ContextMenuHandler.js loaded");
 
 var ContextMenuHandler = {
@@ -190,7 +192,7 @@ var ContextMenuHandler = {
     };
 
     // Do checks for nodes that never have children.
-    if (popupNode.nodeType == Ci.nsIDOMNode.ELEMENT_NODE) {
+    if (popupNode.nodeType == Node.ELEMENT_NODE) {
       // See if the user clicked on an image.
       if (popupNode instanceof Ci.nsIImageLoadingContent && popupNode.currentURI) {
         state.types.push("image");
@@ -220,8 +222,9 @@ var ContextMenuHandler = {
     let elem = popupNode;
     let isText = false;
 
+
     while (elem) {
-      if (elem.nodeType == Ci.nsIDOMNode.ELEMENT_NODE) {
+      if (elem.nodeType == Node.ELEMENT_NODE) {
         // is the target a link or a descendant of a link?
         if (Util.isLink(elem)) {
           // If this is an image that links to itself, don't include both link and
@@ -272,16 +275,17 @@ var ContextMenuHandler = {
             state.types.push("paste");
           }
           break;
-        } else if (Util.isText(elem)) {
-          isText = true;
-        } else if (elem instanceof Ci.nsIDOMHTMLMediaElement ||
-                   elem instanceof targetWindow.HTMLVideoElement) {
+        } else if (Util.isMedia(elem)) {
           state.label = state.mediaURL = (elem.currentSrc || elem.src);
           state.types.push((elem.paused || elem.ended) ?
             "media-paused" : "media-playing");
           if (elem instanceof targetWindow.HTMLVideoElement) {
             state.types.push("video");
           }
+          isText = false;
+          break;
+        } else if (Util.isText(elem)) {
+          isText = true;
         }
       }
 
