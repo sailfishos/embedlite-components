@@ -38,8 +38,11 @@ BuildRequires:  libtool
 BuildRequires:  automake
 BuildRequires:  autoconf
 BuildRequires:  perl
+BuildRequires:  oneshot
 Requires:  xulrunner-qt5 >= %{min_xulrunner_version}
 Conflicts: embedlite-components
+
+%{_oneshot_requires_post}
 
 %description
 EmbedLite Components required for embeded browser UI
@@ -60,7 +63,12 @@ rm -rf %{buildroot}
 
 %post
 /sbin/ldconfig
-touch /var/lib/_MOZEMBED_CACHE_CLEAN_
+
+# Upgrade case
+if [ "$1" -ge 2 ]; then
+# Script insalled by xulrunner-qt5
+%{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
+fi
 
 %postun
 /sbin/ldconfig

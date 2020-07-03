@@ -22,4 +22,14 @@ OTHER_FILES += \
     jscomps/*.js \
     jscomps/*.jsm \
     overrides/* \
-    configure.ac
+    rpm/* \
+    chromehelper/Makefile.am \
+    history/Makefile.am \
+    touchhelper/Makefile.am \
+    widgetfactory/Makefile.am \
+    jsscripts/Makefile.am \
+    jscomps/Makefile.am \
+    overrides/Makefile.am \
+    Makefile.am \
+    configure.ac\
+    autogen.sh
