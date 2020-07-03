@@ -1,9 +1,8 @@
-AC_INIT(configure.ac)
 AM_CONFIG_HEADER(config.h)
 
-VERSION=1.0.0
-
-AM_INIT_AUTOMAKE(historycomponent, $VERSION)
+AC_INIT([historycomponent], 1.0.0)
+AC_CONFIG_SRCDIR([configure.ac])
+AM_INIT_AUTOMAKE([subdir-objects])
 
 AC_PROG_CXX
 AC_PROG_CXXCPP
