@@ -31,6 +31,7 @@ jscomps/HelperAppDialog.js
 jscomps/EmbedPrefService.js
 jscomps/FilePicker.js
 jscomps/ContentPermissionPrompt.js
+jscomps/ContentPermissionManager.js
 jscomps/EmbedLiteGlobalHelper.js
 jscomps/EmbedLiteConsoleListener.js
 jscomps/EmbedLiteSyncService.js
