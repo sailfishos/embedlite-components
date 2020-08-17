@@ -175,8 +175,20 @@ EmbedliteDownloadManager.prototype = {
         Services.obs.removeObserver(this, "profile-after-change");
         Services.obs.addObserver(this, "embedui:download", false);
         Task.spawn(function() {
-          let list = yield Downloads.getList(Downloads.ALL);
-          yield list.addView(DownloadView);
+          let downloadList = yield Downloads.getList(Downloads.ALL);
+
+          // Let's remove all existing downloads from the Download List
+          // before adding the view so that partial (cancelled) downloads
+          // will not get restarted.
+          let list = yield downloadList.getAll();
+          for (let download of list) {
+            // No need to check if this is download has hasPartialData true or not
+            // as we do not have download list at the browser side.
+            yield downloadList.remove(download);
+            download.finalize(true).then(null, Cu.reportError);
+          }
+
+          yield downloadList.addView(DownloadView);
         }).then(null, Cu.reportError);
         break;
 
@@ -195,8 +207,10 @@ EmbedliteDownloadManager.prototype = {
           case "cancelDownload":
             for (var key in DownloadView.prevState) {
               if (DownloadView.prevState[key].id === data.id) {
-                // Finalization does cancel and remove partially downloaded data.
-                DownloadView.prevState[key].download.finalize(true);
+                // Switch to cancel (from finalize) so that we have partially downloaded hanging.
+                // A partially downloaded download can be restarted during the same browsering
+                // session. Restarting the browser will clear download list.
+                DownloadView.prevState[key].download.cancel();
               }
             }
             break;
