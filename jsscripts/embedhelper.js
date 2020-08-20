@@ -196,26 +196,21 @@ EmbedHelper.prototype = {
             SelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
         }
 
+        try {
+          let [x, y] = [aMessage.json.x, aMessage.json.y];
+          this._sendMouseEvent("mousemove", content, x, y);
+          this._sendMouseEvent("mousedown", content, x, y);
+          this._sendMouseEvent("mouseup",   content, x, y);
+          // scrollToFocusedInput does its own checks to find out if an element should be zoomed into
+          this.scrollToFocusedInput();
+        } catch(e) {
+          Cu.reportError(e);
+        }
+
         if (this._touchEventDefaultPrevented) {
           this._touchEventDefaultPrevented = false;
-          this._touchElement = null;
         } else {
-          let element = this._touchElement;
-          if (element) {
-            try {
-              let [x, y] = [aMessage.json.x, aMessage.json.y];
-              this._sendMouseEvent("mousemove", element, x, y);
-              this._sendMouseEvent("mousedown", element, x, y);
-              this._sendMouseEvent("mouseup",   element, x, y);
-              // scrollToFocusedInput does its own checks to find out if an element should be zoomed into
-              this.scrollToFocusedInput();
-            } catch(e) {
-              Cu.reportError(e);
-            }
-            this._touchElement = null;
-          }
-
-          let uri = this._getLinkURI(element);
+          let uri = this._getLinkURI(this._touchElement);
           if (uri && (uri instanceof Ci.nsIURI)) {
             let winId = Services.embedlite.getIDByWindow(content);
             Services.embedlite.sendAsyncMessage(winId, "embed:linkclicked",
@@ -223,6 +218,7 @@ EmbedHelper.prototype = {
                                                                  "uri": uri.asciiSpec
                                                               }));
           }
+          this._touchElement = null;
         }
         break;
       }
@@ -540,8 +536,7 @@ EmbedHelper.prototype = {
     return showing < 0.99;
   },
 
-  _sendMouseEvent: function _sendMouseEvent(aName, aElement, aX, aY) {
-    let window = aElement.ownerDocument.defaultView;
+  _sendMouseEvent: function _sendMouseEvent(aName, window, aX, aY) {
     try {
       let cwu = window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
       cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, Ci.nsIDOMMouseEvent.MOZ_SOURCE_TOUCH);
