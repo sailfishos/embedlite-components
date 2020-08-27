@@ -226,6 +226,24 @@ EmbedliteDownloadManager.prototype = {
               list.add(download);
             }).then(null, Cu.reportError);
             break;
+
+          case "saveAsPdf":
+            if (Services.ww.activeWindow) {
+              Task.spawn(function() {
+                let list = yield Downloads.getList(Downloads.ALL);
+                let download = yield Downloads.createDownload({
+                  source: Services.ww.activeWindow,
+                  target: data.to,
+                  saver: "pdf",
+                  contentType: "application/pdf"
+                });
+                download.start();
+                list.add(download);
+              }).then(null, Cu.reportError);
+            } else {
+              Logger.warn("No active window to print to pdf")
+            }
+            break;
         }
         break;
     }
