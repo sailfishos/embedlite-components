@@ -1195,13 +1195,9 @@ LoginManagerPrompter.prototype = {
                                         notNowButtonText, neverButtonText,
                                         null, {});
     //  Returns:
-    //   0 - Save the login
-    //   1 - Ignore the login this time
-    //   2 - Never save logins for this site
-    if (userChoice == 2) {
-      this.log("Disabling " + aLogin.hostname + " logins by request.");
-      this._pwmgr.setLoginSavingEnabled(aLogin.hostname, false);
-    } else if (userChoice == 0) {
+    //   0 - Ignore the login this time
+    //   1 - Save the login
+    if (userChoice == 1) {
       this.log("Saving login for " + aLogin.hostname);
       this._pwmgr.addLogin(aLogin);
     } else {
@@ -1325,11 +1321,12 @@ LoginManagerPrompter.prototype = {
     var dialogTitle = this._getLocalizedString(
                                 "passwordChangeTitle");
 
-    // returns 0 for yes, 1 for no.
-    var ok = !this._promptService.confirmEx(this._chromeWindow,
+    // returns 1 for yes, 0 for no.
+    var ok = this._promptService.confirmEx(this._chromeWindow,
                             dialogTitle, dialogText, buttonFlags,
                             null, null, null,
                             null, {});
+
     if (ok) {
       this.log("Updating password for user " + aOldLogin.username);
       this._updateLogin(aOldLogin, aNewLogin);
