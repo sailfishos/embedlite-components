@@ -123,7 +123,6 @@ AC_OUTPUT([
     history/Makefile
     chromehelper/Makefile
     jscomps/Makefile
-    touchhelper/Makefile
     jsscripts/Makefile
     widgetfactory/Makefile
     overrides/Makefile

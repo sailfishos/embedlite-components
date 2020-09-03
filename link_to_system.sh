@@ -20,7 +20,6 @@ mkdir -p $TARGET_DIR/components
 FILES_LIST="
 $OBJPREFIX/chromehelper/.libs/libchromehelper.so
 $OBJPREFIX/history/.libs/libhistory.so
-$OBJPREFIX/touchhelper/.libs/libtouchhelper.so
 $OBJPREFIX/widgetfactory/.libs/libwidgetfactory.so
 EmbedLiteBinComponents.manifest
 jscomps/EmbedLiteJSComponents.manifest
