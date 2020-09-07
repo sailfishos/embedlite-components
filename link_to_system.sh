@@ -18,10 +18,6 @@ mkdir -p $TARGET_DIR
 mkdir -p $TARGET_DIR/components
 
 FILES_LIST="
-$OBJPREFIX/chromehelper/.libs/libchromehelper.so
-$OBJPREFIX/history/.libs/libhistory.so
-$OBJPREFIX/widgetfactory/.libs/libwidgetfactory.so
-EmbedLiteBinComponents.manifest
 jscomps/EmbedLiteJSComponents.manifest
 jscomps/AboutRedirector.js
 jscomps/AlertsService.js
