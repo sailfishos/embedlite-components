@@ -114,7 +114,7 @@ function setIconForLink(aIconInfo, aChromeGlobal) {
     { url: aIconInfo.iconUri.spec,
       loadingPrincipal: aIconInfo.loadingPrincipal,
       requestContextID: aIconInfo.requestContextID,
-      canUseForTab: !aIconInfo.isRichIcon,
+      isRichIcon: aIconInfo.isRichIcon,
     });
 }
 

@@ -11,6 +11,7 @@ jscomps_manifest_DATA = \
 	ContentPermissionManager.js \
 	EmbedLiteGlobalHelper.js \
 	EmbedLiteConsoleListener.js \
+        EmbedLiteChromeManager.js \
 	EmbedLiteOrientationChangeHandler.js \
 	EmbedLiteSyncService.js \
 	EmbedLiteFaviconService.js \
