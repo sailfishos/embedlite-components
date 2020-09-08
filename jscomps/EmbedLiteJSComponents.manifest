@@ -56,6 +56,11 @@ component {39c15bb1-0a5c-42ff-979a-f2cfd966743c} EmbedLiteOrientationChangeHandl
 contract @mozilla.org/embedlite-orientationhandler-component;1 {39c15bb1-0a5c-42ff-979a-f2cfd966743c}
 category app-startup EmbedLiteOrientationChangeHandler service,@mozilla.org/embedlite-orientationhandler-component;1
 
+# EmbedLiteChromeManager.js
+component {9d17cd12-da27-4f4c-957c-f355910ac2e9} EmbedLiteChromeManager.js
+contract @mozilla.org/embedlite-chromemanager-component;1 {9d17cd12-da27-4f4c-957c-f355910ac2e9}
+category app-startup EmbedLiteChromeManager service,@mozilla.org/embedlite-chromemanager-component;1
+
 # EmbedLiteSearchEngine.js
 component {924fe7ba-afa1-11e2-9d4f-533572064b73} EmbedLiteSearchEngine.js
 contract @mozilla.org/embedlite-search-component;1 {924fe7ba-afa1-11e2-9d4f-533572064b73}
