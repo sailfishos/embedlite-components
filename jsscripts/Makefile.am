@@ -8,6 +8,7 @@ jsscripts_manifest_DATA = \
 	SelectionHandler.js \
 	SelectionPrototype.js \
 	Util.js \
+        ClickEventBlocker.js \
 	ContextMenuHandler.js \
 	Prompt.jsm \
 	$(NULL)
