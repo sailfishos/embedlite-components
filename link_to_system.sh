@@ -66,6 +66,7 @@ ln -s $(pwd)/jsscripts/SelectionHandler.js $TARGET_DIR/chrome/embedlite/content/
 ln -s $(pwd)/jsscripts/SelectionPrototype.js $TARGET_DIR/chrome/embedlite/content/SelectionPrototype.js;
 ln -s $(pwd)/jsscripts/Util.js $TARGET_DIR/chrome/embedlite/content/Util.js;
 ln -s $(pwd)/jsscripts/Logger.js $TARGET_DIR/chrome/embedlite/content/Logger.js;
+ln -s $(pwd)/jsscripts/ClickEventBlocker.js $TARGET_DIR/chrome/embedlite/content/ClickEventBlocker.js;
 ln -s $(pwd)/jsscripts/ContextMenuHandler.js $TARGET_DIR/chrome/embedlite/content/ContextMenuHandler.js;
 ln -s $(pwd)/search-engines/google.xml $TARGET_DIR/chrome/embedlite/content/google.xml;
 ln -s $(pwd)/search-engines/bing.xml $TARGET_DIR/chrome/embedlite/content/bing.xml;
