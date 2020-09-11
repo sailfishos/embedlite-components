@@ -1,15 +1,5 @@
 TEMPLATE = subdirs
 
-SOURCES += chromehelper/*.cpp \
-    logger/*.cpp \
-    history/*.cpp \
-    widgetfactory/*.cpp
-
-HEADERS += chromehelper/*.h \
-    logger/*.h \
-    history/*.h \
-    widgetfactory/*.h
-
 SUBDIRS += search-engines
 
 OTHER_FILES += \
