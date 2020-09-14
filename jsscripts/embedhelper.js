@@ -10,15 +10,14 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Geometry.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
+Cu.importGlobalProperties(["InspectorUtils"]);
+
 let HTMLSelectElement = Ci.nsIDOMHTMLSelectElement;
 let HTMLLabelElement = Ci.nsIDOMHTMLLabelElement;
 let HTMLIFrameElement = Ci.nsIDOMHTMLIFrameElement;
 let HTMLFrameElement = Ci.nsIDOMHTMLFrameElement;
 let HTMLTextAreaElement = Ci.nsIDOMHTMLTextAreaElement;
 let HTMLInputElement = Ci.nsIDOMHTMLInputElement;
-
-XPCOMUtils.defineLazyServiceGetter(this, "DOMUtils",
-  "@mozilla.org/inspector/dom-utils;1", "inIDOMUtils");
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
                                   "resource://gre/modules/LoginManagerContent.jsm");
@@ -660,7 +659,7 @@ EmbedHelper.prototype = {
   },
 
   _doTapHighlight: function _doTapHighlight(aElement) {
-    DOMUtils.setContentState(aElement, kEmbedStateActive);
+    InspectorUtils.setContentState(aElement, kEmbedStateActive);
     this._highlightElement = aElement;
     this._touchElement = aElement;
   },
@@ -672,9 +671,9 @@ EmbedHelper.prototype = {
     // If the active element is in a sub-frame, we need to make that frame's document
     // active to remove the element's active state.
     if (this._highlightElement.ownerDocument != content.document)
-      DOMUtils.setContentState(this._highlightElement.ownerDocument.documentElement, kEmbedStateActive);
+      InspectorUtils.removeContentState(this._highlightElement.ownerDocument.documentElement, kEmbedStateActive);
 
-    DOMUtils.setContentState(content.document.documentElement, kEmbedStateActive);
+    InspectorUtils.removeContentState(content.document.documentElement, kEmbedStateActive);
     this._highlightElement = null;
   },
 
