@@ -649,9 +649,9 @@ EmbedHelper.prototype = {
   },
 
   _getLinkURI: function(aElement) {
-    if (aElement && aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
-        ((aElement instanceof Ci.nsIDOMHTMLAnchorElement && aElement.href) ||
-        (aElement instanceof Ci.nsIDOMHTMLAreaElement && aElement.href))) {
+    if (aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
+        ((ChromeUtils.getClassName(aElement) === "HTMLAnchorElement" && aElement.href) ||
+         (ChromeUtils.getClassName(aElement) === "HTMLAreaElement" && aElement.href))) {
       try {
         return Services.io.newURI(aElement.href, null, null);
       } catch (e) {}
@@ -723,8 +723,8 @@ EmbedHelper.prototype = {
     let element = utils.elementFromPoint(x, y, true, false);
     let offset = { x:0, y:0 };
 
-    while (element && (element instanceof HTMLIFrameElement ||
-                       element instanceof HTMLFrameElement)) {
+    while (element && (element instanceof content.HTMLIFrameElement ||
+                       element instanceof content.HTMLFrameElement)) {
       // get the child frame position in client coordinates
       let rect = element.getBoundingClientRect();
 
