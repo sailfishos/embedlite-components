@@ -174,21 +174,21 @@ EmbedliteDownloadManager.prototype = {
       case "profile-after-change":
         Services.obs.removeObserver(this, "profile-after-change");
         Services.obs.addObserver(this, "embedui:download", false);
-        Task.spawn(function() {
-          let downloadList = yield Downloads.getList(Downloads.ALL);
+        Task.spawn(async function() {
+          let downloadList = await Downloads.getList(Downloads.ALL);
 
           // Let's remove all existing downloads from the Download List
           // before adding the view so that partial (cancelled) downloads
           // will not get restarted.
-          let list = yield downloadList.getAll();
+          let list = await downloadList.getAll();
           for (let download of list) {
             // No need to check if this is download has hasPartialData true or not
             // as we do not have download list at the browser side.
-            yield downloadList.remove(download);
+            await downloadList.remove(download);
             download.finalize(true).then(null, Cu.reportError);
           }
 
-          yield downloadList.addView(DownloadView);
+          await downloadList.addView(DownloadView);
         }).then(null, Cu.reportError);
         break;
 
@@ -216,9 +216,9 @@ EmbedliteDownloadManager.prototype = {
             break;
 
           case "addDownload":
-            Task.spawn(function() {
-              let list = yield Downloads.getList(Downloads.ALL);
-              let download = yield Downloads.createDownload({
+            Task.spawn(async function() {
+              let list = await Downloads.getList(Downloads.ALL);
+              let download = await Downloads.createDownload({
                 source: data.from,
                 target: data.to
               });
@@ -229,9 +229,9 @@ EmbedliteDownloadManager.prototype = {
 
           case "saveAsPdf":
             if (Services.ww.activeWindow) {
-              Task.spawn(function() {
-                let list = yield Downloads.getList(Downloads.ALL);
-                let download = yield Downloads.createDownload({
+              Task.spawn(async function() {
+                let list = await Downloads.getList(Downloads.ALL);
+                let download = await Downloads.createDownload({
                   source: Services.ww.activeWindow,
                   target: data.to,
                   saver: "pdf",
