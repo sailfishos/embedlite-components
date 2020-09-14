@@ -370,7 +370,7 @@ var ContextMenuHandler = {
 
   /** Remove all handlers registered for a given type. */
   unregisterType: function unregisterType(aName) {
-    this._types = this._types.filter(function(type) type.name != aName);
+    this._types = this._types.filter(function(type) { type.name != aName });
   }
 };
 
