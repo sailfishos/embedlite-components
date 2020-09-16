@@ -208,9 +208,12 @@ var ContextMenuHandler = {
           let props = imageCache.findEntryProperties(popupNode.currentURI);
 
           if (props) {
-            state.contentType = String(props.get("type", Ci.nsISupportsCString));
-            state.contentDisposition = String(props.get("content-disposition",
-                                                        Ci.nsISupportsCString));
+            if (props.has("type"))
+              state.contentType = String(props.get("type", Ci.nsISupportsCString));
+
+            if (props.has("content-disposition"))
+              state.contentDisposition = String(props.get("content-disposition",
+                                                          Ci.nsISupportsCString));
           }
         } catch (ex) {
           Logger.warn(ex.message);
@@ -370,7 +373,7 @@ var ContextMenuHandler = {
 
   /** Remove all handlers registered for a given type. */
   unregisterType: function unregisterType(aName) {
-    this._types = this._types.filter(function(type) type.name != aName);
+    this._types = this._types.filter(function(type) { type.name != aName });
   }
 };
 

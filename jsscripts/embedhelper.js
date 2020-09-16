@@ -10,15 +10,14 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Geometry.jsm");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 
+Cu.importGlobalProperties(["InspectorUtils"]);
+
 let HTMLSelectElement = Ci.nsIDOMHTMLSelectElement;
 let HTMLLabelElement = Ci.nsIDOMHTMLLabelElement;
 let HTMLIFrameElement = Ci.nsIDOMHTMLIFrameElement;
 let HTMLFrameElement = Ci.nsIDOMHTMLFrameElement;
 let HTMLTextAreaElement = Ci.nsIDOMHTMLTextAreaElement;
 let HTMLInputElement = Ci.nsIDOMHTMLInputElement;
-
-XPCOMUtils.defineLazyServiceGetter(this, "DOMUtils",
-  "@mozilla.org/inspector/dom-utils;1", "inIDOMUtils");
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
                                   "resource://gre/modules/LoginManagerContent.jsm");
@@ -649,9 +648,9 @@ EmbedHelper.prototype = {
   },
 
   _getLinkURI: function(aElement) {
-    if (aElement && aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
-        ((aElement instanceof Ci.nsIDOMHTMLAnchorElement && aElement.href) ||
-        (aElement instanceof Ci.nsIDOMHTMLAreaElement && aElement.href))) {
+    if (aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
+        ((ChromeUtils.getClassName(aElement) === "HTMLAnchorElement" && aElement.href) ||
+         (ChromeUtils.getClassName(aElement) === "HTMLAreaElement" && aElement.href))) {
       try {
         return Services.io.newURI(aElement.href, null, null);
       } catch (e) {}
@@ -660,7 +659,7 @@ EmbedHelper.prototype = {
   },
 
   _doTapHighlight: function _doTapHighlight(aElement) {
-    DOMUtils.setContentState(aElement, kEmbedStateActive);
+    InspectorUtils.setContentState(aElement, kEmbedStateActive);
     this._highlightElement = aElement;
     this._touchElement = aElement;
   },
@@ -672,9 +671,9 @@ EmbedHelper.prototype = {
     // If the active element is in a sub-frame, we need to make that frame's document
     // active to remove the element's active state.
     if (this._highlightElement.ownerDocument != content.document)
-      DOMUtils.setContentState(this._highlightElement.ownerDocument.documentElement, kEmbedStateActive);
+      InspectorUtils.removeContentState(this._highlightElement.ownerDocument.documentElement, kEmbedStateActive);
 
-    DOMUtils.setContentState(content.document.documentElement, kEmbedStateActive);
+    InspectorUtils.removeContentState(content.document.documentElement, kEmbedStateActive);
     this._highlightElement = null;
   },
 
@@ -723,8 +722,8 @@ EmbedHelper.prototype = {
     let element = utils.elementFromPoint(x, y, true, false);
     let offset = { x:0, y:0 };
 
-    while (element && (element instanceof HTMLIFrameElement ||
-                       element instanceof HTMLFrameElement)) {
+    while (element && (element instanceof content.HTMLIFrameElement ||
+                       element instanceof content.HTMLFrameElement)) {
       // get the child frame position in client coordinates
       let rect = element.getBoundingClientRect();
 
