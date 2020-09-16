@@ -12,13 +12,6 @@ Cu.import("resource://gre/modules/FileUtils.jsm");
 
 Cu.importGlobalProperties(["InspectorUtils"]);
 
-let HTMLSelectElement = Ci.nsIDOMHTMLSelectElement;
-let HTMLLabelElement = Ci.nsIDOMHTMLLabelElement;
-let HTMLIFrameElement = Ci.nsIDOMHTMLIFrameElement;
-let HTMLFrameElement = Ci.nsIDOMHTMLFrameElement;
-let HTMLTextAreaElement = Ci.nsIDOMHTMLTextAreaElement;
-let HTMLInputElement = Ci.nsIDOMHTMLInputElement;
-
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
                                   "resource://gre/modules/LoginManagerContent.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerParent",
@@ -102,20 +95,20 @@ EmbedHelper.prototype = {
 
     let focused = doc.activeElement;
 
-    while (focused instanceof HTMLFrameElement || focused instanceof HTMLIFrameElement) {
+    while (focused instanceof content.HTMLFrameElement || focused instanceof content.HTMLIFrameElement) {
       doc = focused.contentDocument;
       focused = doc.activeElement;
     }
 
-    if (focused instanceof HTMLInputElement && (focused.mozIsTextField && focused.mozIsTextField(false)
-                                                || this.isExperimentalMobileType(focused.type))) {
+    if (focused instanceof content.HTMLInputElement && (focused.mozIsTextField && focused.mozIsTextField(false)
+                                                        || this.isExperimentalMobileType(focused.type))) {
       return { inputElement: focused, isTextField: true };
     }
 
     if (aOnlyInputElements)
       return null;
 
-    if (focused && (focused instanceof HTMLTextAreaElement || focused.isContentEditable)) {
+    if (focused && (focused instanceof content.HTMLTextAreaElement || focused.isContentEditable)) {
       return { inputElement: focused, isTextField: false };
     }
     return { inputElement: null, isTextField: false };
