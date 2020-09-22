@@ -549,10 +549,6 @@ EmbedHelper.prototype = {
 
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
-      case "DOMContentLoaded": {
-        LoginManagerParent.init();
-        break;
-      }
       case "DOMFormHasPassword": {
         let form = aEvent.target;
         let doc = form.ownerDocument;
