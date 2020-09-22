@@ -7,52 +7,69 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 Components.utils.import("resource://gre/modules/Services.jsm");
+let makeURI = Components.utils.import("resource://gre/modules/BrowserUtils.jsm", {}).BrowserUtils.makeURI;
 
 var ClickEventBlocker = {
-    _context: null,
+  _context: null,
+  _allowNavigationInSameOrigin: false,
 
-    init: function init(context) {
-        this._context = context
-        Services.els.addSystemEventListener(context, "click", this, true);
-    },
+  init: function init(context, params) {
+    this._context = context;
+    this._allowNavigationInSameOrigin = params && params.allowNavigationInSameOrigin;
+    Services.els.addSystemEventListener(context, "click", this, true);
+  },
 
-    handleEvent(event) {
-        switch (event.type) {
-        case "click":
-            event.preventDefault()
-            let originalTarget = event.originalTarget;
-            let ownerDoc = originalTarget.ownerDocument;
-            if (!ownerDoc) {
-                return;
-            }
+  handleEvent(event) {
+    switch (event.type) {
+    case "click":
+      let originalTarget = event.originalTarget;
+      let ownerDoc = originalTarget.ownerDocument;
+      if (!ownerDoc) {
+        return;
+      }
 
-            let href = this._hrefAndLinkNodeForClickEvent(event);
-            if (href) {
-                sendAsyncMessage("embed:OpenLink", {
-                                     "uri":  href
-                                 })
-            }
-        }
-    },
+      let [href, isSameOrigin] = this._hrefForClickEvent(event);
 
+      if (this._allowNavigationInSameOrigin && isSameOrigin) {
+        // Do not block clicks to the same origin links
+        return;
+      }
+      event.preventDefault();
+      if (href) {
+        sendAsyncMessage("embed:OpenLink", {
+                          "uri":  href
+                        })
+      }
+    }
+  },
 
   /**
-   * Extracts linkNode and href for the current click target.
+   * Extracts href for the current click target and checks if it has same
+   * origin as current page.
    *
    * @param event
    *        The click event.
-   * @return [href, linkNode, linkPrincipal].
-   *
-   * @note linkNode will be null if the click wasn't on an anchor
-   *       element. This includes SVG links, because callers expect |node|
-   *       to behave like an <a> element, which SVG links (XLink) don't.
+   * @return [href, isSameOrigin].
    */
-  _hrefAndLinkNodeForClickEvent(event) {
+  _hrefForClickEvent(event) {
     function isHTMLLink(aNode) {
       // Be consistent with what nsContextMenu.js does.
       return ((aNode instanceof content.HTMLAnchorElement && aNode.href) ||
               (aNode instanceof content.HTMLAreaElement && aNode.href) ||
               aNode instanceof content.HTMLLinkElement);
+    }
+
+    let self = this;
+    function isSameOriginHref(referrerURI, href) {
+      if (!self.allowNavigationInSameOrigin)
+          return null;
+      const securityManager = Services.scriptSecurityManager;
+      try {
+        var targetURI = makeURI(href);
+        securityManager.checkSameOriginURI(referrerURI, targetURI, false);
+        return true;
+      } catch (e) { }
+      return false;
     }
 
     let node = event.target;
@@ -61,9 +78,10 @@ var ClickEventBlocker = {
     }
 
     if (node)
-      return node.href;
+      return [node.href, isSameOriginHref(node.ownerDocument.baseURIObject, node.href)];
 
-    // If there is no linkNode, try simple XLink.
+    // linkNode will be null if the click wasn't on an anchor element like
+    // SVG links (XLink). If there is no linkNode, try simple XLink.
     let href, baseURI;
     node = event.target;
     while (node && !href) {
@@ -80,9 +98,14 @@ var ClickEventBlocker = {
       node = node.parentNode;
     }
 
-    // In case of XLink, we don't return the node we got href from since
-    // callers expect <a>-like elements.
-    // Note: makeURI() will throw if aUri is not a valid URI.
-    return href ? Services.io.newURI(href, null, baseURI).spec : null;
+    if (href) {
+      let document = node.ownerDocument;
+      let link = document.createElement('a');
+      link.href = href;
+      let uri = Services.io.newURI(href, null, baseURI).spec;
+
+      return [uri, isSameOriginHref(baseURI, uri)];
+    }
+    return [null, null];
   }
 };
