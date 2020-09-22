@@ -339,8 +339,7 @@ var ContentLinkHandler = {
         case "apple-touch-icon-precomposed":
         case "fluid-icon":
           if (link.hasAttribute("mask") || // Masked icons are not supported yet.
-              iconAdded ||
-              !Services.prefs.getBoolPref("browser.chrome.site_icons")) {
+              iconAdded) {
             break;
           }
 
