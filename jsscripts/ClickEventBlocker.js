@@ -9,31 +9,31 @@
 Components.utils.import("resource://gre/modules/Services.jsm");
 
 var ClickEventBlocker = {
-    _context: null,
+  _context: null,
 
-    init: function init(context) {
-        this._context = context
-        Services.els.addSystemEventListener(context, "click", this, true);
-    },
+  init: function init(context) {
+    this._context = context
+    Services.els.addSystemEventListener(context, "click", this, true);
+  },
 
-    handleEvent(event) {
-        switch (event.type) {
-        case "click":
-            event.preventDefault()
-            let originalTarget = event.originalTarget;
-            let ownerDoc = originalTarget.ownerDocument;
-            if (!ownerDoc) {
-                return;
-            }
+  handleEvent(event) {
+    switch (event.type) {
+    case "click":
+      event.preventDefault()
+      let originalTarget = event.originalTarget;
+      let ownerDoc = originalTarget.ownerDocument;
+      if (!ownerDoc) {
+        return;
+      }
 
-            let href = this._hrefAndLinkNodeForClickEvent(event);
-            if (href) {
-                sendAsyncMessage("embed:OpenLink", {
-                                     "uri":  href
-                                 })
-            }
-        }
-    },
+      let href = this._hrefAndLinkNodeForClickEvent(event);
+      if (href) {
+        sendAsyncMessage("embed:OpenLink", {
+                          "uri":  href
+                        })
+      }
+    }
+  },
 
 
   /**
