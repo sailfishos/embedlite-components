@@ -43,7 +43,6 @@ EmbedLiteGlobalHelper.prototype = {
         } catch (e) {
           Logger.warn("E login manager:", e);
         }
-        LoginManagerParent.init();
         break;
       }
       case "xpcom-shutdown": {
