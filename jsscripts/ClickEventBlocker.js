@@ -61,7 +61,7 @@ var ClickEventBlocker = {
 
     let self = this;
     function isSameOriginHref(referrerURI, href) {
-      if (!self.allowNavigationInSameOrigin)
+      if (!self._allowNavigationInSameOrigin)
         return null;
       const securityManager = Services.scriptSecurityManager;
       try {
