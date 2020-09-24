@@ -96,3 +96,8 @@ category app-startup PrivateDataManager service,@mozilla.org/embedlite/private-d
 component {71b0a6e8-83ac-4006-af97-d66009db97c8} EmbedliteDownloadManager.js
 contract @mozilla.org/embedlite/download-manager;1 {71b0a6e8-83ac-4006-af97-d66009db97c8}
 category app-startup EmbedliteDownloadManager service,@mozilla.org/embedlite/download-manager;1
+
+# ContentPermissionManager.js
+component {86d354c6-81bc-4eb5-82c3-4c9859586165} ContentPermissionManager.js
+contract @mozilla.org/content-permission/manager;1 {86d354c6-81bc-4eb5-82c3-4c9859586165}
+category app-startup ContentPermissionManager service,@mozilla.org/content-permission/manager;1

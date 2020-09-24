@@ -8,6 +8,7 @@ jscomps_manifest_DATA = \
 	EmbedPrefService.js \
 	FilePicker.js \
 	ContentPermissionPrompt.js \
+	ContentPermissionManager.js \
 	EmbedLiteGlobalHelper.js \
 	EmbedLiteConsoleListener.js \
 	EmbedLiteOrientationChangeHandler.js \
