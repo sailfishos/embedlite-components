@@ -62,7 +62,7 @@ var ClickEventBlocker = {
     let self = this;
     function isSameOriginHref(referrerURI, href) {
       if (!self.allowNavigationInSameOrigin)
-          return null;
+        return null;
       const securityManager = Services.scriptSecurityManager;
       try {
         var targetURI = makeURI(href);
