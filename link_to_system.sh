@@ -53,6 +53,7 @@ ln -s $(pwd)/jsscripts/EmbedLiteJSScripts.manifest $TARGET_DIR/chrome/EmbedLiteJ
 
 rm -rf $TARGET_DIR/chrome/embedlite;
 mkdir -p $TARGET_DIR/chrome/embedlite/content/sync;
+mkdir -p $TARGET_DIR/chrome/embedlite/content/search-plugins;
 ln -s $(pwd)/jsscripts/embedhelper.js $TARGET_DIR/chrome/embedlite/content/embedhelper.js;
 ln -s $(pwd)/jsscripts/OrientationChangeHandler.jsm $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.jsm;
 ln -s $(pwd)/jsscripts/Prompt.jsm $TARGET_DIR/chrome/embedlite/content/Prompt.jsm;
@@ -64,12 +65,13 @@ ln -s $(pwd)/jsscripts/Util.js $TARGET_DIR/chrome/embedlite/content/Util.js;
 ln -s $(pwd)/jsscripts/Logger.js $TARGET_DIR/chrome/embedlite/content/Logger.js;
 ln -s $(pwd)/jsscripts/ClickEventBlocker.js $TARGET_DIR/chrome/embedlite/content/ClickEventBlocker.js;
 ln -s $(pwd)/jsscripts/ContextMenuHandler.js $TARGET_DIR/chrome/embedlite/content/ContextMenuHandler.js;
-ln -s $(pwd)/search-engines/google.xml $TARGET_DIR/chrome/embedlite/content/google.xml;
-ln -s $(pwd)/search-engines/bing.xml $TARGET_DIR/chrome/embedlite/content/bing.xml;
-ln -s $(pwd)/search-engines/yahoo.xml $TARGET_DIR/chrome/embedlite/content/yahoo.xml;
-ln -s $(pwd)/search-engines/baidu.xml $TARGET_DIR/chrome/embedlite/content/baidu.xml;
-ln -s $(pwd)/search-engines/duckduckgo.xml $TARGET_DIR/chrome/embedlite/content/duckduckgo.xml;
-ln -s $(pwd)/search-engines/yandex.xml $TARGET_DIR/chrome/embedlite/content/yandex.xml;
+ln -s $(pwd)/search-engines/google.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/google.xml;
+ln -s $(pwd)/search-engines/bing.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/bing.xml;
+ln -s $(pwd)/search-engines/yahoo.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/yahoo.xml;
+ln -s $(pwd)/search-engines/baidu.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/baidu.xml;
+ln -s $(pwd)/search-engines/duckduckgo.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/duckduckgo.xml;
+ln -s $(pwd)/search-engines/yandex.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/yandex.xml;
+ln -s $(pwd)/search-engines/list.json $TARGET_DIR/chrome/embedlite/content/search-plugins/list.json;
 
 ln -s $(pwd)/jsscripts/sync/bookmarks.js $TARGET_DIR/chrome/embedlite/content/sync/bookmarks.js;
 
