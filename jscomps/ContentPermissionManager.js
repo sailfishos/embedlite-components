@@ -16,14 +16,6 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
-const kPermission = {
-  "unknown": Services.perms.UNKNOWN_ACTION,
-  "allow": Services.perms.ALLOW_ACTION,
-  "deny": Services.perms.DENY_ACTION,
-  "prompt": Services.perms.PROMPT_ACTION
-}
-var kPermissionRev = new Map(Array.from(kPermission.entries()).reverse());
-
 function ContentPermissionManager() {
   Logger.debug("JSComp: ContentPermissionManager.js loaded");
 }
@@ -55,11 +47,10 @@ ContentPermissionManager.prototype = {
               let iterator = Services.perms.enumerator;
               while (iterator.hasMoreElements()) {
                   let permission = iterator.getNext().QueryInterface(Ci.nsIPermission);
-                  let capability = kPermissionRev.get(permission.capability);
                   permissionList.push({
                                   type: permission.type,
                                   uri: permission.principal.origin,
-                                  capability: capability
+                                  capability: permission.capability
                               })
               }
               sendResult("embed:perms:all", permissionList);
@@ -69,18 +60,17 @@ ContentPermissionManager.prototype = {
               let permissions = Services.perms.getAllForURI(Services.io.newURI(data.uri, null, null));
               while (permissions.hasMoreElements()) {
                   let permission = permissions.getNext().QueryInterface(Ci.nsIPermission);
-                  let capability = kPermissionRev.get(permission.capability);
                   result.push({
                                   type: permission.type,
                                   uri: data.uri,
-                                  capability: capability
+                                  capability: permission.capability
                               });
               }
               sendResult("embed:perms:all-for-uri", result);
               break;
           case "add":
               Services.perms.add(Services.io.newURI(data.uri, null, null),
-                                 data.type, kPermission[data.permission]);
+                                 data.type, parseInt(data.permission));
               debug("set, uri: " + data.uri
                     + ", type: " + data.type
                     + ", permission: " + data.permission);
