@@ -86,15 +86,22 @@ ln -s $(pwd)/overrides/aboutCertError.xhtml $TARGET_DIR/chrome/chrome/content/
 ln -s $(pwd)/overrides/netError.xhtml $TARGET_DIR/chrome/chrome/content/
 ln -s $(pwd)/overrides/netError.css $TARGET_DIR/chrome/chrome/skin/
 ln -s $(pwd)/overrides/touchcontrols.css $TARGET_DIR/chrome/chrome/skin/
-ln -s $(pwd)/overrides/images/mute-hdpi.png $TARGET_DIR/chrome/chrome/skin/images/
-ln -s $(pwd)/overrides/images/pause-hdpi.png $TARGET_DIR/chrome/chrome/skin/images/
-ln -s $(pwd)/overrides/images/play-hdpi.png $TARGET_DIR/chrome/chrome/skin/images/
-ln -s $(pwd)/overrides/images/unmute-hdpi.png $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/clicktoplay-bgtexture.png $TARGET_DIR/chrome/chrome/skin/images/
 ln -s $(pwd)/overrides/images/error.png $TARGET_DIR/chrome/chrome/skin/images/
-ln -s $(pwd)/overrides/images/exitfullscreen-hdpi.png $TARGET_DIR/chrome/chrome/skin/images/
-ln -s $(pwd)/overrides/images/fullscreen-hdpi.png $TARGET_DIR/chrome/chrome/skin/images/
-ln -s $(pwd)/overrides/images/throbber.png $TARGET_DIR/chrome/chrome/skin/images/
-ln -s $(pwd)/overrides/images/scrubber-hdpi.png $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/icon-m-pause.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/icon-m-play.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/icon-m-speaker-mute.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/icon-m-speaker-on.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videoClickToPlayButton.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-cast-active.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-cast-ready.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-exitfullscreen.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-fullscreen.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-mute.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-pause.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-play.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-scrubber.svg $TARGET_DIR/chrome/chrome/skin/images/
+ln -s $(pwd)/overrides/images/videocontrols-unmute.svg $TARGET_DIR/chrome/chrome/skin/images/
 
 rm -rf $TARGET_DIR/chrome/en-US/locale/branding;
 rm -rf $TARGET_DIR/chrome/en-US/locale/en-US/browser;
