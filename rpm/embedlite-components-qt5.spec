@@ -24,7 +24,6 @@ License:    MPLv2.0
 URL:        https://git.sailfishos.org/mer-core/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 
-BuildRequires:  python
 BuildRequires:  libtool
 BuildRequires:  automake
 BuildRequires:  autoconf
