@@ -9,5 +9,6 @@ OTHER_FILES += \
     jsscripts/sync/*.js \
     jscomps/*.js \
     jscomps/*.jsm \
-    overrides/* \
+    overrides/*.* \
+    overrides/images/* \
     configure.ac
