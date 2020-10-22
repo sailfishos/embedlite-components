@@ -49,6 +49,7 @@ let DownloadView = {
                                  JSON.stringify({
                                      msg: "dl-start",
                                      id: this.counter,
+                                     saveAsPdf: download.saveAsPdf || false,
                                      displayName: download.target.path.split('/').slice(-1)[0],
                                      sourceUrl: download.source.url,
                                      targetPath: download.target.path,
@@ -61,6 +62,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-progress",
                                        id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
     }
@@ -70,6 +72,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-done",
                                        id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
     }
@@ -79,7 +82,8 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-fail",
-                                       id: this.prevState[download].id
+                                       id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false
                                    }));
     }
 
@@ -87,7 +91,8 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-cancel",
-                                       id: this.prevState[download].id
+                                       id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false
                                    }));
     }
   },
@@ -98,6 +103,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-progress",
                                        id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
     }
@@ -108,6 +114,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-done",
                                        id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
     }
@@ -118,7 +125,8 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-fail",
-                                       id: this.prevState[download].id
+                                       id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false
                                    }));
     }
     this.prevState[download].error = download.error;
@@ -127,7 +135,8 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-cancel",
-                                       id: this.prevState[download].id
+                                       id: this.prevState[download].id,
+                                       saveAsPdf: download.saveAsPdf || false
                                    }));
     }
     this.prevState[download].canceled = download.canceled;
@@ -137,6 +146,7 @@ let DownloadView = {
                                    JSON.stringify({
                                      msg: "dl-start",
                                      id: this.prevState[download].id,
+                                     saveAsPdf: download.saveAsPdf || false,
                                      displayName: download.target.path.split('/').slice(-1)[0],
                                      sourceUrl: download.source.url,
                                      targetPath: download.target.path,
@@ -237,6 +247,7 @@ EmbedliteDownloadManager.prototype = {
                   saver: "pdf",
                   contentType: "application/pdf"
                 });
+                download["saveAsPdf"] = true;
                 download.start();
                 list.add(download);
               }).then(null, Cu.reportError);
