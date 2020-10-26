@@ -35,10 +35,6 @@ UserAgentOverrideHelper.prototype = {
         Services.obs.addObserver(this, VIEW_CREATED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         Services.prefs.addObserver(PREF_OVERRIDE, this, false);
-        // Do not initialize UserAgent here because then UserAgentOverrides.jsm
-        // will receive desktop ua as a default user agent <= initialized too ealy.
-        // If initialized too early regular expression based user agent overrides will
-        // not work.
         break;
       }
       case "nsPref:changed": {
@@ -63,17 +59,13 @@ UserAgentOverrideHelper.prototype = {
     }
   },
 
-  // From nsISiteSpecificUserAgent
-  getUserAgentForURIAndWindow: function ssua_getUserAgentForURIAndWindow(aURI, aWindow) {
-    return UserAgent.getUserAgentForWindow(aURI)
-  },
-
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISiteSpecificUserAgent, Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference, Ci.nsIFormSubmitObserver])
 };
 
 var UserAgent = {
   _desktopMode: false,
+  _debug: false,
   _customUA: null,
   overrideMap: new Map,
   initilized: false,
@@ -89,6 +81,8 @@ var UserAgent = {
     }
 
     Services.obs.addObserver(this, "DesktopMode:Change", false);
+    Services.obs.addObserver(this.onModifyRequest.bind(this),
+                             "http-on-modify-request");
     Services.prefs.addObserver(PREF_OVERRIDE, this, false);
     this._customUA = this.getCustomUserAgent();
     Cu.import("resource://gre/modules/UserAgentOverrides.jsm");
@@ -100,6 +94,14 @@ var UserAgent = {
                         .replace(/Android; [a-zA-Z]+/, "X11; Linux x86_64")
                         .replace(/Gecko\/[0-9\.]+/, "Gecko/20100101");
     this.initilized = true;
+  },
+
+  onModifyRequest(aSubject, aTopic, aData) {
+    if (aTopic === "http-on-modify-request") {
+      let channel = aSubject.QueryInterface(Ci.nsIHttpChannel);
+      let ua = this.onRequest(channel, this.getDefaultUserAgent());
+      channel.setRequestHeader("User-Agent", ua, false);
+    }
   },
 
   getCustomUserAgent: function() {
@@ -129,35 +131,30 @@ var UserAgent = {
   onRequest: function(channel, defaultUA) {
     let ua = "";
     let uri = channel.URI;
+    let loadingPrincipalURI = null;
 
     // Prefer current uri over the loading principal's uri in case both have overrides.
     ua = uri && UserAgentOverrides.getOverrideForURI(uri)
 
     if (ua) {
+      // Requires also Logger to be enabled
+      if (this._debug) {
+        Logger.debug("Uri:", uri.asciiHost, "UA:", ua)
+      }
+
       return ua
     } else {
       let loadInfo = channel.loadInfo;
-      let loadingPrincipalURI = loadInfo && loadInfo.loadingPrincipal && loadInfo.loadingPrincipal.URI;
-      if (loadingPrincipalURI && loadingPrincipalURI.asciiHost) {
-        uri = loadingPrincipalURI;
+      loadingPrincipalURI = loadInfo && loadInfo.loadingPrincipal && loadInfo.loadingPrincipal.URI;
+    }
+
+    if (loadingPrincipalURI && loadingPrincipalURI.asciiHost) {
+      ua = UserAgentOverrides.getOverrideForURI(loadingPrincipalURI);
+      if (this._debug) {
+        Logger.debug("Loading principal uri:", loadingPrincipalURI.asciiHost, "Uri:", uri.asciiHost, "UA:", ua);
       }
-    }
-
-    return this.getUserAgentForWindow(uri);
-  },
-
-  getUserAgentForWindow: function ua_getUserAgentForWindow(aUri, aWindow) {
-    // Try to pick 'general.useragent.override.*'
-    let ua = null;
-
-    if (aUri) {
-      ua = UserAgentOverrides.getOverrideForURI(aUri);
-    }
-
-    if (ua) {
       return ua;
     }
-
     return this.getDefaultUserAgent();
   },
 
