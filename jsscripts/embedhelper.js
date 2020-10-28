@@ -331,6 +331,7 @@ EmbedHelper.prototype = {
             }
             let historyEntry = Cc["@mozilla.org/browser/session-history-entry;1"].createInstance(Ci.nsISHEntry);
             historyEntry.setURI(uri);
+            historyEntry.triggeringPrincipal = Services.scriptSecurityManager.createNullPrincipal({});
             shist.addEntry(historyEntry, true);
         });
         if (index < 0) {
