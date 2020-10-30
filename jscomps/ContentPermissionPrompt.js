@@ -79,6 +79,9 @@ ContentPermissionPrompt.prototype = {
       // If the user checked "Don't ask again", make a permanent exception
       if (ret.checkedDontAsk) {
         Services.perms.addFromPrincipal(request.principal, perm.type, Ci.nsIPermissionManager.DENY_ACTION);
+      } else {
+        Services.perms.addFromPrincipal(request.principal, perm.type, Ci.nsIPermissionManager.DENY_ACTION,
+                                        Ci.nsIPermissionManager.EXPIRE_SESSION);
       }
       cachedreqs.forEach(function(r) { r.cancel(); });
     }
