@@ -99,6 +99,10 @@ var UserAgent = {
   onModifyRequest(aSubject, aTopic, aData) {
     if (aTopic === "http-on-modify-request") {
       let channel = aSubject.QueryInterface(Ci.nsIHttpChannel);
+      // Cover all google domains
+      if (!channel.URI.schemeIs("https") && channel.URI.asciiHost.indexOf(".google.") !== -1) {
+        channel.upgradeToSecure();
+      }
       let ua = this.onRequest(channel, this.getDefaultUserAgent());
       channel.setRequestHeader("User-Agent", ua, false);
     }
