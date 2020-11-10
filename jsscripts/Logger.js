@@ -25,7 +25,11 @@ let Logger = {
   },
 
   get stackTraceEnabled() {
-    return this._consoleEnv === "stacktrace";
+    return this._consoleEnv.indexOf("stacktrace") !== -1;
+  },
+
+  get devModeNetworkEnabled() {
+    return this._consoleEnv.indexOf("network") !== -1;
   },
 
   get enabled() {
