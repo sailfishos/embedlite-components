@@ -30,14 +30,22 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 let DownloadView = {
   // This is a map of download => their properties since the previos change
-  prevState: {},
   counter: 0,
 
   onDownloadAdded: function(download) {
     this.counter++;
-    this.prevState[download] = {
-      id: this.counter,
-      download: download,
+
+    if (download["id"]) {
+      Logger.warn("Download id is already set")
+    } else {
+      download["id"] = this.counter;
+    }
+
+    if (download["prevState"]) {
+      Logger.warn("Download prevState is already set")
+    }
+
+    download["prevState"] = {
       progress: download.progress,
       succeeded: download.succeeded,
       error: download.error,
@@ -61,7 +69,7 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-progress",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
@@ -71,7 +79,7 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-done",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
@@ -82,7 +90,7 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-fail",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -91,61 +99,61 @@ let DownloadView = {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-cancel",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
   },
 
   onDownloadChanged: function(download) {
-    if (this.prevState[download].progress !== download.progress) {
+    if (download.prevState.progress !== download.progress) {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-progress",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
     }
-    this.prevState[download].progress = download.progress;
+    download.prevState.progress = download.progress;
 
-    if (!this.prevState[download].succeeded && download.succeeded) {
+    if (!download.prevState.succeeded && download.succeeded) {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-done",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
     }
-    this.prevState[download].succeeded = download.succeeded;
+    download.prevState.succeeded = download.succeeded;
 
-    if (!this.prevState[download].error && download.error) {
+    if (!download.prevState.error && download.error) {
       Logger.debug("EmbedliteDownloadManager error:", download.error.message);
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-fail",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
-    this.prevState[download].error = download.error;
+    download.prevState.error = download.error;
 
-    if (!this.prevState[download].canceled && download.canceled) {
+    if (!download.prevState.canceled && download.canceled) {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-cancel",
-                                       id: this.prevState[download].id,
+                                       id: download.id,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
-    this.prevState[download].canceled = download.canceled;
+    download.prevState.canceled = download.canceled;
 
-    if (this.prevState[download].stopped && !download.stopped) {
+    if (download.prevState.stopped && !download.stopped) {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                      msg: "dl-start",
-                                     id: this.prevState[download].id,
+                                     id: download.id,
                                      saveAsPdf: download.saveAsPdf || false,
                                      displayName: download.target.path.split('/').slice(-1)[0],
                                      sourceUrl: download.source.url,
@@ -154,11 +162,7 @@ let DownloadView = {
                                      size: download.totalBytes
                                    }));
     }
-    this.prevState[download].stopped = download.stopped;
-  },
-
-  onDownloadRemoved: function(download) {
-    delete this.prevState[download];
+    download.prevState.stopped = download.stopped;
   }
 };
 
@@ -207,22 +211,32 @@ EmbedliteDownloadManager.prototype = {
 
         switch (data.msg) {
           case "retryDownload":
-            for (var key in DownloadView.prevState) {
-              if (DownloadView.prevState[key].id === data.id) {
-                DownloadView.prevState[key].download.start();
+            Task.spawn(async function() {
+              let downloadList = await Downloads.getList(Downloads.ALL);
+              let list = await downloadList.getAll();
+              for (let download of list) {
+                if (download.id === data.id) {
+                  download.start();
+                  break;
+                }
               }
-            }
+            }).then(null, Cu.reportError);
             break;
 
           case "cancelDownload":
-            for (var key in DownloadView.prevState) {
-              if (DownloadView.prevState[key].id === data.id) {
-                // Switch to cancel (from finalize) so that we have partially downloaded hanging.
-                // A partially downloaded download can be restarted during the same browsering
-                // session. Restarting the browser will clear download list.
-                DownloadView.prevState[key].download.cancel();
+            Task.spawn(async function() {
+              let downloadList = await Downloads.getList(Downloads.ALL);
+              let list = await downloadList.getAll();
+              for (let download of list) {
+                if (download.id === data.id) {
+                  // Switch to cancel (from finalize) so that we have partially downloaded hanging.
+                  // A partially downloaded download can be restarted during the same browsering
+                  // session. Restarting the browser will clear download list.
+                  download.cancel();
+                  break;
+                }
               }
-            }
+            }).then(null, Cu.reportError);
             break;
 
           case "addDownload":
