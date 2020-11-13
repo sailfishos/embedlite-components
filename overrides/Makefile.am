@@ -44,6 +44,7 @@ localebrand_manifest_DATA = \
 localebrowser_manifestdir=$(libdir)/mozembedlite/chrome/en-US/locale/en-US/browser
 localebrowser_manifest_DATA = \
 	aboutCertError.dtd \
+	appstrings.properties \
 	netError.dtd \
 	$(NULL)
 
