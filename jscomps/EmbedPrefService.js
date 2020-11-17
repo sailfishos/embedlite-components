@@ -12,7 +12,7 @@ Components.utils.import("resource://gre/modules/Services.jsm");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // -----------------------------------------------------------------------
-// Download Manager UI
+// Interface for requesting information on prefs values ​​and setting them
 // -----------------------------------------------------------------------
 
 function EmbedPrefService()
@@ -111,7 +111,7 @@ EmbedPrefService.prototype = {
       }
       case "embedui:clearprefs": {
         let prefs = JSON.parse(aData).prefs;
-        for (var i = 0; i < prefs.length; i++) {
+        for (var i in prefs) {
           Services.prefs.clearUserPref(prefs[i]);
         }
         break;
@@ -133,19 +133,19 @@ EmbedPrefService.prototype = {
       }
       case "embedui:setprefs": {
         let prefs = JSON.parse(aData).prefs;
-        for (var i = 0; i < prefs.length; i++) {
-          switch (typeof(prefs[i].v)) {
+        for (var i in prefs) {
+          switch (typeof(prefs[i].value)) {
             case "string":
-            Services.prefs.setCharPref(prefs[i].n, prefs[i].v);
+            Services.prefs.setCharPref(prefs[i].name, prefs[i].value);
             break;
           case "number":
-            Services.prefs.setIntPref(prefs[i].n, prefs[i].v);
+            Services.prefs.setIntPref(prefs[i].name, prefs[i].value);
             break;
           case "boolean":
-            Services.prefs.setBoolPref(prefs[i].n, prefs[i].v);
+            Services.prefs.setBoolPref(prefs[i].name, prefs[i].value);
             break;
           default:
-            throw new Error("Unexpected value type: " + typeof(prefs[i].v));
+            throw new Error("Unexpected value type: " + typeof(prefs[i].value));
           }
         }
         break;
