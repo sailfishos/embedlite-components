@@ -105,6 +105,7 @@ EmbedLiteChromeManager.prototype = {
   _initialize() {
     // Use "embedliteviewcreated" instead of "domwindowopened".
     Services.obs.addObserver(this, "embedliteviewcreated", true);
+    Services.obs.addObserver(this, "embed-network-link-status", true)
     Services.obs.addObserver(this, "domwindowclosed", true);
     Services.obs.addObserver(this, "xpcom-shutdown", false);
   },
@@ -150,6 +151,13 @@ EmbedLiteChromeManager.prototype = {
       break;
     case "domwindowclosed":
       self.onWindowClosed(aSubject);
+      break;
+    case "embed-network-link-status":
+      let network = JSON.parse(aData);
+      Services.io.manageOfflineStatus = true;
+      Services.io.offline = network.offline;
+      Services.obs.notifyObservers(null, "network:link-status-changed",
+                                   network.offline ? "down" : "up");
       break;
     default:
       Logger.debug("EmbedLiteChromeManager subject", aSubject, "topic:", aTopic);
