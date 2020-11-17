@@ -4,6 +4,7 @@
 
 /* Copyright (c) 2020 Open Mobile Platform LLC. */
 
+const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
@@ -28,10 +29,25 @@ function sendResult(topic, result) {
   Services.obs.notifyObservers(null, topic, JSON.stringify(result));
 }
 
+function permissionToCookieAccess(permission) {
+    switch(permission) {
+    case Ci.nsIPermissionManager.ALLOW_ACTION:
+        return Ci.nsICookiePermission.ACCESS_ALLOW;
+    case Ci.nsIPermissionManager.DENY_ACTION:
+        return Ci.nsICookiePermission.ACCESS_DENY;
+    default:
+        return Ci.nsICookiePermission.ACCESS_DEFAULT;
+    }
+}
+
 ContentPermissionManager.prototype = {
   classID: Components.ID("{86d354c6-81bc-4eb5-82c3-4c9859586165}"),
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
+
+  get cookiePermission() {
+    return Cc["@mozilla.org/cookie/permission;1"].getService(Ci.nsICookiePermission);
+  },
 
   observe: function(aSubject, aTopic, aData) {
       switch (aTopic) {
@@ -69,6 +85,10 @@ ContentPermissionManager.prototype = {
               sendResult("embed:perms:all-for-uri", result);
               break;
           case "add":
+              if (data.type === "cookie") {
+                this.cookiePermission.setAccess(Services.io.newURI(data.uri, null, null),
+                                                permissionToCookieAccess(parseInt(data.permission)));
+              }
               Services.perms.add(Services.io.newURI(data.uri, null, null),
                                  data.type, parseInt(data.permission));
               debug("set, uri: " + data.uri
@@ -76,6 +96,10 @@ ContentPermissionManager.prototype = {
                     + ", permission: " + data.permission);
               break;
           case "remove":
+              if (data.type === "cookie") {
+                this.cookiePermission.setAccess(Services.io.newURI(data.uri, null, null),
+                                                Ci.nsICookiePermission.ACCESS_DEFAULT);
+              }
               Services.perms.remove(Services.io.newURI(data.uri, null, null), data.type);
               debug("remove type: " + data.type + ", for uri: " + data.uri);
               break;
