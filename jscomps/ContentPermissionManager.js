@@ -66,7 +66,8 @@ ContentPermissionManager.prototype = {
                   permissionList.push({
                                   type: permission.type,
                                   uri: permission.principal.origin,
-                                  capability: permission.capability
+                                  capability: permission.capability,
+                                  expireType: permission.expireType
                               })
               }
               sendResult("embed:perms:all", permissionList);
@@ -79,7 +80,8 @@ ContentPermissionManager.prototype = {
                   result.push({
                                   type: permission.type,
                                   uri: data.uri,
-                                  capability: permission.capability
+                                  capability: permission.capability,
+                                  expireType: permission.expireType
                               });
               }
               sendResult("embed:perms:all-for-uri", result);
