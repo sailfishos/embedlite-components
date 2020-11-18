@@ -605,14 +605,19 @@ EmbedHelper.prototype = {
     // Can only trigger if we have not seen touch moves i.e. we do have highlight element. Touch move
     // cancels tap highlight and also here we call cancel tap highlight at the end.
     let target = this._highlightElement;
-    if (target && !this._touchEventDefaultPrevented) {
-      let uri = this._getLinkURI(target);
-      if (uri) {
-        try {
-          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
-        } catch (e) {
-          Logger.warn("Speculative connection error:", e)
+    if (target) {
+      if (!this._touchEventDefaultPrevented) {
+        let uri = this._getLinkURI(target);
+        if (uri) {
+          try {
+            Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
+          } catch (e) {
+            Logger.warn("Speculative connection error:", e)
+          }
         }
+      } else {
+        // Since other browsers seem to switch focus even when defaultPrevented is used we do so too
+        target.focus();
       }
     }
 
@@ -626,13 +631,15 @@ EmbedHelper.prototype = {
 
     this._touchEventDefaultPrevented = aEvent.defaultPrevented;
 
-    if (!this.isBrowserContentDocumentDisplayed() || aEvent.touches.length > 1 || aEvent.defaultPrevented)
-      return;
 
     let target = aEvent.target;
     if (!target) {
       return;
     }
+    this._highlightElement = target;
+
+    if (!this.isBrowserContentDocumentDisplayed() || aEvent.touches.length > 1 || aEvent.defaultPrevented)
+      return;
 
     this._doTapHighlight(target);
   },
@@ -650,7 +657,6 @@ EmbedHelper.prototype = {
 
   _doTapHighlight: function _doTapHighlight(aElement) {
     InspectorUtils.setContentState(aElement, kEmbedStateActive);
-    this._highlightElement = aElement;
     this._touchElement = aElement;
   },
 
