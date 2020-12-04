@@ -17,8 +17,7 @@ Components.utils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
-// Common helper service
-
+// UserAgentOverrideHelper service
 function UserAgentOverrideHelper()
 {
   Logger.debug("JSComp: UserAgentOverrideHelper.js loaded");
@@ -32,9 +31,9 @@ UserAgentOverrideHelper.prototype = {
       // Engine DownloadManager notifications
       case APP_STARTUP: {
         Logger.debug("UserAgentOverrideHelper app-startup");
-        Services.obs.addObserver(this, VIEW_CREATED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         Services.prefs.addObserver(PREF_OVERRIDE, this, false);
+        UserAgent.init();
         break;
       }
       case "nsPref:changed": {
@@ -43,11 +42,6 @@ UserAgentOverrideHelper.prototype = {
         }
         break;
       }
-      case VIEW_CREATED: {
-        UserAgent.init();
-        break;
-      }
-
       case XPCOM_SHUTDOWN: {
         Logger.debug("UserAgentOverrideHelper", XPCOM_SHUTDOWN);
         Services.obs.removeObserver(this, XPCOM_SHUTDOWN, false);
@@ -90,9 +84,8 @@ var UserAgent = {
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
     // See https://developer.mozilla.org/en/Gecko_user_agent_string_reference
     this.DESKTOP_UA = Cc["@mozilla.org/network/protocol;1?name=http"]
-                        .getService(Ci.nsIHttpProtocolHandler).userAgent
-                        .replace(/Android; [a-zA-Z]+/, "X11; Linux x86_64")
-                        .replace(/Gecko\/[0-9\.]+/, "Gecko/20100101");
+                        .getService(Ci.nsIHttpProtocolHandler).userAgent;
+
     this.initilized = true;
   },
 
@@ -165,8 +158,6 @@ var UserAgent = {
   observe: function ua_observe(aSubject, aTopic, aData) {
     switch (aTopic) {
       case "DesktopMode:Change": {
-        //let args = JSON.parse(aData);
-        //Logger.debug("UserAgentOverrideHelper observe:", Topic);
         break;
       }
       case "nsPref:changed": {
