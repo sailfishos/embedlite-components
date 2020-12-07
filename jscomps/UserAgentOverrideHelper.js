@@ -7,10 +7,12 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const APP_STARTUP         = "app-startup"
-const VIEW_CREATED        = "embedliteviewcreated";
-const XPCOM_SHUTDOWN      = "xpcom-shutdown";
-const PREF_OVERRIDE       = "general.useragent.override";
+const APP_STARTUP               = "app-startup"
+const VIEW_CREATED              = "embedliteviewcreated";
+const VIEW_DESTROYED            = "embedliteviewdestroyed";
+const VIEW_DESKTOP_MODE_CHANGED = "embedliteviewdesktopmodechanged";
+const XPCOM_SHUTDOWN            = "xpcom-shutdown";
+const PREF_OVERRIDE             = "general.useragent.override";
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -31,6 +33,9 @@ UserAgentOverrideHelper.prototype = {
       // Engine DownloadManager notifications
       case APP_STARTUP: {
         Logger.debug("UserAgentOverrideHelper app-startup");
+        Services.obs.addObserver(this, VIEW_CREATED, true);
+        Services.obs.addObserver(this, VIEW_DESKTOP_MODE_CHANGED, true);
+        Services.obs.addObserver(this, VIEW_DESTROYED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         Services.prefs.addObserver(PREF_OVERRIDE, this, false);
         UserAgent.init();
@@ -41,6 +46,21 @@ UserAgentOverrideHelper.prototype = {
         if (aData === PREF_OVERRIDE) {
             // Drop general.useragent.override from the in-memory prefs.
             Services.prefs.clearUserPref(PREF_OVERRIDE);
+        }
+        break;
+      }
+      case VIEW_CREATED: {
+        UserAgent.addTabForWindow(aSubject)
+        break;
+      }
+      case VIEW_DESTROYED: {
+        UserAgent.removeTabForWindow(aSubject)
+        break;
+      }
+      case VIEW_DESKTOP_MODE_CHANGED: {
+        let tab = UserAgent.getTabForWindow(aSubject);
+        if (tab) {
+          tab.desktopMode = (aData === "true");
         }
         break;
       }
@@ -60,9 +80,9 @@ UserAgentOverrideHelper.prototype = {
 };
 
 var UserAgent = {
-  _desktopMode: false,
   _debug: false,
   _customUA: null,
+  _tabs: [],
   overrideMap: new Map,
   initilized: false,
   DESKTOP_UA: null,
@@ -86,7 +106,9 @@ var UserAgent = {
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
     // See https://developer.mozilla.org/en/Gecko_user_agent_string_reference
     this.DESKTOP_UA = Cc["@mozilla.org/network/protocol;1?name=http"]
-                        .getService(Ci.nsIHttpProtocolHandler).userAgent;
+                        .getService(Ci.nsIHttpProtocolHandler).userAgent
+                        .replace(/Sailfish \d.+?; [a-zA-Z]+/, "X11; Linux x86_64")
+                        .replace(/Gecko\/[0-9\.]+/, "Gecko/20100101");
 
     this.initilized = true;
   },
@@ -113,10 +135,6 @@ var UserAgent = {
   },
 
   getDefaultUserAgent : function ua_getDefaultUserAgent() {
-    // Send desktop UA if "Request Desktop Site" is enabled.
-    if (this._desktopMode)
-      return this.DESKTOP_UA;
-
     return this._customUA ? this._customUA : this.DESKTOP_UA;
   },
 
@@ -131,6 +149,15 @@ var UserAgent = {
     let ua = "";
     let uri = channel.URI;
     let loadingPrincipalURI = null;
+    let channelWindow = this._getWindowForRequest(channel);
+
+    let tab = this.getTabForWindow(channelWindow);
+    if (tab) {
+      // Send desktop UA if "Request Desktop Site" is enabled.
+      if (tab.desktopMode) {
+        return this.DESKTOP_UA;
+      }
+    }
 
     // Prefer current uri over the loading principal's uri in case both have overrides.
     ua = uri && UserAgentOverrides.getOverrideForURI(uri)
@@ -154,7 +181,60 @@ var UserAgent = {
       }
       return ua;
     }
-    return this.getDefaultUserAgent();
+    return defaultUA;
+  },
+
+  getTabForWindow: function getTabForWindow(aWindow) {
+    let tabs = this._tabs;
+    for (let i = 0; i < tabs.length; i++) {
+      if (tabs[i].contentWindow == aWindow) {
+        return tabs[i];
+      }
+    }
+    return null;
+  },
+
+  addTabForWindow: function addTabForWindow(aWindow) {
+    this._tabs.push({"contentWindow" : aWindow, "desktopMode" : false});
+  },
+
+  removeTabForWindow: function removeTabForWindow(aWindow) {
+    let tabs = this._tabs;
+    for (let i = 0; i < tabs.length; i++) {
+      if (tabs[i].contentWindow == aWindow) {
+        tabs.splice(i, 1);
+        return;
+      }
+    }
+  },
+
+  _getRequestLoadContext: function ua_getRequestLoadContext(aRequest) {
+    if (aRequest && aRequest.notificationCallbacks) {
+      try {
+        return aRequest.notificationCallbacks.getInterface(Ci.nsILoadContext);
+      } catch (ex) { }
+    }
+
+    if (aRequest && aRequest.loadGroup && aRequest.loadGroup.notificationCallbacks) {
+      try {
+        return aRequest.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
+      } catch (ex) { }
+    }
+
+    return null;
+  },
+
+  _getWindowForRequest: function ua_getWindowForRequest(aRequest) {
+    let loadContext = this._getRequestLoadContext(aRequest);
+    if (loadContext) {
+      try {
+        return loadContext.associatedWindow;
+      } catch (e) {
+        // loadContext.associatedWindow can throw when there's no window
+      }
+    }
+
+    return null;
   },
 
   observe: function ua_observe(aSubject, aTopic, aData) {
