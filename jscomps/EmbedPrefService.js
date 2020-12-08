@@ -52,10 +52,7 @@ EmbedPrefService.prototype = {
           break;
         default:
         case Ci.nsIPrefBranch.PREF_STRING:
-          pref.value = Services.prefs.getComplexValue(aPrefName, Ci.nsISupportsString).data;
-          // Try in case it's a localized string (will throw an exception if not)
-          if (pref.default && /^chrome:\/\/.+\/locale\/.+\.properties/.test(pref.value))
-            pref.value = Services.prefs.getComplexValue(aPrefName, Ci.nsIPrefLocalizedString).data;
+          pref.value = Services.prefs.getStringPref(aPrefName);
           break;
       }
     } catch (e) {}
@@ -91,7 +88,7 @@ EmbedPrefService.prototype = {
                     retPrefs.push({ name: pref, value: Services.prefs.getIntPref(pref)});
                     break;
                 case Services.prefs.PREF_STRING:
-                    retPrefs.push({ name: pref, value: Services.prefs.getCharPref(pref)});
+                    retPrefs.push({ name: pref, value: Services.prefs.getStringPref(pref)});
                     break;
                 case Services.prefs.PREF_INVALID:
                     continue;
@@ -136,7 +133,7 @@ EmbedPrefService.prototype = {
         for (var i in prefs) {
           switch (typeof(prefs[i].value)) {
             case "string":
-            Services.prefs.setCharPref(prefs[i].name, prefs[i].value);
+            Services.prefs.setStringPref(prefs[i].name, prefs[i].value);
             break;
           case "number":
             Services.prefs.setIntPref(prefs[i].name, prefs[i].value);
