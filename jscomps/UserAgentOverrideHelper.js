@@ -37,8 +37,10 @@ UserAgentOverrideHelper.prototype = {
         break;
       }
       case "nsPref:changed": {
-        if (aData == PREF_OVERRIDE) {
-          UserAgent.init();
+        // Trigger by Preferences::InitializeUserPrefs after user prefs has been read.
+        if (aData === PREF_OVERRIDE) {
+            // Drop general.useragent.override from the in-memory prefs.
+            Services.prefs.clearUserPref(PREF_OVERRIDE);
         }
         break;
       }
