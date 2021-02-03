@@ -233,18 +233,18 @@ EmbedHelper.prototype = {
         let searchAgain = aMessage.json.again;
         let searchBackwards = aMessage.json.backwards;
         let result = Ci.nsITypeAheadFind.FIND_NOTFOUND;
-        if (!this._fastFind) {
+        if (!searchText && this._fastFind) {
+          result = this._fastFind.find(searchText, false);
+          Services.focus.clearFocus(content);
+          this._fastFind = null;
+        } else if (!this._fastFind) {
           this._fastFind = Cc["@mozilla.org/typeaheadfind;1"].createInstance(Ci.nsITypeAheadFind);
           this._fastFind.init(docShell);
           result = this._fastFind.find(searchText, false);
-        }
-        else {
-          if (!searchAgain) {
-            result = this._fastFind.find(searchText, false);
-          }
-          else {
-            result = this._fastFind.findAgain(searchBackwards, false);
-          }
+        } else if (!searchAgain) {
+          result = this._fastFind.find(searchText, false);
+        } else {
+          result = this._fastFind.findAgain(searchBackwards, false);
         }
         sendAsyncMessage("embed:find", { r: result });
         break;
