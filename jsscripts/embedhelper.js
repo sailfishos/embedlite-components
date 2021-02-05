@@ -44,7 +44,7 @@ EmbedHelper.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference]),
 
-  _fastFind: null,
+  _finder: null,
   _init: function()
   {
     Logger.debug("EmbedHelper init called");
@@ -232,21 +232,29 @@ EmbedHelper.prototype = {
         let searchText = aMessage.json.text;
         let searchAgain = aMessage.json.again;
         let searchBackwards = aMessage.json.backwards;
-        let result = Ci.nsITypeAheadFind.FIND_NOTFOUND;
-        if (!this._fastFind) {
-          this._fastFind = Cc["@mozilla.org/typeaheadfind;1"].createInstance(Ci.nsITypeAheadFind);
-          this._fastFind.init(docShell);
-          result = this._fastFind.find(searchText, false);
+
+        if (!searchText && this._finder) {
+          this._finder.removeSelection()
+          this._finder.destroy()
+          Services.focus.clearFocus(content);
+
+          this._finder = null;
+          return;
         }
-        else {
-          if (!searchAgain) {
-            result = this._fastFind.find(searchText, false);
-          }
-          else {
-            result = this._fastFind.findAgain(searchBackwards, false);
-          }
+
+        if (!this._finder) {
+          const {Finder} = ChromeUtils.import("resource://gre/modules/Finder.jsm", {});
+          this._finder = new Finder(docShell);
+          this._finder.fastFind(searchText, false, true);
+        } else if (!searchAgain) {
+          this._finder.fastFind(searchText, false, true);
+        } else {
+          this._finder.findAgain(searchBackwards, false, true);
         }
-        sendAsyncMessage("embed:find", { r: result });
+
+        // Hackish way to abusing internals of Finder.
+        // We should implement FinderHelper (JB#53008).
+        sendAsyncMessage("embed:find", { r: this._finder._lastFindResult });
         break;
       }
       case "Viewport:Change": {
