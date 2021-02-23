@@ -250,12 +250,19 @@ LoginManagerPrompter.prototype = {
   classID : Components.ID("{8aa66d77-1bbb-45a6-991e-b8f47751c291}"),
   QueryInterface : XPCOMUtils.generateQI([Ci.nsIAuthPrompt,
                                           Ci.nsIAuthPrompt2,
-                                          Ci.nsILoginManagerPrompter]),
+                                          Ci.nsILoginManagerPrompter,
+                                          Ci.nsIEmbedMessageListener]),
 
   _factory       : null,
   _chromeWindow  : null,
   _browser       : null,
   _opener        : null,
+  _pendingRequests: {},
+
+  _getRandomId: function() {
+    let idService = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
+    return idService.generateUUID().toString();
+  },
 
   __pwmgr : null, // Password Manager service
   get _pwmgr() {
@@ -738,22 +745,11 @@ LoginManagerPrompter.prototype = {
 
 
   init : function (aWindow = null, aFactory = null) {
-    if (!aWindow) {
-      // There may be no applicable window e.g. in a Sandbox or JSM.
-      this._chromeWindow = null;
-      this._browser = null;
-    } else if (aWindow instanceof Ci.nsIDOMChromeWindow) {
-      this._chromeWindow = aWindow;
-      // needs to be set explicitly using setBrowser
-      this._browser = null;
-    } else {
-      this._chromeWindow = aWindow;
-      this._browser = null;
-    }
+    this._chromeWindow = aWindow;
     this._opener = null;
     this._factory = aFactory || null;
 
-    this.log("===== initialized =====");
+    this.log("JSComp: nsLoginManagerPrompter initialized");
   },
 
   set browser(aBrowser) {
@@ -766,39 +762,54 @@ LoginManagerPrompter.prototype = {
 
   promptToSavePassword : function (aLogin) {
     this.log("promptToSavePassword");
-    var notifyObj = this._getPopupNote() || this._getNotifyBox();
-    if (notifyObj)
-      this._showSaveLoginNotification(notifyObj, aLogin);
-    else
-      this._showSaveLoginDialog(aLogin);
+    this._showSaveLoginNotification({}, aLogin);
+  },
+
+  onMessageReceived: function(messageName, message) {
+    this.log("nsLoginManagerPrompter.js on message received: top:", messageName, ", msg:", message);
+    var ret = JSON.parse(message);
+    // Send Request
+    if (!ret.id) {
+      this.warn("nsLoginManagerPrompter.js: Request id not defined in response");
+      return;
+    }
+    let request = this._pendingRequests[ret.id];
+    if (!request) {
+      this.warn("nsLoginManagerPrompter.js: Wrong request id:", ret.id);
+      return;
+    }
+    request[ret.buttonidx].callback();
+    Services.embedlite.removeMessageListener("embedui:login", this);
+    delete this._pendingRequests[ret.id];
   },
 
   /**
    * Displays a notification bar.
    */
-  _showLoginNotification : function (aNotifyBox, aName, aText, aButtons) {
-    var oldBar = aNotifyBox.getNotificationWithValue(aName);
-    const priority = aNotifyBox.PRIORITY_INFO_MEDIUM;
-
+  _showLoginNotification : function (aNotifyBox, aName, aText, aButtons, aFormData) {
     this.log("Adding new " + aName + " notification bar");
-    var newBar = aNotifyBox.appendNotification(
-                            aText, aName, "",
-                            priority, aButtons);
+
+    let notifyWin = this._chromeWindow && this._chromeWindow.top || null;
 
     // The page we're going to hasn't loaded yet, so we want to persist
     // across the first location change.
-    newBar.persistence++;
-
-    // Sites like Gmail perform a funky redirect dance before you end up
-    // at the post-authentication page. I don't see a good way to
-    // heuristically determine when to ignore such location changes, so
-    // we'll try ignoring location changes based on a time interval.
-    newBar.timeout = Date.now() + 20000; // 20 seconds
-
-    if (oldBar) {
-      this.log("(...and removing old " + aName + " notification bar)");
-      aNotifyBox.removeNotification(oldBar);
+    let logoptions = {
+      persistWhileVisible: true,
+      timeout: Date.now() + 10000
     }
+
+    Services.embedlite.addMessageListener("embedui:login", this);
+    var winid = Services.embedlite.getIDByWindow(notifyWin);
+    let uniqueid = this._getRandomId();
+    Services.embedlite.sendAsyncMessage(winid, "embed:login",
+                                        JSON.stringify({
+                                                         name: aName,
+                                                         buttons: aButtons,
+                                                         options: logoptions,
+                                                         id: uniqueid,
+                                                         formdata: aFormData
+                                                       }));
+    this._pendingRequests[uniqueid] = aButtons;
   },
 
   /**
@@ -1080,6 +1091,13 @@ LoginManagerPrompter.prototype = {
     var notificationText = this._getLocalizedString(
                                   "rememberPasswordMsgNoUsername",
                                   [displayHost]);
+    var formData = {
+      "displayHost": displayHost
+    };
+    if (aLogin.username) {
+      var displayUser = this._sanitizeUsername(aLogin.username);
+      formData["displayUser"] = displayUser;
+    }
 
     // The callbacks in |buttons| have a closure to access the variables
     // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
@@ -1100,7 +1118,7 @@ LoginManagerPrompter.prototype = {
           label:     rememberButtonText,
           accessKey: rememberButtonAccessKey,
           popup:     null,
-          callback: function(aNotifyObj, aButton) {
+          callback: function(aButton) {
             pwmgr.addLogin(aLogin);
           }
         },
@@ -1110,7 +1128,7 @@ LoginManagerPrompter.prototype = {
           label:     neverButtonText,
           accessKey: neverButtonAccessKey,
           popup:     null,
-          callback: function(aNotifyObj, aButton) {
+          callback: function(aButton) {
             pwmgr.setLoginSavingEnabled(aLogin.hostname, false);
           }
         },
@@ -1125,7 +1143,7 @@ LoginManagerPrompter.prototype = {
       ];
 
       this._showLoginNotification(aNotifyObj, "password-save",
-                                  notificationText, buttons);
+                                  notificationText, buttons, formData);
     }
 
     Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save", null);
@@ -1255,6 +1273,15 @@ LoginManagerPrompter.prototype = {
     var notificationText = this._getLocalizedString("updatePasswordMsg",
                                                     [displayHost]);
 
+
+    var formData = {
+      "displayHost": displayHost
+    };
+    if (aOldLogin.username) {
+      var displayUser = this._sanitizeUsername(aOldLogin.username);
+      formData["displayUser"] = displayUser;
+    }
+
     // The callbacks in |buttons| have a closure to access the variables
     // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
     // without a getService() call.
@@ -1295,7 +1322,7 @@ LoginManagerPrompter.prototype = {
       ];
 
       this._showLoginNotification(aNotifyObj, "password-change",
-                                  notificationText, buttons);
+                                  notificationText, buttons, formData);
     }
 
     let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
@@ -1503,10 +1530,7 @@ LoginManagerPrompter.prototype = {
    *
    */
   _getLocalizedString : function (key, formatArgs) {
-    if (formatArgs)
-      return this._strBundle.formatStringFromName(
-                                  key, formatArgs, formatArgs.length);
-    return this._strBundle.GetStringFromName(key);
+    return key;
   },
 
 
@@ -1697,6 +1721,11 @@ LoginManagerPrompter.prototype = {
 XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "log", () => {
   let logger = Logger
   return logger.debug.bind(logger);
+});
+
+XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
+  let logger = Logger
+  return logger.warn.bind(logger);
 });
 
 var component = [LoginManagerPromptFactory, LoginManagerPrompter];
