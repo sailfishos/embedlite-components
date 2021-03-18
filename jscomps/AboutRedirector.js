@@ -3,8 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 const Cc = Components.classes;
 const Ci = Components.interfaces;
+const Cu = Components.utils;
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -43,7 +45,7 @@ AboutRedirector.prototype = {
   classID: Components.ID("{59f3da9a-6c88-11e2-b875-33d1bd379849}"),
 
   _getModuleInfo: function (aURI) {
-    let moduleName = aURI.path.replace(/[?#].*/, "").toLowerCase();
+    let moduleName = aURI.pathQueryRef.replace(/[?#].*/, "").toLowerCase();
     return modules[moduleName];
   },
 
