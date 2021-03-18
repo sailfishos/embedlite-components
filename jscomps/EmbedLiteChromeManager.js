@@ -53,7 +53,11 @@ EmbedLiteChromeListener.prototype = {
   },
 
   sendAsyncMessage(messageName, message) {
-    Services.embedlite.sendAsyncMessage(this.windowId, messageName, JSON.stringify(message));
+    try {
+      Services.embedlite.sendAsyncMessage(this.windowId, messageName, JSON.stringify(message));
+    } catch (e) {
+      Logger.warn("EmbedLiteChromeListener: sending async message failed", e)
+    }
   },
 
   get content() {
@@ -86,6 +90,10 @@ EmbedLiteChromeListener.prototype = {
       messageName = "chrome:winopenclose";
       message["type"] = event.type;
       break;
+    }
+
+    if (messageName) {
+      this.sendAsyncMessage(messageName, message);
     }
   },
 
