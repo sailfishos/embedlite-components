@@ -91,6 +91,10 @@ EmbedLiteChromeListener.prototype = {
       message["type"] = event.type;
       break;
     }
+
+    if (messageName) {
+      this.sendAsyncMessage(messageName, message);
+    }
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMEventListener,
