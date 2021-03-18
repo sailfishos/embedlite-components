@@ -49,13 +49,17 @@ var gProgressListener = {
       return;
     }
     let iconPath = domDoc.documentURIObject.prePath + "/favicon.ico";
-    let winId = Services.embedlite.getIDByWindow(aWebProgress.DOMWindow);
-    NetUtil.asyncFetch(iconPath, function(aInputStream, aStatusCode, aRequest) {
-      if (!Components.isSuccessCode(aStatusCode) || aRequest.contentType == "text/html") {
-        return;
-      }
-      Services.embedlite.sendAsyncMessage(winId, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(iconPath)}));
-    });
+    try {
+      let winId = Services.embedlite.getIDByWindow(aWebProgress.DOMWindow);
+      NetUtil.asyncFetch(iconPath, function(aInputStream, aStatusCode, aRequest) {
+        if (!Components.isSuccessCode(aStatusCode) || aRequest.contentType == "text/html") {
+          return;
+        }
+        Services.embedlite.sendAsyncMessage(winId, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(iconPath)}));
+      });
+    } catch (e) {
+      Logger.warn("EmbedLiteFaviconService: sending async message failed", e)
+    }
   },
   onSecurityChange: function() { },
   onProgressChange: function() { },
@@ -100,7 +104,11 @@ EventLinkListener.prototype = {
         if (list.indexOf("[icon]") == -1)
           return;
 
-        Services.embedlite.sendAsyncMessage(this._winId, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(target.href)}));
+        try {
+          Services.embedlite.sendAsyncMessage(this._winId, "embed:faviconURL", JSON.stringify({url: resolveGeckoURI(target.href)}));
+        } catch (e) {
+          Logger.warn("EmbedLiteFaviconService: sending async message failed", e)
+        }
         break;
     }
   },

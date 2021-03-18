@@ -204,11 +204,15 @@ EmbedHelper.prototype = {
         } else {
           let uri = this._getLinkURI(this._touchElement);
           if (uri && (uri instanceof Ci.nsIURI)) {
-            let winId = Services.embedlite.getIDByWindow(content);
-            Services.embedlite.sendAsyncMessage(winId, "embed:linkclicked",
-                                                JSON.stringify({
-                                                                 "uri": uri.asciiSpec
-                                                              }));
+            try {
+              let winId = Services.embedlite.getIDByWindow(content);
+              Services.embedlite.sendAsyncMessage(winId, "embed:linkclicked",
+                                                  JSON.stringify({
+                                                                   "uri": uri.asciiSpec
+                                                                 }));
+            } catch (e) {
+              Logger.warn("embedhelper: sending async message failed", e)
+            }
           }
           this._touchElement = null;
         }
@@ -594,12 +598,16 @@ EmbedHelper.prototype = {
 
   _handleFullScreenChanged: function(aEvent) {
     let window = aEvent.target.defaultView;
-    let winId = Services.embedlite.getIDByWindow(window);
-    this.inFullScreen = aEvent.target.mozFullScreen;
-    Services.embedlite.sendAsyncMessage(winId, "embed:fullscreenchanged",
-                                        JSON.stringify({
-                                                         "fullscreen": aEvent.target.mozFullScreen
-                                                       }));
+    try {
+      let winId = Services.embedlite.getIDByWindow(window);
+      this.inFullScreen = aEvent.target.mozFullScreen;
+      Services.embedlite.sendAsyncMessage(winId, "embed:fullscreenchanged",
+                                          JSON.stringify({
+                                                           "fullscreen": aEvent.target.mozFullScreen
+                                                         }));
+    } catch (e) {
+      Logger.warn("emhedhelper: sending async message failed", e)
+    }
   },
 
   _handleTouchMove: function(aEvent) {

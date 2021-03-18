@@ -799,17 +799,21 @@ LoginManagerPrompter.prototype = {
     }
 
     Services.embedlite.addMessageListener("embedui:login", this);
-    var winid = Services.embedlite.getIDByWindow(notifyWin);
-    let uniqueid = this._getRandomId();
-    Services.embedlite.sendAsyncMessage(winid, "embed:login",
-                                        JSON.stringify({
-                                                         name: aName,
-                                                         buttons: aButtons,
-                                                         options: logoptions,
-                                                         id: uniqueid,
-                                                         formdata: aFormData
-                                                       }));
-    this._pendingRequests[uniqueid] = aButtons;
+    try {
+      var winid = Services.embedlite.getIDByWindow(notifyWin);
+      let uniqueid = this._getRandomId();
+      Services.embedlite.sendAsyncMessage(winid, "embed:login",
+                                          JSON.stringify({
+                                                           name: aName,
+                                                           buttons: aButtons,
+                                                           options: logoptions,
+                                                           id: uniqueid,
+                                                           formdata: aFormData
+                                                         }));
+      this._pendingRequests[uniqueid] = aButtons;
+    } catch (e) {
+      Logger.warn("nsLoginManagerPrompter: sending async message failed", e)
+    }
   },
 
   /**

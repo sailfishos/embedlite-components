@@ -216,7 +216,11 @@ Prompt.prototype = {
 
   _innerShow: function() {
     Services.embedlite.addMessageListener(this.getResponseName(), this);
-    Services.embedlite.sendAsyncMessage(this.msg.winId, this.getMessageName(), JSON.stringify(this.msg));
+    try {
+      Services.embedlite.sendAsyncMessage(this.msg.winId, this.getMessageName(), JSON.stringify(this.msg));
+    } catch (e) {
+      Logger.warn("Prompt: sending async message failed", e)
+    }
   },
 
   _setListItems: function(aItems) {
