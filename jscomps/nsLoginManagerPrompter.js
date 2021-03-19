@@ -1184,14 +1184,7 @@ LoginManagerPrompter.prototype = {
    */
   promptToChangePassword(aOldLogin, aNewLogin) {
     this.log("promptToChangePassword");
-    let notifyObj = this._getPopupNote() || this._getNotifyBox();
-
-    if (notifyObj) {
-      this._showChangeLoginNotification(notifyObj, aOldLogin,
-                                        aNewLogin);
-    } else {
-      this._showChangeLoginDialog(aOldLogin, aNewLogin);
-    }
+    this._showChangeLoginNotification({}, aOldLogin, aNewLogin);
   },
 
   /**
@@ -1273,41 +1266,6 @@ LoginManagerPrompter.prototype = {
     let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
     Services.obs.notifyObservers(aNewLogin, "passwordmgr-prompt-change", oldGUID);
   },
-
-
-  /**
-   * Shows the Change Password dialog.
-   */
-  _showChangeLoginDialog(aOldLogin, aNewLogin) {
-    const buttonFlags = Ci.nsIPrompt.STD_YES_NO_BUTTONS;
-
-    var dialogText;
-    if (aOldLogin.username)
-      dialogText  = this._getLocalizedString(
-                              "updatePasswordMsg",
-                              [aOldLogin.username]);
-    else
-      dialogText  = this._getLocalizedString(
-                              "updatePasswordMsgNoUser");
-
-    var dialogTitle = this._getLocalizedString(
-                                "passwordChangeTitle");
-
-    // returns 1 for yes, 0 for no.
-    var ok = this._promptService.confirmEx(this._chromeWindow,
-                            dialogTitle, dialogText, buttonFlags,
-                            null, null, null,
-                            null, {});
-
-    if (ok) {
-      this.log("Updating password for user " + aOldLogin.username);
-      this._updateLogin(aOldLogin, aNewLogin);
-    }
-
-    let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
-    Services.obs.notifyObservers(aNewLogin, "passwordmgr-prompt-change", oldGUID);
-  },
-
 
   /**
    * Called when we detect a password change in a form submission, but we
