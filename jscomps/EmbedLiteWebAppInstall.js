@@ -118,10 +118,13 @@ var WebappsUI = {
         }).bind(this));
         break;
       case "webapps-sync-uninstall":
-        let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
-        Services.embedlite.sendAsyncMessage(winId, "WebApps:Uninstall", JSON.stringify({
-          origin: data.origin
-        }));
+        try {
+          let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+          Services.embedlite.sendAsyncMessage(winId, "WebApps:Uninstall",
+                                              JSON.stringify({ origin: data.origin }));
+        } catch (e) {
+          Logger.warn("EmbedLiteWebAppInstall: sending async message failed", e)
+        }
         break;
     }
   },
@@ -211,12 +214,16 @@ var WebappsUI = {
                   let source = Services.io.newURI(fullsizeIcon, "UTF8", null);
                   persist.saveURI(source, null, null, null, null, iconFile, null);
 
-                  Services.embedlite.sendAsyncMessage(winId, "WebApps:PostInstall", JSON.stringify({
-                    name: manifest.name,
-                    manifestURL: aData.app.manifestURL,
-                    origin: aData.app.origin,
-                    iconURL: fullsizeIcon
-                  }));
+                  try {
+                    Services.embedlite.sendAsyncMessage(winId, "WebApps:PostInstall", JSON.stringify({
+                      name: manifest.name,
+                      manifestURL: aData.app.manifestURL,
+                      origin: aData.app.origin,
+                      iconURL: fullsizeIcon
+                    }));
+                  } catch (e) {
+                    Logger.warn("EmbedLiteWebAppInstall: sending async message failed", e)
+                  }
                   if (!!aData.isPackage) {
                     // For packaged apps, put a notification in the notification bar.
                     let message = Strings.browser.GetStringFromName("webapps.alertSuccess");
@@ -259,11 +266,15 @@ var WebappsUI = {
   },
 
   openURL: function openURL(aManifestURL, aOrigin) {
-    let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
-    Services.embedlite.sendAsyncMessage(winId, "WebApps:Open", JSON.stringify({
-      manifestURL: aManifestURL,
-      origin: aOrigin
-    }));
+    try {
+      let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+      Services.embedlite.sendAsyncMessage(winId, "WebApps:Open", JSON.stringify({
+        manifestURL: aManifestURL,
+        origin: aOrigin
+      }));
+    } catch (e) {
+      Logger.warn("EmbedLiteWebAppInstall: sending async message failed", e)
+    }
   },
 
   get iconSize() {

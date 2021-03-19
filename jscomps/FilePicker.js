@@ -227,7 +227,11 @@ FilePicker.prototype = {
   },
 
   sendMessageToEmbed: function(aMsg) {
-    Services.embedlite.sendAsyncMessage(aMsg.winId, aMsg.type, JSON.stringify(aMsg));
+    try {
+      Services.embedlite.sendAsyncMessage(aMsg.winId, aMsg.type, JSON.stringify(aMsg));
+    } catch (e) {
+      Logger.warn("FilePicker: sending async message failed", e)
+    }
     Services.embedlite.addMessageListener("filepickerresponse", this);
   },
 
