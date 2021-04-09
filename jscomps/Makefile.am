@@ -23,6 +23,7 @@ jscomps_manifest_DATA = \
 	PrivateDataManager.js \
 	EmbedliteDownloadManager.js \
 	LoginsHelper.js \
+	EmbedLiteWebrtcUI.js \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)

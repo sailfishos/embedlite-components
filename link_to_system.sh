@@ -40,6 +40,7 @@ jscomps/EmbedLiteWebAppInstall.js
 jscomps/PromptService.js
 jscomps/PrivateDataManager.js
 jscomps/EmbedliteDownloadManager.js
+jscomps/EmbedLiteWebrtcUI.js
 "
 
 for str in $FILES_LIST; do

@@ -111,3 +111,8 @@ category app-startup ContentPermissionManager service,@mozilla.org/content-permi
 component {aa0eeee6-5e1e-46a1-8b54-fbdd7cdb6e81} LoginsHelper.js
 contract @mozilla.org/embedlite-loginshelper-component;1 {aa0eeee6-5e1e-46a1-8b54-fbdd7cdb6e81}
 category app-startup LoginsHelper service,@mozilla.org/embedlite-loginshelper-component;1
+
+# EmbedLiteWebrtcUI.js
+component {08b3fb7b-b5c6-4d3c-b9c0-bde7aa0674f7} EmbedLiteWebrtcUI.js
+contract @mozilla.org/embedlite-webrtc-ui;1 {08b3fb7b-b5c6-4d3c-b9c0-bde7aa0674f7}
+category app-startup EmbedLiteWebrtcUI service,@mozilla.org/embedlite-webrtc-ui;1
