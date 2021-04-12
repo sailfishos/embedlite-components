@@ -37,16 +37,7 @@ UserAgentOverrideHelper.prototype = {
         Services.obs.addObserver(this, VIEW_DESKTOP_MODE_CHANGED, true);
         Services.obs.addObserver(this, VIEW_DESTROYED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
-        Services.prefs.addObserver(PREF_OVERRIDE, this, false);
         UserAgent.init();
-        break;
-      }
-      case "nsPref:changed": {
-        // Trigger by Preferences::InitializeUserPrefs after user prefs has been read.
-        if (aData === PREF_OVERRIDE) {
-            // Drop general.useragent.override from the in-memory prefs.
-            Services.prefs.clearUserPref(PREF_OVERRIDE);
-        }
         break;
       }
       case VIEW_CREATED: {
