@@ -80,23 +80,31 @@ HelperAppLauncherDialog.prototype = {
                                   aSuggestedFileExtension,
                                   aForcePrompt) {
     this.mLauncher = aLauncher;
+    Services.obs.addObserver(this, "embedui:downloadpicker", false);
 
-    let downloadDir = Services.prefs.getStringPref(PREF_BD_DOWNLOADDIR);
     var result = {
       defaultFileName: aDefaultFileName,
-      suggestedFileExtension: aSuggestedFileExtension,
-      downloadDirectory: downloadDir
+      suggestedFileExtension: aSuggestedFileExtension
     }
     if (!aForcePrompt) {
-      let autodownload = Services.prefs.getBoolPref(PREF_BD_USEDOWNLOADDIR);
+      let autodownload = Services.prefs.getBoolPref(PREF_BD_USEDOWNLOADDIR, false);
 
       if (autodownload) {
+        try {
+          result.downloadDirectory = Services.prefs.getStringPref(PREF_BD_DOWNLOADDIR);
+        } catch (e) {
+          Logger.warn("HelperAppDialog: browser.download.dir isn't enabled, will use prefferedDir", e)
+        }
         this.saveAndDownload(result);
         return;
       }
     }
-    Services.obs.addObserver(this, "embedui:downloadpicker", false);
-    Services.obs.notifyObservers(null, "embed:downloadpicker", JSON.stringify(result));
+    try {
+      let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+      Services.embedlite.sendAsyncMessage(winId, "embed:downloadpicker", JSON.stringify(result));
+    } catch (e) {
+      Logger.warn("HelperAppDialog: sending async message failed", e)
+    }
   },
 
   promptForSaveToFile: function hald_promptForSaveToFile(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
