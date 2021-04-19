@@ -5,7 +5,6 @@ jsscripts_manifest_DATA = \
 	Feeds.jsm \
 	ContentLinkHandler.jsm \
 	OrientationChangeHandler.jsm \
-	SelectHelper.js \
 	SelectAsyncHelper.js \
 	SelectionHandler.js \
 	SelectionPrototype.js \
