@@ -69,6 +69,7 @@ EmbedHelper.prototype = {
     // Metrics used when virtual keyboard is open/opening.
     addMessageListener("embedui:vkbOpenCompositionMetrics", this);
     addMessageListener("embedui:addhistory", this);
+    addMessageListener("embedui:runjavascript", this);
     addMessageListener("Memory:Dump", this);
     addMessageListener("Gesture:ContextMenuSynth", this);
     addMessageListener("embed:ContextMenuCreate", this);
@@ -372,6 +373,41 @@ EmbedHelper.prototype = {
         docShell.setCurrentURI(initialURI);
         break;
       }
+      case "embedui:runjavascript": {
+        if (aMessage.data && aMessage.data.script) {
+          let callbackId = aMessage.data.callbackId;
+          let jsstring = aMessage.data.script;
+
+          let promise = new Promise(function(resolve, reject) {
+            try {
+              let f = new content.Function(jsstring);
+              let result = f();
+              resolve(result);
+            } catch (e) {
+              reject(e.toString());
+            }
+          }).then(result => {
+                    if (callbackId >= 0) {
+                      let error
+                      sendAsyncMessage("embed:runjavascript", {
+                                         "result": result,
+                                         "error": error,
+                                         "callbackId": callbackId
+                                       });
+                    }
+          }).catch(error => {
+                     let result
+                     sendAsyncMessage("embed:runjavascript", {
+                                        "result": result,
+                                        "error": error,
+                                        "callbackId": callbackId
+                                      });
+                   });
+        }
+
+        break;
+      }
+
       case "Memory:Dump": {
         if (aMessage.data && aMessage.data.fileName) {
             let memDumper = Cc["@mozilla.org/memory-info-dumper;1"].getService(Ci.nsIMemoryInfoDumper);
