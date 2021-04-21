@@ -84,11 +84,14 @@ EmbedLiteChromeListener.prototype = {
       }
 
       break;
-   case "DOMWillOpenModalDialog":
-   case "DOMModalDialogClosed":
-   case "DOMWindowClose":
+    case "DOMWillOpenModalDialog":
+    case "DOMModalDialogClosed":
+    case "DOMWindowClose":
       messageName = "chrome:winopenclose";
       message["type"] = event.type;
+      break;
+    case "DOMPopupBlocked":
+      this.sendAsyncMessage("embed:popupblocked", { host: event.target.URL});
       break;
     }
 
@@ -129,6 +132,7 @@ EmbedLiteChromeManager.prototype = {
       chromeEventHandler.addEventListener("DOMModalDialogClosed", chromeListener, false);
       chromeEventHandler.addEventListener("DOMWindowClose", chromeListener, false);
       chromeEventHandler.addEventListener("DOMMetaAdded", chromeListener, false);
+      chromeEventHandler.addEventListener("DOMPopupBlocked", chromeListener, false);
     } else {
       Logger.warn("Something went wrong, could not get chrome event handler for window", aWindow, "id:", chromeListener.windowId, "when opening a window")
     }

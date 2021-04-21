@@ -92,7 +92,7 @@ ContentPermissionManager.prototype = {
                                                 permissionToCookieAccess(parseInt(data.permission)));
               }
               Services.perms.add(Services.io.newURI(data.uri, null, null),
-                                 data.type, parseInt(data.permission));
+                                 data.type, parseInt(data.permission), parseInt(data.expireType));
               debug("set, uri: " + data.uri
                     + ", type: " + data.type
                     + ", permission: " + data.permission);
