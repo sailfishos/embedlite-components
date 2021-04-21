@@ -396,13 +396,15 @@ EmbedHelper.prototype = {
                                        });
                     }
           }).catch(error => {
-                     let result
-                     sendAsyncMessage("embed:runjavascript", {
-                                        "result": result,
-                                        "error": error,
-                                        "callbackId": callbackId
-                                      });
-                   });
+                    if (callbackId >= 0) {
+                      let result
+                      sendAsyncMessage("embed:runjavascript", {
+                                         "result": result,
+                                         "error": error,
+                                         "callbackId": callbackId
+                                       });
+                    }
+          });
         }
 
         break;
