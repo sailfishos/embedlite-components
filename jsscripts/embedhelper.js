@@ -381,16 +381,36 @@ EmbedHelper.prototype = {
           let promise = new Promise(function(resolve, reject) {
             try {
               let f = new content.Function(jsstring);
-              let result = f();
-              resolve(result);
+              let resultObject = {
+                stringified: false,
+                result: undefined
+              }
+              resultObject.result = f();
+              if (typeof resultObject.result === "function") {
+                reject("Error: cannot return a function.")
+              } else if (typeof resultObject.result === "symbol") {
+                // Special handling for Symbol type
+                resultObject.result = resultObject.result.toString()
+                resolve(resultObject);
+              } else if (typeof resultObject.result === "boolean"
+                         || typeof resultObject.result === "undefined"
+                         || typeof resultObject.result === "number"
+                         || typeof resultObject.result === "string") {
+                resolve(resultObject);
+              } else {
+                resultObject.result = JSON.stringify(resultObject.result);
+                resultObject.stringified = true;
+                resolve(resultObject);
+              }
             } catch (e) {
               reject(e.toString());
             }
-          }).then(result => {
+          }).then(resultObject => {
                     if (callbackId >= 0) {
                       let error
                       sendAsyncMessage("embed:runjavascript", {
-                                         "result": result,
+                                         "result": resultObject.result,
+                                         "stringified": resultObject.stringified,
                                          "error": error,
                                          "callbackId": callbackId
                                        });
@@ -400,6 +420,7 @@ EmbedHelper.prototype = {
                       let result
                       sendAsyncMessage("embed:runjavascript", {
                                          "result": result,
+                                         "stringified": false,
                                          "error": error,
                                          "callbackId": callbackId
                                        });
