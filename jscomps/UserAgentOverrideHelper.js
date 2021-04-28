@@ -11,6 +11,7 @@ const APP_STARTUP               = "app-startup"
 const VIEW_CREATED              = "embedliteviewcreated";
 const VIEW_DESTROYED            = "embedliteviewdestroyed";
 const VIEW_DESKTOP_MODE_CHANGED = "embedliteviewdesktopmodechanged";
+const VIEW_UA_CHANGED           = "embedliteviewhttpuseragentchanged";
 const XPCOM_SHUTDOWN            = "xpcom-shutdown";
 const PREF_OVERRIDE             = "general.useragent.override";
 
@@ -36,6 +37,7 @@ UserAgentOverrideHelper.prototype = {
         Services.obs.addObserver(this, VIEW_CREATED, true);
         Services.obs.addObserver(this, VIEW_DESKTOP_MODE_CHANGED, true);
         Services.obs.addObserver(this, VIEW_DESTROYED, true);
+        Services.obs.addObserver(this, VIEW_UA_CHANGED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         UserAgent.init();
         break;
@@ -53,6 +55,10 @@ UserAgentOverrideHelper.prototype = {
         if (tab) {
           tab.desktopMode = (aData === "true");
         }
+        break;
+      }
+      case VIEW_UA_CHANGED: {
+        UserAgent.setUserAgentOverride(aSubject, aData);
         break;
       }
       case XPCOM_SHUTDOWN: {
@@ -87,7 +93,6 @@ var UserAgent = {
       return
     }
 
-    Services.obs.addObserver(this, "DesktopMode:Change", false);
     Services.obs.addObserver(this.onModifyRequest.bind(this),
                              "http-on-modify-request");
     Services.prefs.addObserver(PREF_OVERRIDE, this, false);
@@ -95,7 +100,7 @@ var UserAgent = {
     Cu.import("resource://gre/modules/UserAgentOverrides.jsm");
     UserAgentOverrides.init();
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
-    // See https://developer.mozilla.org/en/Gecko_user_agent_string_reference
+    // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent/Firefox
     this.DESKTOP_UA = Cc["@mozilla.org/network/protocol;1?name=http"]
                         .getService(Ci.nsIHttpProtocolHandler).userAgent
                         .replace(/Sailfish \d.+?; [a-zA-Z]+/, "X11; Linux x86_64")
@@ -116,6 +121,13 @@ var UserAgent = {
     }
   },
 
+  setUserAgentOverride: function(aWindow, httpUserAgent) {
+    let tab = this.getTabForWindow(aWindow);
+    if (tab) {
+      tab.httpuseragentstring = httpUserAgent
+    }
+  },
+
   getCustomUserAgent: function() {
     if (Services.prefs.prefHasUserValue(PREF_OVERRIDE)) {
       let ua = Services.prefs.getCharPref(PREF_OVERRIDE);
@@ -130,7 +142,6 @@ var UserAgent = {
   },
 
   uninit: function ua_uninit() {
-    Services.obs.removeObserver(this, "DesktopMode:Change");
     Services.prefs.removeObserver(PREF_OVERRIDE, this);
     UserAgentOverrides.uninit();
   },
@@ -144,6 +155,10 @@ var UserAgent = {
 
     let tab = this.getTabForWindow(channelWindow);
     if (tab) {
+      // Send assigned UA if it has been overridden
+      if (tab.httpuseragentstring.length) {
+        return tab.httpuseragentstring;
+      }
       // Send desktop UA if "Request Desktop Site" is enabled.
       if (tab.desktopMode) {
         return this.DESKTOP_UA;
@@ -186,7 +201,11 @@ var UserAgent = {
   },
 
   addTabForWindow: function addTabForWindow(aWindow) {
-    this._tabs.push({"contentWindow" : aWindow, "desktopMode" : false});
+    this._tabs.push({
+      "contentWindow" : aWindow,
+      "desktopMode" : false,
+      "httpuseragentstring" : ""
+    });
   },
 
   removeTabForWindow: function removeTabForWindow(aWindow) {
@@ -230,9 +249,6 @@ var UserAgent = {
 
   observe: function ua_observe(aSubject, aTopic, aData) {
     switch (aTopic) {
-      case "DesktopMode:Change": {
-        break;
-      }
       case "nsPref:changed": {
         if (aData == PREF_OVERRIDE) {
           this._customUA = this.getCustomUserAgent();
