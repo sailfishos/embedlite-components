@@ -22,6 +22,7 @@ jscomps_manifest_DATA = \
 	PromptService.js \
 	PrivateDataManager.js \
 	EmbedliteDownloadManager.js \
+	LoginsHelper.js \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)
