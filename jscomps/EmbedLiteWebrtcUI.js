@@ -118,6 +118,12 @@ WebrtcPermissionRequest.prototype = {
     // If the permission has already been granted
     let result = Services.perms.testExactPermission(this.uri, type);
     if (result == Ci.nsIPermissionManager.ALLOW_ACTION) {
+      if (type == "camera") {
+        // Add one-shot permission to use camera
+        Services.perms.add(this.uri, "MediaManagerVideo",
+                           Ci.nsIPermissionManager.ALLOW_ACTION,
+                           Ci.nsIPermissionManager.EXPIRE_SESSION);
+      }
       // Use first available device. Assume Gecko has them sorted by importance.
       // Perhaps a better algorithm can be implemented here.
       return 0;
@@ -148,6 +154,12 @@ WebrtcPermissionRequest.prototype = {
               && availableDevices
               && availableDevices.length > selectedIndex) {
             this.allowedDevices.appendElement(availableDevices[selectedIndex]);
+            // Add one-shot permission to use camera
+            if (type == "camera") {
+              Services.perms.add(this.uri, "MediaManagerVideo",
+                                 Ci.nsIPermissionManager.ALLOW_ACTION,
+                                 Ci.nsIPermissionManager.EXPIRE_SESSION);
+            }
           }
         }
       }
