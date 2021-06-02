@@ -116,3 +116,7 @@ category app-startup LoginsHelper service,@mozilla.org/embedlite-loginshelper-co
 component {08b3fb7b-b5c6-4d3c-b9c0-bde7aa0674f7} EmbedLiteWebrtcUI.js
 contract @mozilla.org/embedlite-webrtc-ui;1 {08b3fb7b-b5c6-4d3c-b9c0-bde7aa0674f7}
 category app-startup EmbedLiteWebrtcUI service,@mozilla.org/embedlite-webrtc-ui;1
+
+# IntentProtocolHandler.js
+component {878c8294-b764-48fd-87be-7d5e7a44faa9} IntentProtocolHandler.js
+contract @mozilla.org/network/protocol;1?name=intent {878c8294-b764-48fd-87be-7d5e7a44faa9}
