@@ -248,7 +248,14 @@ FilePicker.prototype = {
 
     this._promptActive = false;
 
-    if (!this._filePath) {
+    if (!this._filePath || !accepted) {
+      try {
+        this._callback.done(Ci.nsIFilePicker.returnCancel);
+        Services.embedlite.removeMessageListener("filepickerresponse", this);
+        delete this._callback;
+      } catch (e) {
+          Logger.warn("FilePicker: cancelling filepicker failed", e)
+      }
       return;
     }
 
@@ -265,8 +272,7 @@ FilePicker.prototype = {
       promise.then(domFile => {
                      this._domFiles.push(domFile);
                      if (this._callback && (this._domFiles.length === this._filePath.length)) {
-                       this._callback.done(this._filePath && accepted ?
-                                             Ci.nsIFilePicker.returnOK : Ci.nsIFilePicker.returnCancel);
+                       this._callback.done(Ci.nsIFilePicker.returnOK);
                        Services.embedlite.removeMessageListener("filepickerresponse", this);
                        delete this._callback;
                      }
