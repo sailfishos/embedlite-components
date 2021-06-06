@@ -3,6 +3,7 @@ jsscripts_manifest_DATA = \
 	embedhelper.js \
 	Logger.js \
 	Feeds.jsm \
+	FormAssistant.js \
 	ContentLinkHandler.jsm \
 	OrientationChangeHandler.jsm \
 	SelectAsyncHelper.js \
