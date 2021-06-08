@@ -1,0 +1,41 @@
+<html>
+<body>
+<button id="microphone">Microphone</button><br>
+<button id="camera">Camera</button><br>
+<button id="camera+microphone">Camera + Microphone</button><br>
+<style>
+button {
+  background-color: white;
+  color: black;
+  padding: 16px 32px;
+  font-size: 32px;
+  margin: 16px;
+  width: 50%;
+}
+.success {
+  background-color: green;
+}
+.error {
+  background-color: red;
+}
+</style>
+<script>
+const testPermissions = {
+  "microphone":        {audio: true},
+  "camera":            {video: true},
+  "camera+microphone": {audio: true, video: true},
+};
+
+for (const [perm, params] of Object.entries(testPermissions)) {
+  var button = document.getElementById(perm);
+  button.addEventListener('click', function(event) {
+    navigator.mediaDevices.getUserMedia(params)
+      .then(
+        () => { event.target.className = "button success"},
+        () => { event.target.className = "button error"}
+      )
+    }
+  );
+}
+</script>
+</body>
