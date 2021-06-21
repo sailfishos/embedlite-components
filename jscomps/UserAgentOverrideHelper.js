@@ -117,7 +117,9 @@ var UserAgent = {
         channel.upgradeToSecure();
       }
       let ua = this.onRequest(channel, this.getDefaultUserAgent());
-      channel.setRequestHeader("User-Agent", ua, false);
+      if (ua) {
+        channel.setRequestHeader("User-Agent", ua, false);
+      }
     }
   },
 
