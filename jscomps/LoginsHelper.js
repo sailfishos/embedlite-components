@@ -55,6 +55,12 @@ LoginsHelper.prototype = {
       case "remove":
         this._removeLogin(data);
         break;
+      case "add":
+        this._addLogin(data);
+        break;
+      case "removeAll":
+        this._removeAll();
+        break;
       }
       break;
     }
@@ -105,6 +111,21 @@ LoginsHelper.prototype = {
 
     var loginInfo = this._loginFromJson(aData.login);
     this._pwmgr.removeLogin(loginInfo);
+  },
+
+  // Needed for the sailfish-browser unit tests
+  _addLogin: function (aData) {
+    Logger.debug("LoginsHelper, add login");
+
+    var newInfo = this._loginFromJson(aData.newinfo);
+    this._pwmgr.addLogin(newInfo);
+  },
+
+  // Needed for the sailfish-browser unit tests
+  _removeAll: function () {
+    Logger.debug("LoginsHelper, remove all logins");
+
+    this._pwmgr.removeAllLogins();
   },
 };
 
