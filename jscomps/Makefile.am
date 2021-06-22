@@ -24,6 +24,7 @@ jscomps_manifest_DATA = \
 	EmbedliteDownloadManager.js \
 	LoginsHelper.js \
 	EmbedLiteWebrtcUI.js \
+	IntentProtocolHandler.js \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)
