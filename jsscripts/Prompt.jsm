@@ -71,6 +71,10 @@ Prompt.prototype = {
     return this;
   },
 
+  addHiddenValue: function(aKey, aValue) {
+    this.msg[aKey] = aValue;
+  },
+
   setPrivateBrowsing: function(aPrivateBrowsing) {
     if (!aPrivateBrowsing)
       delete this.msg.privateBrowsing;
