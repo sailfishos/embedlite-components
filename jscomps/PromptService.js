@@ -157,6 +157,11 @@ InternalPrompt.prototype = {
     });
   },
 
+  addHostInfo: function(prompt, hostname, realm) {
+    prompt.addHiddenValue("hostname", hostname);
+    prompt.addHiddenValue("realm", realm);
+  },
+
   /* Shows a native prompt, and then spins the event loop for this thread while we wait
    * for a response
    */
@@ -370,8 +375,52 @@ InternalPrompt.prototype = {
     return ok;
   },
 
+  nonlocalized_promptPassword: function nonlocalized_promptPassword(
+      aTitle, aMessage, aHostname, aHttpRealm, aPassword, aCheckMsg, aCheckState) {
+    let p = this._getPrompt(aTitle, aMessage, null);
+    p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
+    p.addHostInfo(aHostname, aHttpRealm);
+    this.addPassword(p, aPassword.value, true, PromptUtils.getLocaleString("password", "passwdmgr"));
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
+    let data = this.showPrompt(p);
+
+    let ok = data.accepted;
+    // True if we should remember login
+    if (aCheckState)
+      aCheckState.value = data.remember || false;
+
+    if (ok)
+      aPassword.value = data.password || "";
+    return ok;
+  },
+
+  nonlocalized_promptUsernameAndPassword: function nonlocalized_promptUsernameAndPassword(
+      aTitle, aMessage, aHostname, aHttpRealm, aUsername, aPassword, aCheckMsg, aCheckState) {
+    let p = this._getPrompt(aTitle, aMessage, null);
+    p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
+    this.addHostInfo(p, aHostname, aHttpRealm);
+    this.addTextbox(p, aUsername.value, true, PromptUtils.getLocaleString("username", "passwdmgr"));
+    this.addPassword(p, aPassword.value, false, PromptUtils.getLocaleString("password", "passwdmgr"));
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
+    let data = this.showPrompt(p);
+
+    let ok = data.accepted;
+    // True if we should remember login
+    if (aCheckState)
+      aCheckState.value = data.remember || false;
+
+    if (ok) {
+      aUsername.value = data.username || "";
+      aPassword.value = data.password || "";
+    }
+    return ok;
+  },
+
   select: function select(aTitle, aText, aCount, aSelectList, aOutSelection) {
     let p = this._getPrompt(aTitle, aText, [ PromptUtils.getLocaleString("OK") ]);
+    p.setHint("select");
     p.addMenulist({ values: aSelectList });
     let data = this.showPrompt(p);
 
@@ -452,9 +501,9 @@ InternalPrompt.prototype = {
 
     let ok = canAutologin;
     if (!ok && aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD)
-      ok = this.nsIPrompt_promptPassword(message, hostname, password, checkMsg, check);
+      ok = this.nonlocalized_promptPassword(null, message, hostname, httpRealm, password, checkMsg, check);
     else if (!ok)
-      ok = this.nsIPrompt_promptUsernameAndPassword(message, hostname, username, password, checkMsg, check);
+      ok = this.nonlocalized_promptUsernameAndPassword(null, message, hostname, httpRealm, username, password, checkMsg, check);
 
     PromptUtils.setAuthInfo(aAuthInfo, username.value, password.value);
 
@@ -636,7 +685,7 @@ var PromptUtils = {
     let check = { value: false };
     let selectedLogin;
 
-    checkLabel = this.getLocaleString("rememberButton", "passwdmgr");
+    checkLabel = "rememberButtonText";
 
     // XXX Like the original code, we can't deal with multiple
     // account selection. (bug 227632)
@@ -714,7 +763,7 @@ var PromptUtils = {
 
     // Suppress "the site says: $realm" when we synthesized a missing realm.
     if (!aAuthInfo.realm && !isProxy)
-    realm = "";
+      realm = "";
 
     // Trim obnoxiously long realms.
     if (realm.length > 150) {
@@ -723,7 +772,20 @@ var PromptUtils = {
       realm += this.ellipsis;
     }
 
-    return realm;
+    let textBundle;
+    if (isProxy) {
+      textBundle = ["EnterLoginForProxy3", realm, displayHost];
+    } else if (isPassOnly) {
+      textBundle = ["EnterPasswordFor", username, displayHost];
+    } else if (isCrossOrig) {
+      textBundle = ["EnterUserPasswordForCrossOrigin2", displayHost];
+    } else if (!realm) {
+      textBundle = ["EnterUserPasswordFor2", displayHost];
+    } else {
+      textBundle = ["EnterLoginForRealm3", realm, displayHost];
+    }
+
+    return textBundle;
   },
 
   // JS port of http://mxr.mozilla.org/mozilla-central/source/embedding/components/windowwatcher/nsPromptUtils.h#89

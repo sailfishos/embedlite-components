@@ -380,7 +380,7 @@ LoginManagerPrompter.prototype = {
 
       // if checkBoxLabel is null, the checkbox won't be shown at all.
       if (canRememberLogin)
-        checkBoxLabel = this._getLocalizedString("rememberPassword");
+        checkBoxLabel = "rememberPassword";
 
       // Look for existing logins.
       var foundLogins = this._pwmgr.findLogins({}, hostname, null,
@@ -478,7 +478,7 @@ LoginManagerPrompter.prototype = {
 
       // if checkBoxLabel is null, the checkbox won't be shown at all.
       if (canRememberLogin)
-        checkBoxLabel = this._getLocalizedString("rememberPassword");
+        checkBoxLabel = "rememberPassword";
 
       if (!aPassword.value) {
         // Look for existing logins.
@@ -619,7 +619,7 @@ LoginManagerPrompter.prototype = {
       // if checkboxLabel is null, the checkbox won't be shown at all.
       notifyObj = this._getPopupNote() || this._getNotifyBox();
       if (canRememberLogin && !notifyObj)
-        checkboxLabel = this._getLocalizedString("rememberPassword");
+        checkboxLabel = "rememberPassword";
     } catch (e) {
       // Ignore any errors and display the prompt anyway.
       epicfail = true;
@@ -668,15 +668,14 @@ LoginManagerPrompter.prototype = {
                  " @ " + hostname + " (" + httpRealm + ")");
 
         if (notifyObj)
-          this._showSaveLoginNotification(notifyObj, newLogin);
+          this._showSaveLoginNotification(newLogin);
         else
           this._pwmgr.addLogin(newLogin);
       } else if (password != selectedLogin.password) {
         this.log("Updating password for " + username +
                  " @ " + hostname + " (" + httpRealm + ")");
         if (notifyObj)
-          this._showChangeLoginNotification(notifyObj,
-                                            selectedLogin, newLogin);
+          this._showChangeLoginNotification(selectedLogin, newLogin);
         else
           this._updateLogin(selectedLogin, newLogin);
       } else {
@@ -762,7 +761,38 @@ LoginManagerPrompter.prototype = {
 
   promptToSavePassword : function (aLogin) {
     this.log("promptToSavePassword");
-    this._showSaveLoginNotification({}, aLogin);
+    this._showSaveLoginNotification(aLogin);
+  },
+
+  /**
+   * Called when we think we detect a password or username change for
+   * an existing login, when the form being submitted contains multiple
+   * password fields.
+   *
+   * @param {nsILoginInfo} aOldLogin
+   *                       The old login we may want to update.
+   * @param {nsILoginInfo} aNewLogin
+   *                       The new login from the page form.
+   */
+  promptToChangePassword(aOldLogin, aNewLogin) {
+    this.log("promptToChangePassword");
+    this._showChangeLoginNotification(aOldLogin, aNewLogin);
+  },
+
+  /**
+   * Called when we detect a password change in a form submission, but we
+   * don't know which existing login (username) it's for. Asks the user
+   * to select a username and confirm the password change.
+   *
+   * Note: The caller doesn't know the username for aNewLogin, so this
+   *       function fills in .username and .usernameField with the values
+   *       from the login selected by the user.
+   *
+   * Note; XPCOM stupidity: |count| is just |logins.length|.
+   */
+  promptToChangePasswordWithUsernames : function (logins, count, aNewLogin) {
+    this.log("promptToChangePasswordWithUsernames");
+    this._showChangeLoginWithUsernamesNotification(logins, aNewLogin);
   },
 
   onMessageReceived: function(messageName, message) {
@@ -778,15 +808,18 @@ LoginManagerPrompter.prototype = {
       this.warn("nsLoginManagerPrompter.js: Wrong request id:", ret.id);
       return;
     }
-    request[ret.buttonidx].callback();
+    let selectedIndex = ret.selectedIndex || 0;
+    request[ret.buttonidx].callback(ret.buttonidx, selectedIndex);
     Services.embedlite.removeMessageListener("embedui:login", this);
     delete this._pendingRequests[ret.id];
   },
 
+  /* ---------- Internal Methods ---------- */
+
   /**
    * Displays a notification bar.
    */
-  _showLoginNotification : function (aNotifyBox, aName, aText, aButtons, aFormData) {
+  _showLoginNotification : function (aName, aTextBundle, aButtons, aFormData) {
     this.log("Adding new " + aName + " notification bar");
 
     let notifyWin = this._chromeWindow && this._chromeWindow.top || null;
@@ -805,6 +838,7 @@ LoginManagerPrompter.prototype = {
       Services.embedlite.sendAsyncMessage(winid, "embed:login",
                                           JSON.stringify({
                                                            name: aName,
+                                                           textBundle: aTextBundle,
                                                            buttons: aButtons,
                                                            options: logoptions,
                                                            id: uniqueid,
@@ -817,290 +851,23 @@ LoginManagerPrompter.prototype = {
   },
 
   /**
-   * Displays the PopupNotifications.jsm doorhanger for password save or change.
-   *
-   * @param {nsILoginInfo} login
-   *        Login to save or change. For changes, this login should contain the
-   *        new password.
-   * @param {string} type
-   *        This is "password-save" or "password-change" depending on the
-   *        original notification type. This is used for telemetry and tests.
-   */
-  _showLoginCaptureDoorhanger(login, type) {
-    let { browser } = this._getNotifyWindow();
-
-    let saveMsgNames = {
-      prompt: login.username === "" ? "rememberLoginMsgNoUser"
-                                    : "rememberLoginMsg",
-      buttonLabel: "rememberLoginButtonText",
-      buttonAccessKey: "rememberLoginButtonAccessKey",
-    };
-
-    let changeMsgNames = {
-      prompt: login.username === "" ? "updateLoginMsgNoUser"
-                                    : "updateLoginMsg",
-      buttonLabel: "updateLoginButtonText",
-      buttonAccessKey: "updateLoginButtonAccessKey",
-    };
-
-    let initialMsgNames = type == "password-save" ? saveMsgNames
-                                                  : changeMsgNames;
-
-    let brandBundle = Services.strings.createBundle(BRAND_BUNDLE);
-    let brandShortName = brandBundle.GetStringFromName("brandShortName");
-    let promptMsg = type == "password-save" ? this._getLocalizedString(saveMsgNames.prompt, [brandShortName])
-                                            : this._getLocalizedString(changeMsgNames.prompt);
-
-    let histogramName = type == "password-save" ? "PWMGR_PROMPT_REMEMBER_ACTION"
-                                                : "PWMGR_PROMPT_UPDATE_ACTION";
-    let histogram = Services.telemetry.getHistogramById(histogramName);
-    histogram.add(PROMPT_DISPLAYED);
-
-    let chromeDoc = browser.ownerDocument;
-
-    let currentNotification;
-
-    let updateButtonStatus = (element) => {
-      let mainActionButton = chromeDoc.getAnonymousElementByAttribute(element.button, "anonid", "button");
-      // Disable the main button inside the menu-button if the password field is empty.
-      if (login.password.length == 0) {
-        mainActionButton.setAttribute("disabled", true);
-        chromeDoc.getElementById("password-notification-password")
-                 .classList.add("popup-notification-invalid-input");
-      } else {
-        mainActionButton.removeAttribute("disabled");
-        chromeDoc.getElementById("password-notification-password")
-                 .classList.remove("popup-notification-invalid-input");
-      }
-    };
-
-    let updateButtonLabel = () => {
-      let foundLogins = LoginHelper.searchLoginsWithObject({
-        formSubmitURL: login.formSubmitURL,
-        hostname: login.hostname,
-        httpRealm: login.httpRealm,
-        schemeUpgrades: LoginHelper.schemeUpgrades,
-      });
-
-      let logins = this._filterUpdatableLogins(login, foundLogins);
-      let msgNames = (logins.length == 0) ? saveMsgNames : changeMsgNames;
-
-      // Update the label based on whether this will be a new login or not.
-      let label = this._getLocalizedString(msgNames.buttonLabel);
-      let accessKey = this._getLocalizedString(msgNames.buttonAccessKey);
-
-      // Update the labels for the next time the panel is opened.
-      currentNotification.mainAction.label = label;
-      currentNotification.mainAction.accessKey = accessKey;
-
-      // Update the labels in real time if the notification is displayed.
-      let element = [...currentNotification.owner.panel.childNodes]
-                    .find(n => n.notification == currentNotification);
-      if (element) {
-        element.setAttribute("buttonlabel", label);
-        element.setAttribute("buttonaccesskey", accessKey);
-        updateButtonStatus(element);
-      }
-    };
-
-    let writeDataToUI = () => {
-      // setAttribute is used since the <textbox> binding may not be attached yet.
-      chromeDoc.getElementById("password-notification-username")
-               .setAttribute("placeholder", usernamePlaceholder);
-      chromeDoc.getElementById("password-notification-username")
-               .setAttribute("value", login.username);
-
-      let toggleCheckbox = chromeDoc.getElementById("password-notification-visibilityToggle");
-      toggleCheckbox.removeAttribute("checked");
-      let passwordField = chromeDoc.getElementById("password-notification-password");
-      // Ensure the type is reset so the field is masked.
-      passwordField.setAttribute("type", "password");
-      passwordField.setAttribute("value", login.password);
-      updateButtonLabel();
-    };
-
-    let readDataFromUI = () => {
-      login.username =
-        chromeDoc.getElementById("password-notification-username").value;
-      login.password =
-        chromeDoc.getElementById("password-notification-password").value;
-    };
-
-    let onInput = () => {
-      readDataFromUI();
-      updateButtonLabel();
-    };
-
-    let onVisibilityToggle = (commandEvent) => {
-      let passwordField = chromeDoc.getElementById("password-notification-password");
-      // Gets the caret position before changing the type of the textbox
-      let selectionStart = passwordField.selectionStart;
-      let selectionEnd = passwordField.selectionEnd;
-      passwordField.setAttribute("type", commandEvent.target.checked ? "" : "password");
-      if (!passwordField.hasAttribute("focused")) {
-        return;
-      }
-      passwordField.selectionStart = selectionStart;
-      passwordField.selectionEnd = selectionEnd;
-    };
-
-    let persistData = () => {
-      let foundLogins = LoginHelper.searchLoginsWithObject({
-        formSubmitURL: login.formSubmitURL,
-        hostname: login.hostname,
-        httpRealm: login.httpRealm,
-        schemeUpgrades: LoginHelper.schemeUpgrades,
-      });
-
-      let logins = this._filterUpdatableLogins(login, foundLogins);
-
-      if (logins.length == 0) {
-        // The original login we have been provided with might have its own
-        // metadata, but we don't want it propagated to the newly created one.
-        Services.logins.addLogin(new LoginInfo(login.hostname,
-                                               login.formSubmitURL,
-                                               login.httpRealm,
-                                               login.username,
-                                               login.password,
-                                               login.usernameField,
-                                               login.passwordField));
-      } else if (logins.length == 1) {
-        if (logins[0].password == login.password &&
-            logins[0].username == login.username) {
-          // We only want to touch the login's use count and last used time.
-          this._updateLogin(logins[0]);
-        } else {
-          this._updateLogin(logins[0], login);
-        }
-      } else {
-        Cu.reportError("Unexpected match of multiple logins.");
-      }
-    };
-
-    // The main action is the "Remember" or "Update" button.
-    let mainAction = {
-      label: this._getLocalizedString(initialMsgNames.buttonLabel),
-      accessKey: this._getLocalizedString(initialMsgNames.buttonAccessKey),
-      callback: () => {
-        histogram.add(PROMPT_ADD_OR_UPDATE);
-        if (histogramName == "PWMGR_PROMPT_REMEMBER_ACTION") {
-          Services.obs.notifyObservers(null, 'LoginStats:NewSavedPassword', null);
-        }
-        readDataFromUI();
-        persistData();
-        browser.focus();
-      }
-    };
-
-    // Include a "Never for this site" button when saving a new password.
-    let secondaryActions = type == "password-save" ? [{
-      label: this._getLocalizedString("notifyBarNeverRememberButtonText"),
-      accessKey: this._getLocalizedString("notifyBarNeverRememberButtonAccessKey"),
-      callback: () => {
-        histogram.add(PROMPT_NEVER);
-        Services.logins.setLoginSavingEnabled(login.hostname, false);
-        browser.focus();
-      }
-    }] : null;
-
-    let usernamePlaceholder = this._getLocalizedString("noUsernamePlaceholder");
-    let togglePasswordLabel = this._getLocalizedString("togglePasswordLabel");
-    let togglePasswordAccessKey = this._getLocalizedString("togglePasswordAccessKey");
-
-    this._getPopupNote().show(
-      browser,
-      "password",
-      promptMsg,
-      "password-notification-icon",
-      mainAction,
-      secondaryActions,
-      {
-        timeout: Date.now() + 10000,
-        displayURI: Services.io.newURI(login.hostname, null, null),
-        persistWhileVisible: true,
-        passwordNotificationType: type,
-        eventCallback: function (topic) {
-          switch (topic) {
-            case "showing":
-              currentNotification = this;
-              chromeDoc.getElementById("password-notification-password")
-                       .removeAttribute("focused");
-              chromeDoc.getElementById("password-notification-username")
-                       .removeAttribute("focused");
-              chromeDoc.getElementById("password-notification-username")
-                       .addEventListener("input", onInput);
-              chromeDoc.getElementById("password-notification-password")
-                       .addEventListener("input", onInput);
-              let toggleBtn = chromeDoc.getElementById("password-notification-visibilityToggle");
-
-              if (Services.prefs.getBoolPref("signon.rememberSignons.visibilityToggle")) {
-                toggleBtn.addEventListener("command", onVisibilityToggle);
-                toggleBtn.setAttribute("label", togglePasswordLabel);
-                toggleBtn.setAttribute("accesskey", togglePasswordAccessKey);
-                toggleBtn.setAttribute("hidden", LoginHelper.isMasterPasswordSet());
-              }
-              if (this.wasDismissed) {
-                chromeDoc.getElementById("password-notification-visibilityToggle")
-                         .setAttribute("hidden", true);
-              }
-              break;
-            case "shown":
-              writeDataToUI();
-              break;
-            case "dismissed":
-              this.wasDismissed = true;
-              readDataFromUI();
-              // Fall through.
-            case "removed":
-              currentNotification = null;
-              chromeDoc.getElementById("password-notification-username")
-                       .removeEventListener("input", onInput);
-              chromeDoc.getElementById("password-notification-password")
-                       .removeEventListener("input", onInput);
-              chromeDoc.getElementById("password-notification-visibilityToggle")
-                       .removeEventListener("command", onVisibilityToggle);
-              break;
-          }
-          return false;
-        },
-      }
-    );
-  },
-
-  /**
    * Displays a notification bar or a popup notification, to allow the user
    * to save the specified login. This allows the user to see the results of
    * their login, and only save a login which they know worked.
    *
-   * @param aNotifyObj
-   *        A notification box or a popup notification.
    * @param aLogin
    *        The login captured from the form.
    */
-  _showSaveLoginNotification : function (aNotifyObj, aLogin) {
-    // Ugh. We can't use the strings from the popup window, because they
-    // have the access key marked in the string (eg "Mo&zilla"), along
-    // with some weird rules for handling access keys that do not occur
-    // in the string, for L10N. See commonDialog.js's setLabelForNode().
-    var neverButtonText =
-          this._getLocalizedString("notifyBarNeverRememberButtonText");
-    var neverButtonAccessKey =
-          this._getLocalizedString("notifyBarNeverRememberButtonAccessKey");
-    var rememberButtonText =
-          this._getLocalizedString("notifyBarRememberPasswordButtonText");
-    var rememberButtonAccessKey =
-          this._getLocalizedString("notifyBarRememberPasswordButtonAccessKey");
-
+  _showSaveLoginNotification : function (aLogin) {
     var displayHost = this._getShortDisplayHost(aLogin.hostname);
-    var notificationText = this._getLocalizedString(
-                                  "rememberPasswordMsgNoUsername",
-                                  [displayHost]);
+    var notificationTextBundle = ["rememberPasswordMsgNoUsername", displayHost];
     var formData = {
       "displayHost": displayHost
     };
     if (aLogin.username) {
       var displayUser = this._sanitizeUsername(aLogin.username);
       formData["displayUser"] = displayUser;
+      notificationTextBundle = ["rememberPasswordMsg", displayUser, displayHost];
     }
 
     // The callbacks in |buttons| have a closure to access the variables
@@ -1108,47 +875,38 @@ LoginManagerPrompter.prototype = {
     // without a getService() call.
     var pwmgr = this._pwmgr;
 
-    // Notification is a PopupNotification
-    if (aNotifyObj == this._getPopupNote()) {
-      this._showLoginCaptureDoorhanger(aLogin, "password-save");
-    } else {
-      var notNowButtonText =
-            this._getLocalizedString("notifyBarNotNowButtonText");
-      var notNowButtonAccessKey =
-            this._getLocalizedString("notifyBarNotNowButtonAccessKey");
-      var buttons = [
-        // "Remember" button
-        {
-          label:     rememberButtonText,
-          accessKey: rememberButtonAccessKey,
-          popup:     null,
-          callback: function(aButton) {
-            pwmgr.addLogin(aLogin);
-          }
-        },
-
-        // "Never for this site" button
-        {
-          label:     neverButtonText,
-          accessKey: neverButtonAccessKey,
-          popup:     null,
-          callback: function(aButton) {
-            pwmgr.setLoginSavingEnabled(aLogin.hostname, false);
-          }
-        },
-
-        // "Not now" button
-        {
-          label:     notNowButtonText,
-          accessKey: notNowButtonAccessKey,
-          popup:     null,
-          callback:  function() { /* NOP */ }
+    var buttons = [
+      // "Remember" button
+      {
+        label:     "notifyBarRememberPasswordButtonText",
+        accessKey: "notifyBarRememberPasswordButtonAccessKey",
+        popup:     null,
+        callback: function(aButton) {
+          pwmgr.addLogin(aLogin);
         }
-      ];
+      },
 
-      this._showLoginNotification(aNotifyObj, "password-save",
-                                  notificationText, buttons, formData);
-    }
+      // "Never for this site" button
+      {
+        label:     "notifyBarNeverRememberButtonText",
+        accessKey: "notifyBarNeverRememberButtonAccessKey",
+        popup:     null,
+        callback: function(aButton) {
+          pwmgr.setLoginSavingEnabled(aLogin.hostname, false);
+        }
+      },
+
+      // "Not now" button
+      {
+        label:     "notifyBarNotNowButtonText",
+        accessKey: "notifyBarNotNowButtonAccessKey",
+        popup:     null,
+        callback:  function() { /* NOP */ }
+      }
+    ];
+
+    this._showLoginNotification("password-save", notificationTextBundle,
+                                buttons, formData);
 
     Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save", null);
   },
@@ -1177,25 +935,7 @@ LoginManagerPrompter.prototype = {
   },
 
   /**
-   * Called when we think we detect a password or username change for
-   * an existing login, when the form being submitted contains multiple
-   * password fields.
-   *
-   * @param {nsILoginInfo} aOldLogin
-   *                       The old login we may want to update.
-   * @param {nsILoginInfo} aNewLogin
-   *                       The new login from the page form.
-   */
-  promptToChangePassword(aOldLogin, aNewLogin) {
-    this.log("promptToChangePassword");
-    this._showChangeLoginNotification({}, aOldLogin, aNewLogin);
-  },
-
-  /**
    * Shows the Change Password notification bar or popup notification.
-   *
-   * @param aNotifyObj
-   *        A notification box or a popup notification.
    *
    * @param aOldLogin
    *        The stored login we want to update.
@@ -1203,25 +943,20 @@ LoginManagerPrompter.prototype = {
    * @param aNewLogin
    *        The login object with the changes we want to make.
    */
-  _showChangeLoginNotification(aNotifyObj, aOldLogin, aNewLogin) {
-    var changeButtonText =
-          this._getLocalizedString("notifyBarUpdateButtonText");
-    var changeButtonAccessKey =
-          this._getLocalizedString("notifyBarUpdateButtonAccessKey");
-
+  _showChangeLoginNotification(aOldLogin, aNewLogin) {
     // We reuse the existing message, even if it expects a username, until we
     // switch to the final terminology in bug 1144856.
     var displayHost = this._getShortDisplayHost(aOldLogin.hostname);
-    var notificationText = this._getLocalizedString("updatePasswordMsg",
-                                                    [displayHost]);
-
-
+    var notificationTextBundle;
     var formData = {
       "displayHost": displayHost
     };
     if (aOldLogin.username) {
       var displayUser = this._sanitizeUsername(aOldLogin.username);
+      notificationTextBundle = ["updatePasswordMsg", displayUser];
       formData["displayUser"] = displayUser;
+    } else {
+      notificationTextBundle = ["updatePasswordMsgNoUser"];
     }
 
     // The callbacks in |buttons| have a closure to access the variables
@@ -1229,94 +964,95 @@ LoginManagerPrompter.prototype = {
     // without a getService() call.
     var self = this;
 
-    // Notification is a PopupNotification
-    if (aNotifyObj == this._getPopupNote()) {
-      aOldLogin.hostname = aNewLogin.hostname;
-      aOldLogin.formSubmitURL = aNewLogin.formSubmitURL;
-      aOldLogin.password = aNewLogin.password;
-      aOldLogin.username = aNewLogin.username;
-      this._showLoginCaptureDoorhanger(aOldLogin, "password-change");
-    } else {
-      var dontChangeButtonText =
-            this._getLocalizedString("notifyBarDontChangeButtonText");
-      var dontChangeButtonAccessKey =
-            this._getLocalizedString("notifyBarDontChangeButtonAccessKey");
-      var buttons = [
-        // "Yes" button
-        {
-          label:     changeButtonText,
-          accessKey: changeButtonAccessKey,
-          popup:     null,
-          callback:  function(aNotifyObj, aButton) {
-            self._updateLogin(aOldLogin, aNewLogin);
-          }
-        },
-
-        // "No" button
-        {
-          label:     dontChangeButtonText,
-          accessKey: dontChangeButtonAccessKey,
-          popup:     null,
-          callback:  function(aNotifyObj, aButton) {
-            // do nothing
-          }
+    var buttons = [
+      // "Yes" button
+      {
+        label:     "notifyBarUpdateButtonText",
+        accessKey: "notifyBarUpdateButtonAccessKey",
+        popup:     null,
+        callback:  function(aButton) {
+          self._updateLogin(aOldLogin, aNewLogin);
         }
-      ];
+      },
 
-      this._showLoginNotification(aNotifyObj, "password-change",
-                                  notificationText, buttons, formData);
-    }
+      // "No" button
+      {
+        label:     "notifyBarDontChangeButtonText",
+        accessKey: "notifyBarDontChangeButtonAccessKey",
+        popup:     null,
+        callback:  function(aButton) {
+          // do nothing
+        }
+      }
+    ];
+
+    this._showLoginNotification("password-change", notificationTextBundle,
+                                buttons, formData);
 
     let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
     Services.obs.notifyObservers(aNewLogin, "passwordmgr-prompt-change", oldGUID);
   },
 
   /**
-   * Called when we detect a password change in a form submission, but we
-   * don't know which existing login (username) it's for. Asks the user
-   * to select a username and confirm the password change.
+   * Shows the Change Password notification bar or popup notification which
+   * allows the user to select a username to update.
    *
-   * Note: The caller doesn't know the username for aNewLogin, so this
-   *       function fills in .username and .usernameField with the values
-   *       from the login selected by the user.
+   * @param logins
+   *        The list of possible usernames for the user to select.
    *
-   * Note; XPCOM stupidity: |count| is just |logins.length|.
+   * @param aNewLogin
+   *        The login object with the changes we want to make.
    */
-  promptToChangePasswordWithUsernames : function (logins, count, aNewLogin) {
-    this.log("promptToChangePasswordWithUsernames with count:", count);
+  _showChangeLoginWithUsernamesNotification(logins, aNewLogin) {
+    // We reuse the existing message, even if it expects a username, until we
+    // switch to the final terminology in bug 1144856.
+    var displayHost = this._getShortDisplayHost(aNewLogin.hostname);
+    var notificationTextBundle = ["passwordChangeTitle"];
+    var usernames = logins.map(l => this._sanitizeUsername(l.username));
+    var dialogTextBundle  = ["userSelectText2"];
 
-    var usernames = logins.map(l => l.username);
-    var dialogText  = this._getLocalizedString("userSelectText");
-    var dialogTitle = this._getLocalizedString("passwordChangeTitle");
-    var selectedIndex = { value: null };
+    var formData = {
+      "textBundle": dialogTextBundle
+    };
 
-    // If user selects ok, outparam.value is set to the index
-    // of the selected username.
-    var ok = this._promptService.select(this._chromeWindow,
-                            dialogTitle, dialogText,
-                            usernames.length, usernames,
-                            selectedIndex);
-    if (ok) {
-      // Now that we know which login to use, modify its password.
-      var selectedLogin = logins[selectedIndex.value];
-      this.log("Updating password for user " + selectedLogin.username);
-      var newLoginWithUsername = Cc["@mozilla.org/login-manager/loginInfo;1"].
-                     createInstance(Ci.nsILoginInfo);
-      newLoginWithUsername.init(aNewLogin.hostname,
-                                aNewLogin.formSubmitURL, aNewLogin.httpRealm,
-                                selectedLogin.username, aNewLogin.password,
-                                selectedLogin.userNameField, aNewLogin.passwordField);
-      this._updateLogin(selectedLogin, newLoginWithUsername);
-    }
+    // The callbacks in |buttons| have a closure to access the variables
+    // in scope here; set one to |this._pwmgr| so we can get back to pwmgr
+    // without a getService() call.
+    var self = this;
+
+    var buttons = [
+      // "Yes" button
+      {
+        label:     "notifyBarUpdateButtonText",
+        accessKey: "notifyBarUpdateButtonAccessKey",
+        popup:     null,
+        callback:  function(aButton, selectedIndex) {
+          // Now that we know which login to use, modify its password.
+          var selectedLogin = logins[selectedIndex];
+          var newLoginWithUsername = Cc["@mozilla.org/login-manager/loginInfo;1"].
+                         createInstance(Ci.nsILoginInfo);
+          newLoginWithUsername.init(aNewLogin.hostname,
+                                    aNewLogin.formSubmitURL, aNewLogin.httpRealm,
+                                    selectedLogin.username, aNewLogin.password,
+                                    selectedLogin.userNameField, aNewLogin.passwordField);
+          self._updateLogin(selectedLogin, newLoginWithUsername);
+        }
+      },
+
+      // "No" button
+      {
+        label:     "notifyBarDontChangeButtonText",
+        accessKey: "notifyBarDontChangeButtonAccessKey",
+        popup:     null,
+        callback:  function(aButton) {
+          // do nothing
+        }
+      }
+    ];
+
+    this._showLoginNotification("password-update-multiuser", notificationTextBundle,
+                                buttons, formData);
   },
-
-
-
-
-  /* ---------- Internal Methods ---------- */
-
-
-
 
   _updateLogin(login, aNewLogin = null) {
     var now = Date.now();
@@ -1391,7 +1127,6 @@ LoginManagerPrompter.prototype = {
     return popupNote;
   },
 
-
   /**
    * Returns the notification box to this prompter, or null if there isn't
    * a notification box available.
@@ -1411,7 +1146,6 @@ LoginManagerPrompter.prototype = {
     return notifyBox;
   },
 
-
   /**
    * The user might enter a login that isn't the one we prefilled, but
    * is the same as some other existing login. So, pick a login with a
@@ -1423,23 +1157,6 @@ LoginManagerPrompter.prototype = {
         return foundLogins[i];
     return null;
   },
-
-
-  /**
-   * Can be called as:
-   *   _getLocalizedString("key1");
-   *   _getLocalizedString("key2", ["arg1"]);
-   *   _getLocalizedString("key3", ["arg1", "arg2"]);
-   *   (etc)
-   *
-   * Returns the localized string for the specified key,
-   * formatted if required.
-   *
-   */
-  _getLocalizedString : function (key, formatArgs) {
-    return key;
-  },
-
 
   /**
    * Sanitizes the specified username, by stripping quotes and truncating if
