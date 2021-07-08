@@ -15,4 +15,5 @@ OTHER_FILES += \
     jscomps/*.am \
     overrides/*.* \
     overrides/images/* \
+    overrides/en-US/* \
     configure.ac
