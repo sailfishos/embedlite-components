@@ -593,6 +593,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandl
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js");
+Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js");
 
 globalObject = new EmbedHelper();
 
