@@ -61,4 +61,17 @@ localebrowser_fi_manifest_DATA = \
 	fi/netError.dtd \
 	$(NULL)
 
+localebrand_ru_manifestdir=$(libdir)/mozembedlite/chrome/ru/locale/branding
+localebrand_ru_manifest_DATA = \
+	ru/brand.dtd \
+	ru/brand.properties \
+	$(NULL)
+
+localebrowser_ru_manifestdir=$(libdir)/mozembedlite/chrome/ru/locale/ru/browser
+localebrowser_ru_manifest_DATA = \
+	ru/aboutCertError.dtd \
+	ru/appstrings.properties \
+	ru/netError.dtd \
+	$(NULL)
+
 AM_CPPFLAGS = $(DEPS_CFLAGS)

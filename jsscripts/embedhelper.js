@@ -34,7 +34,8 @@ const kEmbedStateActive = 0x00000001; // :active pseudoclass for elements
 
 const availableLocales = [
   "en-US",
-  "fi"
+  "fi",
+  "ru"
 ];
 
 function EmbedHelper() {
