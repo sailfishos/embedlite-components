@@ -16,4 +16,5 @@ OTHER_FILES += \
     overrides/*.* \
     overrides/images/* \
     overrides/en-US/* \
+    tools/*.py \
     configure.ac
