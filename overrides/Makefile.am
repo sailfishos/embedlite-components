@@ -48,4 +48,17 @@ localebrowser_manifest_DATA = \
 	en-US/netError.dtd \
 	$(NULL)
 
+localebrand_fi_manifestdir=$(libdir)/mozembedlite/chrome/fi/locale/branding
+localebrand_fi_manifest_DATA = \
+	fi/brand.dtd \
+	fi/brand.properties \
+	$(NULL)
+
+localebrowser_fi_manifestdir=$(libdir)/mozembedlite/chrome/fi/locale/fi/browser
+localebrowser_fi_manifest_DATA = \
+	fi/aboutCertError.dtd \
+	fi/appstrings.properties \
+	fi/netError.dtd \
+	$(NULL)
+
 AM_CPPFLAGS = $(DEPS_CFLAGS)
