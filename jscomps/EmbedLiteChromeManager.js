@@ -10,9 +10,11 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
+const Cu = Components.utils;
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("chrome://embedlite/content/NetErrorHelper.jsm")
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   ContentLinkHandler: "chrome://embedlite/content/ContentLinkHandler.jsm",
@@ -44,12 +46,18 @@ EmbedLiteChromeListener.prototype = {
   targetDOMWindow: null,
   docShell: null,
   windowId: -1,
+  userRequested: "",
 
   // -------------------------------------------------------------------------
   // Added call through function to mimic chrome and satisfy ContentLinkHandler
   addEventListener(eventType, callback, options) {
     let chromeEventHandler = Services.embedlite.chromeEventHandler(this.targetDOMWindow);
     chromeEventHandler.addEventListener(eventType, callback, options);
+  },
+
+  removeEventListener(eventType, callback, options) {
+    let chromeEventHandler = Services.embedlite.chromeEventHandler(this.targetDOMWindow);
+    chromeEventHandler.removeEventListener(eventType, callback, options);
   },
 
   sendAsyncMessage(messageName, message) {
@@ -83,6 +91,9 @@ EmbedLiteChromeListener.prototype = {
         message["docuri"] = docURI;
       }
 
+      if (docURI.startsWith("about:neterror")) {
+        NetErrorHelper.attachToBrowser(this);
+      }
       break;
     case "DOMWillOpenModalDialog":
     case "DOMModalDialogClosed":
@@ -121,6 +132,7 @@ function EmbedLiteChromeManager()
 EmbedLiteChromeManager.prototype = {
   classID: Components.ID("{9d17cd12-da27-4f4c-957c-f355910ac2e9}"),
   _chromeListeners: {},
+  _lastCreatedWindowId: 0,
 
   _initialize() {
     // Use "embedliteviewcreated" instead of "domwindowopened".
@@ -128,12 +140,14 @@ EmbedLiteChromeManager.prototype = {
     Services.obs.addObserver(this, "embed-network-link-status", true)
     Services.obs.addObserver(this, "domwindowclosed", true);
     Services.obs.addObserver(this, "xpcom-shutdown", false);
+    Services.obs.addObserver(this, "keyword-uri-fixup", true);
   },
 
   onWindowOpen(aWindow) {
     // Listener creates ContentLinkHandler.jsm which handles link element parsing.
     let chromeListener = new EmbedLiteChromeListener(aWindow);
-    this._chromeListeners[aWindow] = chromeListener;
+    this._chromeListeners[chromeListener.windowId] = chromeListener;
+    this._lastCreatedWindowId = chromeListener.windowId;
     let chromeEventHandler = Services.embedlite.chromeEventHandler(aWindow);
     if (chromeEventHandler) {
       chromeEventHandler.addEventListener("DOMContentLoaded", chromeListener, false);
@@ -149,7 +163,8 @@ EmbedLiteChromeManager.prototype = {
 
   onWindowClosed(aWindow) {
     let chromeEventHandler = Services.embedlite.chromeEventHandler(aWindow);
-    let chromeListener = this._chromeListeners[aWindow];
+    let windowId = Services.embedlite.getIDByWindow(aWindow);
+    let chromeListener = this._chromeListeners[windowId];
     if (chromeEventHandler) {
       chromeEventHandler.removeEventListener("DOMContentLoaded", chromeListener, false);
       chromeEventHandler.addEventListener("DOMWillOpenModalDialog", chromeListener, false);
@@ -159,11 +174,28 @@ EmbedLiteChromeManager.prototype = {
     } else {
       Logger.warn("Something went wrong, could not get chrome event handler for window", aWindow, "id:", chromeListener.windowId, "when opening a window")
     }
+    if (this._lastCreatedWindowId === windowId) {
+      this._lastCreatedWindowId = 0;
+    }
+    delete this._chromeListeners[windowId];
   },
 
   observe(aSubject, aTopic, aData) {
     let self = this;
     switch (aTopic) {
+    case "keyword-uri-fixup":
+      var windowId = this._lastCreatedWindowId;
+      try {
+        windowId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+      } catch (e) {
+        // Do nothing
+      }
+      if (windowId) {
+        this._chromeListeners[windowId].userRequested = aData;
+      } else {
+        Logger.warn("JSComp: EmbedLiteChromeManager.js no window to store request against");
+      }
+      break;
     case "app-startup":
       self._initialize();
       break;
