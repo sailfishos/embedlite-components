@@ -5,11 +5,10 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
-const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("chrome://embedlite/content/OrientationChangeHandler.jsm")
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.import("chrome://embedlite/content/OrientationChangeHandler.jsm")
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",
