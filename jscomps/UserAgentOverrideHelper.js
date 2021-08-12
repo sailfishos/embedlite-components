@@ -72,7 +72,7 @@ UserAgentOverrideHelper.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsISiteSpecificUserAgent, Ci.nsIObserver,
+  QueryInterface: ChromeUtils.generateQI([Ci.nsISiteSpecificUserAgent, Ci.nsIObserver,
                                          Ci.nsISupportsWeakReference, Ci.nsIFormSubmitObserver])
 };
 

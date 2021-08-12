@@ -28,7 +28,7 @@ IntentProtocolHandler.prototype = {
   },
 
   classID: Components.ID("{878c8294-b764-48fd-87be-7d5e7a44faa9}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIProtocolHandler])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolHandler])
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([IntentProtocolHandler]);

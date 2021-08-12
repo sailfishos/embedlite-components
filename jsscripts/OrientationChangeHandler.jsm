@@ -158,7 +158,7 @@ OrientationChangeHandler.prototype = {
   },
   onStatusChange: function() { },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
-                                            Ci.nsIDOMEventListener,
-                                            Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener,
+                                          Ci.nsIDOMEventListener,
+                                          Ci.nsISupportsWeakReference])
 };

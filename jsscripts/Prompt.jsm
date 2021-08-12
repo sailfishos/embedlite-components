@@ -52,7 +52,7 @@ function Prompt(aOptions) {
 }
 
 Prompt.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIEmbedMessageListener]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIEmbedMessageListener]),
   onMessageReceived: function(messageName, message) {
     let data = JSON.parse(message);
 
