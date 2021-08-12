@@ -54,7 +54,7 @@ SPConsoleListener.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIConsoleListener])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIConsoleListener])
 };
 
 // Captures the data received on a channel for debug output
@@ -233,7 +233,7 @@ $EmbedLiteConsoleListener.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([$EmbedLiteConsoleListener]);

@@ -65,7 +65,7 @@ EventLinkListener.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMEventListener])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIDOMEventListener])
 };
 
 EmbedLiteErrorPageHandler.prototype = {
@@ -114,7 +114,7 @@ EmbedLiteErrorPageHandler.prototype = {
     delete this._linkListeners[aWindow];
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
 var ErrorPageEventHandler = {

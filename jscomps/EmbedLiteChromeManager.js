@@ -120,8 +120,8 @@ EmbedLiteChromeListener.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMEventListener,
-                                         Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIDOMEventListener,
+                                          Ci.nsISupportsWeakReference])
 };
 
 function EmbedLiteChromeManager()
@@ -217,7 +217,7 @@ EmbedLiteChromeManager.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedLiteChromeManager]);
