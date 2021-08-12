@@ -11,9 +11,9 @@ const PREF_BD_USEDOWNLOADDIR = "browser.download.useDownloadDir";
 const PREF_BD_DOWNLOADDIR = "browser.download.dir";
 const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.import("resource://gre/modules/Task.jsm");
 
 ChromeUtils.import("resource://gre/modules/DownloadPaths.jsm");
 ChromeUtils.import("resource://gre/modules/Downloads.jsm");
