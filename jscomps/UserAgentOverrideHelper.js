@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const Cu = Components.utils;
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
@@ -15,8 +14,8 @@ const VIEW_UA_CHANGED           = "embedliteviewhttpuseragentchanged";
 const XPCOM_SHUTDOWN            = "xpcom-shutdown";
 const PREF_OVERRIDE             = "general.useragent.override";
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-Components.utils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -97,7 +96,7 @@ var UserAgent = {
                              "http-on-modify-request");
     Services.prefs.addObserver(PREF_OVERRIDE, this, false);
     this._customUA = this.getCustomUserAgent();
-    Cu.import("resource://gre/modules/UserAgentOverrides.jsm");
+    ChromeUtils.import("resource://gre/modules/UserAgentOverrides.jsm");
     UserAgentOverrides.init();
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
     // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent/Firefox

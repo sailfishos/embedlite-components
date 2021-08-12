@@ -8,9 +8,9 @@
 
 "use strict";
 
-const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
+const {classes: Cc, interfaces: Ci, results: Cr} = Components;
 
-Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+const { XPCOMUtils } = ChromeUtils.import('resource://gre/modules/XPCOMUtils.jsm');
 
 function IntentProtocolHandler() {
 }
