@@ -177,7 +177,7 @@ function EmbedliteDownloadManager()
 EmbedliteDownloadManager.prototype = {
   classID: Components.ID("{71b0a6e8-83ac-4006-af97-d66009db97c8}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
 
   observe: function(aSubject, aTopic, aData) {
     switch (aTopic) {

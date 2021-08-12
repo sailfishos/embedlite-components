@@ -28,7 +28,7 @@ function LoginsHelper() {
 LoginsHelper.prototype = {
   classID: Components.ID("{aa0eeee6-5e1e-46a1-8b54-fbdd7cdb6e81}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
 
   __pwmgr : null, // Password Manager service
   get _pwmgr() {
