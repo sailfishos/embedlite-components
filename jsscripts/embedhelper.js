@@ -44,8 +44,8 @@ function EmbedHelper() {
 }
 
 EmbedHelper.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsISupportsWeakReference]),
 
   _finder: null,
   _init: function()

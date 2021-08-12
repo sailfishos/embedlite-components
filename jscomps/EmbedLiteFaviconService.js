@@ -65,8 +65,8 @@ var gProgressListener = {
   onProgressChange: function() { },
   onStatusChange: function() { },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
-                                         Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener,
+                                          Ci.nsISupportsWeakReference]),
 }
 
 function EventLinkListener(aWindow)
@@ -113,7 +113,7 @@ EventLinkListener.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMEventListener])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIDOMEventListener])
 };
 
 EmbedLiteFaviconService.prototype = {
@@ -181,7 +181,7 @@ EmbedLiteFaviconService.prototype = {
     this._getProgress(aWindow).removeProgressListener(gProgressListener, Ci.nsIWebProgress.NOTIFY_LOCATION);
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedLiteFaviconService]);

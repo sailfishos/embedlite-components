@@ -41,7 +41,7 @@ function AboutRedirector() {
   Logger.debug("JSComp: AboutRedirector.js loaded");
 }
 AboutRedirector.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIAboutModule]),
   classID: Components.ID("{59f3da9a-6c88-11e2-b875-33d1bd379849}"),
 
   _getModuleInfo: function (aURI) {

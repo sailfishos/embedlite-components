@@ -20,7 +20,7 @@ function WebInstallPrompt() {
 
 WebInstallPrompt.prototype = {
   classID: Components.ID("{ce2d8764-c366-11e2-8e71-1bb058e7ef52}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.amIWebInstallPrompt]),
+  QueryInterface: ChromeUtils.generateQI([Ci.amIWebInstallPrompt]),
 
   confirm: function(aWindow, aURL, aInstalls) {
 

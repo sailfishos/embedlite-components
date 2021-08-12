@@ -20,7 +20,7 @@ function AlertsService() {
 
 AlertsService.prototype = {
   classID: Components.ID("{b98ab6b8-6c88-11e2-99bc-6745f7369235}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAlertsService]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIAlertsService]),
 
   showAlertNotification: function(aImageUrl, aTitle, aText, aTextClickable, aCookie, aAlertListener, aName) {
     dump("showAlertNotification: imgUrl:" + aImageUrl + ", title:" + aTitle + ", txt:" + aText + ", clickable:" + aTextClickable + ", cookie:" +  aCookie + ", listener:" + aAlertListener + ", Name:" + aName + "\n");

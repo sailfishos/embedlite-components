@@ -33,8 +33,8 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   * See gecko-dev/mobile/android/modules/FormAssistant.jsm
   */
 FormAssistant.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsISupportsWeakReference]),
 
   // Weak-ref used to keep track of the currently focused element.
   _currentFocusedElement: null,

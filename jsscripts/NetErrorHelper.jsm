@@ -117,8 +117,8 @@ handlers.searchbutton = {
 handlers.wifi = {
   // This registers itself with the nsIObserverService as a weak ref,
   // so we have to implement GetWeakReference as well
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsISupportsWeakReference]),
 
   _docShell: null,
 

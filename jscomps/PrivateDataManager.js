@@ -21,7 +21,7 @@ function PrivateDataManager() {
 
 PrivateDataManager.prototype = {
   classID: Components.ID("{6a7dd2ef-b7c8-4ab5-8c35-c0e5d7557ccf}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
 
   get loginManager() {
     return Cc["@mozilla.org/login-manager;1"].getService(Ci.nsILoginManager);
