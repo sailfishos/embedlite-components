@@ -158,11 +158,13 @@ function LogChannelInfo(aSubject) {
   }
 }
 
-function EmbedLiteConsoleListener()
+// Prefix the component name with $ to ensure it is initalised
+// before all other components in the start-up sequence.
+function $EmbedLiteConsoleListener()
 {
 }
 
-EmbedLiteConsoleListener.prototype = {
+$EmbedLiteConsoleListener.prototype = {
   classID: Components.ID("{6b21b5a8-9816-11e2-86f8-fb54170a814d}"),
   _listener: null,
 
@@ -234,4 +236,4 @@ EmbedLiteConsoleListener.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedLiteConsoleListener]);
+this.NSGetFactory = XPCOMUtils.generateNSGetFactory([$EmbedLiteConsoleListener]);
