@@ -219,7 +219,7 @@ FormAssistant.prototype = {
   * LoginUtils
   *
   * Allows extraction of origin information from form elements. These are
-  * needed to identify any stored logins which relate tot he form.
+  * needed to identify any stored logins which relate to the form.
   *
   * Modified from LoginManagerContent.jsm
   * See gecko-dev/toolkit/components/passwordmgr/LoginManagerContent.jsm

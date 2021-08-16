@@ -120,3 +120,4 @@ category app-startup EmbedLiteWebrtcUI service,@mozilla.org/embedlite-webrtc-ui;
 # IntentProtocolHandler.js
 component {878c8294-b764-48fd-87be-7d5e7a44faa9} IntentProtocolHandler.js
 contract @mozilla.org/network/protocol;1?name=intent {878c8294-b764-48fd-87be-7d5e7a44faa9}
+

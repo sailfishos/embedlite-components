@@ -6,7 +6,10 @@ content browser chrome/content/ contentaccessible=yes
 override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
 locale browser en-US en-US/locale/en-US/browser/
 locale branding en-US en-US/locale/branding/
+locale branding fi fi/locale/branding/
+locale browser fi fi/locale/fi/browser/
+locale branding ru ru/locale/branding/
+locale browser ru ru/locale/ru/browser/
 override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
 override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
-locale browser en-US en-US/locale/en-US/browser/
 override chrome://global/skin/media/videocontrols.css chrome://browser/skin/touchcontrols.css

@@ -37,15 +37,41 @@ manifestsscript_manifest_DATA = \
 
 localebrand_manifestdir=$(libdir)/mozembedlite/chrome/en-US/locale/branding
 localebrand_manifest_DATA = \
-	brand.dtd \
-	brand.properties \
+	en-US/brand.dtd \
+	en-US/brand.properties \
 	$(NULL)
 
 localebrowser_manifestdir=$(libdir)/mozembedlite/chrome/en-US/locale/en-US/browser
 localebrowser_manifest_DATA = \
-	aboutCertError.dtd \
-	appstrings.properties \
-	netError.dtd \
+	en-US/aboutCertError.dtd \
+	en-US/appstrings.properties \
+	en-US/netError.dtd \
+	$(NULL)
+
+localebrand_fi_manifestdir=$(libdir)/mozembedlite/chrome/fi/locale/branding
+localebrand_fi_manifest_DATA = \
+	fi/brand.dtd \
+	fi/brand.properties \
+	$(NULL)
+
+localebrowser_fi_manifestdir=$(libdir)/mozembedlite/chrome/fi/locale/fi/browser
+localebrowser_fi_manifest_DATA = \
+	fi/aboutCertError.dtd \
+	fi/appstrings.properties \
+	fi/netError.dtd \
+	$(NULL)
+
+localebrand_ru_manifestdir=$(libdir)/mozembedlite/chrome/ru/locale/branding
+localebrand_ru_manifest_DATA = \
+	ru/brand.dtd \
+	ru/brand.properties \
+	$(NULL)
+
+localebrowser_ru_manifestdir=$(libdir)/mozembedlite/chrome/ru/locale/ru/browser
+localebrowser_ru_manifest_DATA = \
+	ru/aboutCertError.dtd \
+	ru/appstrings.properties \
+	ru/netError.dtd \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)

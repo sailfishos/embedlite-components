@@ -22,11 +22,21 @@ XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
                                     "nsIEmbedAppService");
 
+XPCOMUtils.defineLazyServiceGetter(Services, "locale",
+                                    "@mozilla.org/intl/localeservice;1",
+                                    "mozILocaleService");
+
 var globalObject = null;
 var gScreenWidth = 0;
 var gScreenHeight = 0;
 
 const kEmbedStateActive = 0x00000001; // :active pseudoclass for elements
+
+const availableLocales = [
+  "en-US",
+  "fi",
+  "ru"
+];
 
 function EmbedHelper() {
   this.contentDocumentIsDisplayed = true;
@@ -63,6 +73,9 @@ EmbedHelper.prototype = {
     addMessageListener("Gesture:ContextMenuSynth", this);
     addMessageListener("embed:ContextMenuCreate", this);
     Services.obs.addObserver(this, "embedlite-before-first-paint", true);
+
+    Logger.debug("Available locales: " + availableLocales.join(", "));
+    Services.locale.setAvailableLocales(availableLocales);
   },
 
   // Similar to HtmlInputElement IsExperimentalMobileType
