@@ -7,10 +7,9 @@
 this.EXPORTED_SYMBOLS = ["OrientationChangeHandler"];
 
 const Ci = Components.interfaces;
-const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
@@ -158,7 +157,7 @@ OrientationChangeHandler.prototype = {
   },
   onStatusChange: function() { },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
-                                            Ci.nsIDOMEventListener,
-                                            Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener,
+                                          Ci.nsIDOMEventListener,
+                                          Ci.nsISupportsWeakReference])
 };

@@ -5,10 +5,9 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
-const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
@@ -65,8 +64,8 @@ var gProgressListener = {
   onProgressChange: function() { },
   onStatusChange: function() { },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
-                                         Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener,
+                                          Ci.nsISupportsWeakReference]),
 }
 
 function EventLinkListener(aWindow)
@@ -113,7 +112,7 @@ EventLinkListener.prototype = {
     }
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMEventListener])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIDOMEventListener])
 };
 
 EmbedLiteFaviconService.prototype = {
@@ -181,7 +180,7 @@ EmbedLiteFaviconService.prototype = {
     this._getProgress(aWindow).removeProgressListener(gProgressListener, Ci.nsIWebProgress.NOTIFY_LOCATION);
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedLiteFaviconService]);

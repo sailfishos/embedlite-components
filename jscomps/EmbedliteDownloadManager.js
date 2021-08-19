@@ -14,7 +14,7 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
@@ -177,7 +177,7 @@ function EmbedliteDownloadManager()
 EmbedliteDownloadManager.prototype = {
   classID: Components.ID("{71b0a6e8-83ac-4006-af97-d66009db97c8}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
 
   observe: function(aSubject, aTopic, aData) {
     switch (aTopic) {

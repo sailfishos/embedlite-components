@@ -3,10 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 const Cc = Components.classes;
 const Ci = Components.interfaces;
-const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -41,7 +40,7 @@ function AboutRedirector() {
   Logger.debug("JSComp: AboutRedirector.js loaded");
 }
 AboutRedirector.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAboutModule]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIAboutModule]),
   classID: Components.ID("{59f3da9a-6c88-11e2-b875-33d1bd379849}"),
 
   _getModuleInfo: function (aURI) {

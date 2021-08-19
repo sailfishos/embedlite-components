@@ -13,7 +13,7 @@ function debug(msg) {
   Logger.debug("FormAssistant.js -", msg);
 }
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
@@ -33,8 +33,8 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   * See gecko-dev/mobile/android/modules/FormAssistant.jsm
   */
 FormAssistant.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsISupportsWeakReference]),
 
   // Weak-ref used to keep track of the currently focused element.
   _currentFocusedElement: null,

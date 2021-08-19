@@ -4,8 +4,8 @@
 
 // Ported from Android FF esr60 sha1 c714053d73ac408ab402bb4d7e906e718f4ecb7e
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
 Cu.importGlobalProperties(['File']);
@@ -282,7 +282,7 @@ FilePicker.prototype = {
 
   getEnumerator: function(files) {
     return {
-      QueryInterface: XPCOMUtils.generateQI([Ci.nsISimpleEnumerator]),
+      QueryInterface: ChromeUtils.generateQI([Ci.nsISimpleEnumerator]),
       mFiles: files,
       mIndex: 0,
       hasMoreElements: function() {
@@ -312,7 +312,7 @@ FilePicker.prototype = {
   },
 
   classID: Components.ID("{18a4e042-7c7c-424b-a583-354e68553a7f}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIFilePicker, Ci.nsIEmbedMessageListener])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIFilePicker, Ci.nsIEmbedMessageListener])
 };
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory([FilePicker]);
