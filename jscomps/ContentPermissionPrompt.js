@@ -4,11 +4,10 @@
 
 const Ci = Components.interfaces;
 const Cr = Components.results;
-const Cu = Components.utils;
 const Cc = Components.classes;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
@@ -26,7 +25,7 @@ function ContentPermissionPrompt() {
 ContentPermissionPrompt.prototype = {
   classID: Components.ID("{C6E8C44D-9F39-4AF7-BCC0-76E38A8310F5}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIContentPermissionPrompt, Ci.nsIEmbedMessageListener]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIContentPermissionPrompt, Ci.nsIEmbedMessageListener]),
   _pendingRequests: {},
 
   _getReqKey: function(request, type) {

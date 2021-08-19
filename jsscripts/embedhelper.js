@@ -5,10 +5,10 @@
 "use strict";
 
 let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/Geometry.jsm");
-Cu.import("resource://gre/modules/FileUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.import("resource://gre/modules/Geometry.jsm");
+ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
 Cu.importGlobalProperties(["InspectorUtils"]);
 
@@ -44,8 +44,8 @@ function EmbedHelper() {
 }
 
 EmbedHelper.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsISupportsWeakReference]),
 
   _finder: null,
   _init: function()
