@@ -7,8 +7,8 @@
 var Cc = Components.classes;
 var Ci = Components.interfaces;
 
-Components.utils.import("resource://gre/modules/Services.jsm");
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
@@ -52,7 +52,7 @@ function Prompt(aOptions) {
 }
 
 Prompt.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIEmbedMessageListener]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIEmbedMessageListener]),
   onMessageReceived: function(messageName, message) {
     let data = JSON.parse(message);
 

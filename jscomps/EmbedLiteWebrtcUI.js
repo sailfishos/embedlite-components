@@ -13,7 +13,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
@@ -181,7 +181,7 @@ function EmbedLiteWebrtcUI()
 EmbedLiteWebrtcUI.prototype = {
   classID: Components.ID("{08b3fb7b-b5c6-4d3c-b9c0-bde7aa0674f7}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
 
   _pendingRequests: [],
 
