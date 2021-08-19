@@ -6,9 +6,9 @@ const Cc = Components.classes;
 const Cr = Components.results;
 const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -26,7 +26,7 @@ PromptService.prototype = {
   inModalState: false,
   classID: Components.ID("{44df5fae-c5a1-11e2-8e91-1ff32ee4f840}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIPromptService]),
 
   inPrivateBrowsing: function(domWin) {
     if (domWin) {
@@ -110,7 +110,7 @@ function InternalPrompt(aDomWin) {
 InternalPrompt.prototype = {
   _domWin: null,
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPrompt, Ci.nsIAuthPrompt, Ci.nsIAuthPrompt2]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIPrompt, Ci.nsIAuthPrompt, Ci.nsIAuthPrompt2]),
 
   /* ---------- internal methods ---------- */
   _getPrompt: function _getPrompt(aTitle, aText, aButtons, aCheckMsg, aCheckState) {
@@ -588,7 +588,7 @@ InternalPrompt.prototype = {
       //this._removeLoginNotifications();
 
       cancelable = {
-        QueryInterface: XPCOMUtils.generateQI([Ci.nsICancelable]),
+        QueryInterface: ChromeUtils.generateQI([Ci.nsICancelable]),
         callback: aCallback,
         context: aContext,
         cancel: function() {
@@ -906,7 +906,7 @@ function AuthPromptAdapterFactory() {
 
 AuthPromptAdapterFactory.prototype = {
   classID: Components.ID("{80dae1e9-e0d2-4974-915f-f97050fa8068}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAuthPromptAdapterFactory]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIAuthPromptAdapterFactory]),
 
   /* ----------  nsIAuthPromptAdapterFactory ---------- */
 
@@ -923,7 +923,7 @@ function AuthPromptAdapter(aPrompt) {
 }
 
 AuthPromptAdapter.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIAuthPrompt2]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIAuthPrompt2]),
   prompt: null,
 
   /* ----------  nsIAuthPrompt2 ---------- */

@@ -4,10 +4,10 @@
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-const { PromptUtils } = Cu.import("resource://gre/modules/SharedPromptUtils.jsm", {});
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+const { PromptUtils } = ChromeUtils.import("resource://gre/modules/SharedPromptUtils.jsm", {});
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
                                   "resource://gre/modules/LoginHelper.jsm");
@@ -45,7 +45,7 @@ function LoginManagerPromptFactory() {
 LoginManagerPromptFactory.prototype = {
 
   classID : Components.ID("{72de694e-6c88-11e2-a4ee-6b515bdf0cb7}"),
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIObserver, Ci.nsISupportsWeakReference]),
+  QueryInterface : ChromeUtils.generateQI([Ci.nsIPromptFactory, Ci.nsIObserver, Ci.nsISupportsWeakReference]),
 
   _asyncPrompts : {},
   _asyncPromptInProgress : false,
@@ -248,10 +248,10 @@ function LoginManagerPrompter() {
 LoginManagerPrompter.prototype = {
 
   classID : Components.ID("{8aa66d77-1bbb-45a6-991e-b8f47751c291}"),
-  QueryInterface : XPCOMUtils.generateQI([Ci.nsIAuthPrompt,
-                                          Ci.nsIAuthPrompt2,
-                                          Ci.nsILoginManagerPrompter,
-                                          Ci.nsIEmbedMessageListener]),
+  QueryInterface : ChromeUtils.generateQI([Ci.nsIAuthPrompt,
+                                           Ci.nsIAuthPrompt2,
+                                           Ci.nsILoginManagerPrompter,
+                                           Ci.nsIEmbedMessageListener]),
 
   _factory       : null,
   _chromeWindow  : null,
@@ -1308,7 +1308,7 @@ LoginManagerPrompter.prototype = {
 
   _newAsyncPromptConsumer : function(aCallback, aContext) {
     return {
-      QueryInterface: XPCOMUtils.generateQI([Ci.nsICancelable]),
+      QueryInterface: ChromeUtils.generateQI([Ci.nsICancelable]),
       callback: aCallback,
       context: aContext,
       cancel: function() {

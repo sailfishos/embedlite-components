@@ -6,10 +6,9 @@
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
-const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
@@ -43,7 +42,7 @@ function permissionToCookieAccess(permission) {
 ContentPermissionManager.prototype = {
   classID: Components.ID("{86d354c6-81bc-4eb5-82c3-4c9859586165}"),
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
 
   get cookiePermission() {
     return Cc["@mozilla.org/cookie/permission;1"].getService(Ci.nsICookiePermission);
