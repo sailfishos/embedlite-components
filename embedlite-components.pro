@@ -19,4 +19,6 @@ OTHER_FILES += \
     overrides/fi/* \
     overrides/ru/* \
     tools/*.py \
-    configure.ac
+    configure.ac \
+    link_to_system.sh \
+    rpm/*.spec
