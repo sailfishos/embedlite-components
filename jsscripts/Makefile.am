@@ -6,6 +6,8 @@ jsscripts_manifest_DATA = \
 	FormAssistant.js \
 	ContentLinkHandler.jsm \
 	OrientationChangeHandler.jsm \
+	UserAgentUpdates.jsm \
+	UserAgentOverrides.jsm \
 	SelectAsyncHelper.js \
 	SelectionHandler.js \
 	SelectionPrototype.js \
