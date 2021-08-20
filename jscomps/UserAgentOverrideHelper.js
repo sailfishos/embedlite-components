@@ -16,6 +16,7 @@ const PREF_OVERRIDE             = "general.useragent.override";
 
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { UserAgentOverrides } = ChromeUtils.import("chrome://embedlite/content/UserAgentOverrides.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -96,7 +97,6 @@ var UserAgent = {
                              "http-on-modify-request");
     Services.prefs.addObserver(PREF_OVERRIDE, this, false);
     this._customUA = this.getCustomUserAgent();
-    ChromeUtils.import("resource://gre/modules/UserAgentOverrides.jsm");
     UserAgentOverrides.init();
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
     // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent/Firefox
