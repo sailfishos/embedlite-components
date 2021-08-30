@@ -57,6 +57,8 @@ mkdir -p $TARGET_DIR/chrome/embedlite/content/sync;
 mkdir -p $TARGET_DIR/chrome/embedlite/content/search-plugins;
 ln -s $(pwd)/jsscripts/embedhelper.js $TARGET_DIR/chrome/embedlite/content/embedhelper.js;
 ln -s $(pwd)/jsscripts/OrientationChangeHandler.jsm $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.jsm;
+ln -s $(pwd)/jsscripts/UserAgentUpdates.jsm $TARGET_DIR/chrome/embedlite/content/UserAgentUpdates.jsm;
+ln -s $(pwd)/jsscripts/UserAgentOverrides.jsm $TARGET_DIR/chrome/embedlite/content/UserAgentOverrides.jsm;
 ln -s $(pwd)/jsscripts/Prompt.jsm $TARGET_DIR/chrome/embedlite/content/Prompt.jsm;
 ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content/SelectAsyncHelper.js;
 ln -s $(pwd)/jsscripts/SelectionHandler.js $TARGET_DIR/chrome/embedlite/content/SelectionHandler.js;
