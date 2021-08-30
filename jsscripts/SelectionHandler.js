@@ -612,9 +612,7 @@ function SelectionHandler() {
   this._getDocShell = function _getDocShell(aWindow) {
     if (aWindow == null)
       return null;
-    return aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-                  .getInterface(Ci.nsIWebNavigation)
-                  .QueryInterface(Ci.nsIDocShell);
+    return aWindow.docShell;
   }
 
   this._getSelectedText = function _getSelectedText() {
