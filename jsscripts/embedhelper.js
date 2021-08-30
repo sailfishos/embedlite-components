@@ -356,7 +356,7 @@ EmbedHelper.prototype = {
 
   _sendMouseEvent: function _sendMouseEvent(aName, window, aX, aY) {
     try {
-      let cwu = window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+      let cwu = window.windowUtils;
       cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, Ci.nsIDOMMouseEvent.MOZ_SOURCE_TOUCH);
     } catch(e) {
       Cu.reportError(e);
@@ -536,8 +536,7 @@ EmbedHelper.prototype = {
       // get the frame's nsIDOMWindowUtils
       utils = element.contentDocument
                      .defaultView
-                     .QueryInterface(Ci.nsIInterfaceRequestor)
-                     .getInterface(Ci.nsIDOMWindowUtils);
+                     .windowUtils;
 
       // retrieve the target element in the sub frame at x, y
       element = utils.elementFromPoint(x, y, true, false);
@@ -580,7 +579,7 @@ EmbedHelper.prototype = {
 // Ported from Metro code base. SHA1 554eff3a212d474f5a883
 let ContentScroll =  {
   getScrollOffset: function(aWindow) {
-    let cwu = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+    let cwu = aWindow.windowUtils;
     let scrollX = {}, scrollY = {};
     cwu.getScrollXY(false, scrollX, scrollY);
     return { x: scrollX.value, y: scrollY.value };

@@ -610,7 +610,7 @@ function SelectionHandler() {
    */
 
   this._getDocShell = function _getDocShell(aWindow) {
-    if (aWindow == null)
+    if (!aWindow)
       return null;
     return aWindow.docShell;
   }
