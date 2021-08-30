@@ -18,9 +18,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "Logger",
                                   "chrome://embedlite/content/Logger.js");
 
 this.OrientationChangeHandler = function OrientationChangeHandler(window) {
-  this.docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                    .getInterface(Ci.nsIWebNavigation)
-                    .QueryInterface(Ci.nsIDocShell);
+  this.docShell = window.docShell;
 
   this.webProgress = this.docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                             .getInterface(Ci.nsIWebProgress);
