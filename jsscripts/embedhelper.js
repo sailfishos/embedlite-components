@@ -103,13 +103,6 @@ EmbedHelper.prototype = {
   _lastTargetY: 0,
   _touchEventDefaultPrevented: false,
 
-  resetMaxLineBoxWidth: function() {
-    let webNav = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
-    let docShell = webNav.QueryInterface(Ci.nsIDocShell);
-    let docViewer = docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
-    docViewer.changeMaxLineBoxWidth(0);
-  },
-
   _touchElement: null,
 
   receiveMessage: function receiveMessage(aMessage) {
