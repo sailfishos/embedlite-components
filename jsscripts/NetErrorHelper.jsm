@@ -78,7 +78,7 @@ handlers.searchbutton = {
 
   onPageShown: function(browser) {
     this._docShell = browser.docShell;
-    let doc = this._docShell.getInterface(Ci.nsIDOMDocument);
+    let doc = this._docShell.contentViewer.DOMDocument;
 
     let search = doc.querySelector("#searchbox");
     if (!search) {
@@ -129,7 +129,7 @@ handlers.wifi = {
   onPageShown: function(browser) {
     // If we have a connection, don't bother showing the wifi toggle
     this._docShell = browser.docShell;
-    let doc = this._docShell.getInterface(Ci.nsIDOMDocument);
+    let doc = this._docShell.contentViewer.DOMDocument;
 
     if (!Services.io.offline) {
       // We're online, so hide the Wifi connection button
