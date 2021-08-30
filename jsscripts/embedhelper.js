@@ -103,13 +103,6 @@ EmbedHelper.prototype = {
   _lastTargetY: 0,
   _touchEventDefaultPrevented: false,
 
-  resetMaxLineBoxWidth: function() {
-    let webNav = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
-    let docShell = webNav.QueryInterface(Ci.nsIDocShell);
-    let docViewer = docShell.contentViewer.QueryInterface(Ci.nsIMarkupDocumentViewer);
-    docViewer.changeMaxLineBoxWidth(0);
-  },
-
   _touchElement: null,
 
   receiveMessage: function receiveMessage(aMessage) {
@@ -224,9 +217,9 @@ EmbedHelper.prototype = {
       case "embedui:addhistory": {
         // aMessage.data contains: 1) list of 'links' loaded from DB, 2) current 'index'.
 
-        let webNav = content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIWebNavigation);
-        let docShell = webNav.QueryInterface(Ci.nsIDocShell);
-        let shist = webNav.sessionHistory.QueryInterface(Ci.nsISHistoryInternal);
+        let docShell = content.docShell;
+        let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
+        let shist = webNav.sessionHistory.legacySHistory;
         let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
         try {
@@ -257,23 +250,23 @@ EmbedHelper.prototype = {
                 Logger.debug("Warning: no protocol provided for uri '" + link + "'. Assuming http..." + e);
                 uri = ioService.newURI("http://" + link, null, null);
             }
-            let historyEntry = Cc["@mozilla.org/browser/session-history-entry;1"].createInstance(Ci.nsISHEntry);
-            historyEntry.setURI(uri);
+            let historyEntry = shist.createEntry();
+            historyEntry.URI = uri;
             historyEntry.triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
             shist.addEntry(historyEntry, true);
         });
         if (index < 0) {
             Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
-            webNav.sessionHistory.getEntryAtIndex(0, true);
+            shist.getEntryAtIndex(0);
             index = 0;
         } else if (index >= webNav.sessionHistory.count) {
             let lastIndex = webNav.sessionHistory.count - 1;
             Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + webNav.sessionHistory.count +
                  " item(s) in the session history. Returning index " + lastIndex);
-            webNav.sessionHistory.getEntryAtIndex(lastIndex, true);
+            shist.getEntryAtIndex(lastIndex);
             index = lastIndex;
         } else {
-            webNav.sessionHistory.getEntryAtIndex(index, true);
+            shist.getEntryAtIndex(index);
         }
 
         shist.updateIndex();
