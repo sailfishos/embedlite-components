@@ -87,7 +87,8 @@ EmbedHelper.prototype = {
     // Ignore notifications not about our document.
     switch (aTopic) {
         case "embedlite-before-first-paint":
-          // Is it on the top level?
+          // BrowserChildHelper notifies this when document is
+          // top level content document.
           this.contentDocumentIsDisplayed = true;
           break;
         case "nsPref:changed":
@@ -402,7 +403,7 @@ EmbedHelper.prototype = {
   },
 
   isBrowserContentDocumentDisplayed: function() {
-    if (content.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils).isFirstPaint) {
+    if (content.windowUtils.isFirstPaint) {
       return false;
     }
     return this.contentDocumentIsDisplayed;
@@ -436,7 +437,7 @@ EmbedHelper.prototype = {
       let uri = this._getLinkURI(target);
       if (uri) {
         try {
-          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
+          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null, null);
         } catch (e) {
           Logger.warn("Speculative connection error:", e)
         }
