@@ -21,36 +21,16 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 // Common helper service
 
 function SPConsoleListener() {
-  this._cacheLogs = true;
-
   Logger.debug("JSComp: EmbedLiteConsoleListener.js loaded");
 }
 
 SPConsoleListener.prototype = {
-  _cacheLogs: true,
-  _startupCachedLogs: [],
   observe: function(msg) {
     if (Logger.enabled) {
       Logger.debug("CONSOLE message:");
       Logger.debug(msg);
     } else {
-      if (this._cacheLogs) {
-        this._startupCachedLogs.push(msg);
-      } else {
-        Services.obs.notifyObservers(null, "embed:logger", JSON.stringify({ multiple: false, log: msg }));
-      }
-    }
-  },
-  clearCache: function() {
-      this._cacheLogs = false;
-      this._startupCachedLogs = null;
-  },
-
-  flushCache: function() {
-    if (this._cacheLogs) {
-      this._cacheLogs = false;
-      Services.obs.notifyObservers(null, "embed:logger", JSON.stringify({ multiple: true, log: this._startupCachedLogs }));
-      this._startupCachedLogs = null;
+      Services.obs.notifyObservers(null, "embed:logger", JSON.stringify({ multiple: false, log: msg }));
     }
   },
 
@@ -186,8 +166,8 @@ $EmbedLiteConsoleListener.prototype = {
         if (Logger.enabled) {
           this._listener = new SPConsoleListener();
           Services.console.registerListener(this._listener);
-          Services.obs.addObserver(this, "embedui:logger", true);
         }
+        Services.obs.addObserver(this, "embedui:logger", true);
 
         if (Logger.devModeNetworkEnabled) {
           Services.obs.addObserver(this, 'http-on-examine-response', false);
@@ -202,14 +182,9 @@ $EmbedLiteConsoleListener.prototype = {
       case "embedui:logger": {
         var data = JSON.parse(aData);
         if (data.enabled) {
-          if (Logger.enabled) {
-            this._listener.flushCache();
-          } else {
-            Services.console.registerListener(this._listener);
-          }
-        } else if (!data.enabled && Logger.enabled) {
+          Services.console.registerListener(this._listener);
+        } else {
           Services.console.unregisterListener(this._listener);
-          this._listener.clearCache();
         }
         break;
       }
