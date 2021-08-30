@@ -465,7 +465,7 @@ EmbedHelper.prototype = {
   },
 
   _getLinkURI: function(aElement) {
-    if (aElement && aElement.nodeType == Ci.nsIDOMNode.ELEMENT_NODE &&
+    if (aElement && aElement.nodeType == Node.ELEMENT_NODE &&
         ((ChromeUtils.getClassName(aElement) === "HTMLAnchorElement" && aElement.href) ||
          (ChromeUtils.getClassName(aElement) === "HTMLAreaElement" && aElement.href))) {
       try {
