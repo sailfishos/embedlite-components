@@ -156,7 +156,7 @@ EmbedHelper.prototype = {
         let element = this._touchElement;
         if (element) {
           let [x, y] = [aMessage.json.x, aMessage.json.y];
-          ContextMenuHandler._processPopupNode(element, x, y, Ci.nsIDOMMouseEvent.MOZ_SOURCE_UNKNOWN);
+          gContextMenuHandler._processPopupNode(element, x, y, Ci.nsIDOMMouseEvent.MOZ_SOURCE_UNKNOWN);
         }
         this._touchElement = null;
         break;
@@ -596,6 +596,7 @@ this.ContentScroll = ContentScroll;
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Util.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandler.js");
+gContextMenuHandler.init(content);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js");
