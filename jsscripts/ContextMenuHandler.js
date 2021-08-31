@@ -4,22 +4,23 @@
 
 const kXLinkNamespace = "http://www.w3.org/1999/xlink";
 
-let Node = Ci.nsIDOMNode;
-
 Logger.debug("JSScript: ContextMenuHandler.js loaded");
 
-var ContextMenuHandler = {
+var gContextMenuHandler = {
+  content: null,
   _types: [],
   _previousState: null,
 
-  init: function ch_init() {
+  init: function ch_init(content) {
+    this.content = content;
     // Events we catch from content during the bubbling phase
-    addEventListener("contextmenu", this, false);
-    addEventListener("pagehide", this, false);
+    let rootWindow = content.windowRoot;
+    rootWindow.addEventListener("contextmenu", this, false);
+    rootWindow.addEventListener("pagehide", this, false);
 
     // Messages we receive from browser
     // Command sent over from browser that only we can handle.
-    addMessageListener("Browser:ContextCommand", this, false);
+    content.docShell.messageManager.addMessageListener("Browser:ContextCommand", this, false);
 
     this.popupNode = null;
   },
@@ -376,5 +377,3 @@ var ContextMenuHandler = {
     this._types = this._types.filter(function(type) { type.name != aName });
   }
 };
-
-ContextMenuHandler.init();
