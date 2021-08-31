@@ -119,8 +119,8 @@ InternalPrompt.prototype = {
       title: aTitle,
       message: aText,
       buttons: aButtons || [
-        PromptUtils.getLocaleString("OK"),
-        PromptUtils.getLocaleString("Cancel")
+        "OK",
+        "Cancel"
       ]
     });
     return p;
@@ -155,6 +155,11 @@ InternalPrompt.prototype = {
       autofocus: autofocus,
       hint: hint
     });
+  },
+
+  addHostInfo: function(prompt, hostname, realm) {
+    prompt.addHiddenValue("hostname", hostname);
+    prompt.addHiddenValue("realm", realm);
   },
 
   /* Shows a native prompt, and then spins the event loop for this thread while we wait
@@ -234,13 +239,13 @@ InternalPrompt.prototype = {
   /* ----------  nsIPrompt  ---------- */
 
   alert: function alert(aTitle, aText) {
-    let p = this._getPrompt(aTitle, aText, [ PromptUtils.getLocaleString("OK") ]);
+    let p = this._getPrompt(aTitle, aText, [ "OK" ]);
     p.setHint("alert");
     this.showPrompt(p);
   },
 
   alertCheck: function alertCheck(aTitle, aText, aCheckMsg, aCheckState) {
-    let p = this._getPrompt(aTitle, aText, [ PromptUtils.getLocaleString("OK") ]);
+    let p = this._getPrompt(aTitle, aText, [ "OK" ]);
     p.setHint("alert");
     this.addCheckbox(p, aCheckMsg, aCheckState, "preventAddionalDialog");
     let data = this.showPrompt(p);
@@ -274,25 +279,25 @@ InternalPrompt.prototype = {
       let bTitle = null;
       switch (aButtonFlags & 0xff) {
         case Ci.nsIPromptService.BUTTON_TITLE_OK :
-          bTitle = PromptUtils.getLocaleString("OK");
+          bTitle = "OK";
           break;
         case Ci.nsIPromptService.BUTTON_TITLE_CANCEL :
-          bTitle = PromptUtils.getLocaleString("Cancel");
+          bTitle = "Cancel";
           break;
         case Ci.nsIPromptService.BUTTON_TITLE_YES :
-          bTitle = PromptUtils.getLocaleString("Yes");
+          bTitle = "Yes";
           break;
         case Ci.nsIPromptService.BUTTON_TITLE_NO :
-          bTitle = PromptUtils.getLocaleString("No");
+          bTitle = "No";
           break;
         case Ci.nsIPromptService.BUTTON_TITLE_SAVE :
-          bTitle = PromptUtils.getLocaleString("Save");
+          bTitle = "Save";
           break;
         case Ci.nsIPromptService.BUTTON_TITLE_DONT_SAVE :
-          bTitle = PromptUtils.getLocaleString("DontSave");
+          bTitle = "DontSave";
           break;
         case Ci.nsIPromptService.BUTTON_TITLE_REVERT :
-          bTitle = PromptUtils.getLocaleString("Revert");
+          bTitle = "Revert";
           break;
         case Ci.nsIPromptService.BUTTON_TITLE_IS_STRING :
           bTitle = PromptUtils.cleanUpLabel(titles[i]);
@@ -334,7 +339,7 @@ InternalPrompt.prototype = {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("auth");
     p.setPrivateBrowsing(this._privateBrowsing);
-    this.addPassword(p, aPassword.value, true, PromptUtils.getLocaleString("password", "passwdmgr"));
+    this.addPassword(p, aPassword.value, true, "password");
     this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
     let data = this.showPrompt(p);
 
@@ -353,8 +358,55 @@ InternalPrompt.prototype = {
     let p = this._getPrompt(aTitle, aText, null);
     p.setHint("auth");
     p.setPrivateBrowsing(this._privateBrowsing);
-    this.addTextbox(p, aUsername.value, true, PromptUtils.getLocaleString("username", "passwdmgr"));
-    this.addPassword(p, aPassword.value, false, PromptUtils.getLocaleString("password", "passwdmgr"));
+    this.addTextbox(p, aUsername.value, true, "username");
+    this.addPassword(p, aPassword.value, false, "password");
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
+    let data = this.showPrompt(p);
+
+    let ok = data.accepted;
+    // True if we should remember login
+    if (aCheckState)
+      aCheckState.value = data.remember || false;
+
+    if (ok) {
+      aUsername.value = data.username || "";
+      aPassword.value = data.password || "";
+    }
+    return ok;
+  },
+
+  nonlocalized_promptPassword: function nonlocalized_promptPassword(
+      aTitle, aMessage, aHostname, aHttpRealm, aPassword, aCheckMsg, aCheckState) {
+    // We abuse the Gecko-to-Qt translation key conversion process by providing a key for the
+    // accept button that isn't actually available in gecko, but which we need in the front end
+    let p = this._getPrompt(aTitle, aMessage, [ "AcceptLogin" ]);
+    p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
+    p.addHostInfo(aHostname, aHttpRealm);
+    this.addPassword(p, aPassword.value, true, "password");
+    this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
+    let data = this.showPrompt(p);
+
+    let ok = data.accepted;
+    // True if we should remember login
+    if (aCheckState)
+      aCheckState.value = data.remember || false;
+
+    if (ok)
+      aPassword.value = data.password || "";
+    return ok;
+  },
+
+  nonlocalized_promptUsernameAndPassword: function nonlocalized_promptUsernameAndPassword(
+      aTitle, aMessage, aHostname, aHttpRealm, aUsername, aPassword, aCheckMsg, aCheckState) {
+    // We abuse the Gecko-to-Qt translation key conversion process by providing a key for the
+    // accept button that isn't actually available in gecko, but which we need in the front end
+    let p = this._getPrompt(aTitle, aMessage, [ "AcceptLogin" ]);
+    p.setHint("auth");
+    p.setPrivateBrowsing(this._privateBrowsing);
+    this.addHostInfo(p, aHostname, aHttpRealm);
+    this.addTextbox(p, aUsername.value, true, "username");
+    this.addPassword(p, aPassword.value, false, "password");
     this.addCheckbox(p, aCheckMsg, aCheckState, "remember");
     let data = this.showPrompt(p);
 
@@ -371,7 +423,8 @@ InternalPrompt.prototype = {
   },
 
   select: function select(aTitle, aText, aCount, aSelectList, aOutSelection) {
-    let p = this._getPrompt(aTitle, aText, [ PromptUtils.getLocaleString("OK") ]);
+    let p = this._getPrompt(aTitle, aText, [ "OK" ]);
+    p.setHint("select");
     p.addMenulist({ values: aSelectList });
     let data = this.showPrompt(p);
 
@@ -452,9 +505,9 @@ InternalPrompt.prototype = {
 
     let ok = canAutologin;
     if (!ok && aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD)
-      ok = this.nsIPrompt_promptPassword(message, hostname, password, checkMsg, check);
+      ok = this.nonlocalized_promptPassword(null, message, hostname, httpRealm, password, checkMsg, check);
     else if (!ok)
-      ok = this.nsIPrompt_promptUsernameAndPassword(message, hostname, username, password, checkMsg, check);
+      ok = this.nonlocalized_promptUsernameAndPassword(null, message, hostname, httpRealm, username, password, checkMsg, check);
 
     PromptUtils.setAuthInfo(aAuthInfo, username.value, password.value);
 
@@ -572,11 +625,6 @@ InternalPrompt.prototype = {
 };
 
 var PromptUtils = {
-  getLocaleString: function pu_getLocaleString(aKey, aService) {
-    // This will not localize anything.
-    return aKey;
-  },
-
   //
   // Copied from chrome://global/content/commonDialog.js
   //
@@ -636,7 +684,7 @@ var PromptUtils = {
     let check = { value: false };
     let selectedLogin;
 
-    checkLabel = this.getLocaleString("rememberButton", "passwdmgr");
+    checkLabel = "rememberButtonText";
 
     // XXX Like the original code, we can't deal with multiple
     // account selection. (bug 227632)
@@ -714,7 +762,7 @@ var PromptUtils = {
 
     // Suppress "the site says: $realm" when we synthesized a missing realm.
     if (!aAuthInfo.realm && !isProxy)
-    realm = "";
+      realm = "";
 
     // Trim obnoxiously long realms.
     if (realm.length > 150) {
@@ -723,7 +771,20 @@ var PromptUtils = {
       realm += this.ellipsis;
     }
 
-    return realm;
+    let textBundle;
+    if (isProxy) {
+      textBundle = ["EnterLoginForProxy3", realm, displayHost];
+    } else if (isPassOnly) {
+      textBundle = ["EnterPasswordFor", username, displayHost];
+    } else if (isCrossOrig) {
+      textBundle = ["EnterUserPasswordForCrossOrigin2", displayHost];
+    } else if (!realm) {
+      textBundle = ["EnterUserPasswordFor2", displayHost];
+    } else {
+      textBundle = ["EnterLoginForRealm3", realm, displayHost];
+    }
+
+    return textBundle;
   },
 
   // JS port of http://mxr.mozilla.org/mozilla-central/source/embedding/components/windowwatcher/nsPromptUtils.h#89
