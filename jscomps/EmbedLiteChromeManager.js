@@ -34,10 +34,7 @@ function EmbedLiteChromeListener(aWindow)
   this.windowId = Services.embedlite.getIDByWindow(aWindow);
   // Services.embedlite.getContentWindowByID will return the same as aWindow
   this.targetDOMWindow = aWindow;
-  this.docShell = aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsIWebNavigation)
-                         .QueryInterface(Ci.nsIDocShell);
-
+  this.docShell = aWindow.docShell;
   ContentLinkHandler.init(this);
 }
 
