@@ -80,7 +80,7 @@ EmbedLiteChromeListener.prototype = {
       messageName = "chrome:metaadded"
       break;
     case "DOMContentLoaded":
-      let doc = this.docShell.getInterface(Ci.nsIDOMDocument);
+      let doc = this.docShell.contentViewer.DOMDocument;
       var docURI = doc && doc.documentURI || "";
       if (!docURI.startsWith("about:blank")) {
         messageName = "chrome:contentloaded";
