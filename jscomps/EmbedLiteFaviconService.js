@@ -159,9 +159,7 @@ EmbedLiteFaviconService.prototype = {
   },
   
   _getProgress: function(aWindow) {
-    return aWindow.QueryInterface(Ci.nsIInterfaceRequestor)
-                  .getInterface(Ci.nsIWebNavigation)
-                  .QueryInterface(Ci.nsIDocShell)
+    return aWindow.docShell
                   .QueryInterface(Ci.nsIInterfaceRequestor)
                   .getInterface(Ci.nsIWebProgress);
   },
