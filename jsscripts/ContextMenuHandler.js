@@ -18,10 +18,6 @@ var gContextMenuHandler = {
     rootWindow.addEventListener("contextmenu", this, false);
     rootWindow.addEventListener("pagehide", this, false);
 
-    // Messages we receive from browser
-    // Command sent over from browser that only we can handle.
-    content.docShell.messageManager.addMessageListener("Browser:ContextCommand", this, false);
-
     this.popupNode = null;
   },
 
@@ -32,45 +28,6 @@ var gContextMenuHandler = {
         break;
       case "pagehide":
         this.reset();
-        break;
-    }
-  },
-
-  receiveMessage: function ch_receiveMessage(aMessage) {
-    switch (aMessage.name) {
-      case "Browser:ContextCommand":
-        this._onContextCommand(aMessage);
-      break;
-    }
-  },
-
-  /*
-   * Handler for commands send over from browser's ContextCommands.js
-   * in response to certain context menu actions only we can handle.
-   */
-  _onContextCommand: function _onContextCommand(aMessage) {
-    let node = this.popupNode;
-    let command = aMessage.json.command;
-
-    switch (command) {
-      case "cut":
-        this._onCut();
-        break;
-
-      case "copy":
-        this._onCopy();
-        break;
-
-      case "paste":
-        this._onPaste();
-        break;
-
-      case "select-all":
-        this._onSelectAll();
-        break;
-
-      case "copy-image-contents":
-        this._onCopyImage();
         break;
     }
   },
@@ -95,67 +52,6 @@ var gContextMenuHandler = {
 
     this._processPopupNode(aEvent.originalTarget, aEvent.clientX,
                            aEvent.clientY, aEvent.mozInputSource);
-  },
-
-  /******************************************************
-   * ContextCommand handlers
-   */
-
-  _onSelectAll: function _onSelectAll() {
-    if (Util.isTextInput(this._target)) {
-      // select all text in the input control
-      this._target.select();
-    } else {
-      // select the entire document
-      content.getSelection().selectAllChildren(content.document);
-    }
-    this.reset();
-  },
-
-  _onPaste: function _onPaste() {
-    // paste text if this is an input control
-    if (Util.isTextInput(this._target)) {
-      let edit = this._target.QueryInterface(Ci.nsIDOMNSEditableElement);
-      if (edit) {
-        edit.editor.paste(Ci.nsIClipboard.kGlobalClipboard);
-      } else {
-        Logger.warn("error: target element does not support nsIDOMNSEditableElement");
-      }
-    }
-    this.reset();
-  },
-
-  _onCopyImage: function _onCopyImage() {
-    Util.copyImageToClipboard(this._target);
-  },
-
-  _onCut: function _onCut() {
-    if (Util.isTextInput(this._target)) {
-      let edit = this._target.QueryInterface(Ci.nsIDOMNSEditableElement);
-      if (edit) {
-        edit.editor.cut();
-      } else {
-        Logger.warn("error: target element does not support nsIDOMNSEditableElement");
-      }
-    }
-    this.reset();
-  },
-
-  _onCopy: function _onCopy() {
-    if (Util.isTextInput(this._target)) {
-      let edit = this._target.QueryInterface(Ci.nsIDOMNSEditableElement);
-      if (edit) {
-        edit.editor.copy();
-      } else {
-        Logger.warn("error: target element does not support nsIDOMNSEditableElement");
-      }
-    } else {
-      let selectionText = this._previousState.string;
-
-      Cc["@mozilla.org/widget/clipboardhelper;1"]
-        .getService(Ci.nsIClipboardHelper).copyString(selectionText);
-    }
-    this.reset();
   },
 
   /******************************************************
