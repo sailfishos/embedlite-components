@@ -157,7 +157,7 @@ FormAssistant.prototype = {
     * Calls aCallback when done with a true argument if results were found and
     * false if no results were found.
     *
-    * aElement -- nsIDOMHTMLInputElement being autocompleted (may be null if from chrome)
+    * aElement -- HTMLInputElement being autocompleted (may be null if from chrome)
     * aCallback(boolean_results_found) is called when results are available.
     */
   _showAutoCompleteSuggestions: function(aElement, aCallback) {
@@ -196,7 +196,7 @@ FormAssistant.prototype = {
 
   // We only want to show login suggestions for certain elements
   _isAutoComplete: function(aElement) {
-    return (aElement instanceof Ci.nsIDOMHTMLInputElement) &&
+    return (ChromeUtils.getClassName(aElement) === "HTMLInputElement") &&
            !aElement.readOnly &&
            !this._isDisabledElement(aElement) &&
            (aElement.type !== "password") &&
