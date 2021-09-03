@@ -115,8 +115,8 @@ EmbedHelper.prototype = {
         break;
       }
       case "Gesture:SingleTap": {
-        if (SelectionHandler.isActive) {
-            SelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
+        if (gSelectionHandler.isActive) {
+            gSelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
         }
 
         try {
@@ -599,6 +599,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandl
 gContextMenuHandler.init(content);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js");
+gSelectionHandler.init(content)
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js");
 
