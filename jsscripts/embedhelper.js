@@ -75,7 +75,7 @@ EmbedHelper.prototype = {
     Services.obs.addObserver(this, "embedlite-before-first-paint", true);
 
     Logger.debug("Available locales: " + availableLocales.join(", "));
-    Services.locale.setAvailableLocales(availableLocales);
+    Services.locale.availableLocales = availableLocales;
   },
 
   // Similar to HtmlInputElement IsExperimentalMobileType
