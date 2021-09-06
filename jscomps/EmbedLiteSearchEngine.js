@@ -51,20 +51,17 @@ EmbedLiteSearchEngine.prototype = {
       }
       case "profile-after-change": {
         Services.obs.removeObserver(this, "profile-after-change");
-        Services.search.init(function addEngine_cb(rv) {
-            let engines = Services.search.getEngines({});
-            let engineNames = engines.map(function (element) {
-              return element.name;
-            });
-
-            let enginesAvailable = (engines && engines.length > 0);
-            var messg = {
-              msg: "init",
-              engines: engineNames,
-              defaultEngine: enginesAvailable && Services.search.defaultEngine ?
-                Services.search.defaultEngine.name : null
-            }
-            Services.obs.notifyObservers(null, "embed:search", JSON.stringify(messg));
+        Services.search.getEngines().then((engines) => {
+          let engineNames = engines.map(function (element) {
+            return element.name;
+          });
+          let enginesAvailable = (engines && engines.length > 0);
+          var messg = {
+            msg: "init",
+            engines: engineNames,
+            defaultEngine: enginesAvailable && Services.search.defaultEngine ? Services.search.defaultEngine.name : null
+          }
+          Services.obs.notifyObservers(null, "embed:search", JSON.stringify(messg));
         });
         break;
       }
@@ -107,18 +104,19 @@ EmbedLiteSearchEngine.prototype = {
             break;
           }
           case "getlist": {
-            let engines = Services.search.getEngines({});
-            var json = [];
-            if (engines) {
-              for (var i = 0; i < engines.length; i++) {
-                let engine = engines[i];
-                let serEn = { name: engine.name,
-                              isDefault: Services.search.defaultEngine === engine,
-                              isCurrent: Services.search.currentEngine === engine };
-                json.push(serEn);
+            Services.search.getEngines().then((engines) => {
+              var json = [];
+              if (engines) {
+                for (var i = 0; i < engines.length; i++) {
+                  let engine = engines[i];
+                  let serEn = { name: engine.name,
+                                isDefault: Services.search.defaultEngine === engine,
+                                isCurrent: Services.search.currentEngine === engine };
+                  json.push(serEn);
+                }
               }
-            }
-            Services.obs.notifyObservers(null, "embed:search", JSON.stringify({ msg: "pluginslist", list: json}));
+              Services.obs.notifyObservers(null, "embed:search", JSON.stringify({ msg: "pluginslist", list: json}));
+            });
             break;
           }
           case "getsuggestions": {
