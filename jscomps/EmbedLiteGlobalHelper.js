@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
+const { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -40,20 +40,24 @@ EmbedLiteGlobalHelper.prototype = {
         // Init LoginManager
         try {
           Cc["@mozilla.org/login-manager;1"].getService(Ci.nsILoginManager);
-          var globalMM = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessageListenerManager);
+          // Bug 1531959 - Change all RemoteLogins message names to PasswordManager in pwmgr code
+          // https://github.com/sailfishos-mirror/gecko-dev/commit/1371a0545cdd9323b5a6fea14ad3a78658c9bace)
+          // Bug 1527828 - Remove insecure password field detection code for the address bar
+          // https://github.com/sailfishos-mirror/gecko-dev/commit/87888ef23587b953bd3045f745d74ab6c9d010eb
+          // Bug 1567175, support password manager in out of process iframes
+          // https://github.com/sailfishos-mirror/gecko-dev/commit/7410901165d99b03feb66a67d2fe7a114e251f0f
 
-          // PLEASE KEEP THIS LIST IN SYNC WITH THE MOBILE LIST IN BrowserCLH.js AND WITH THE DESKTOP LIST IN nsBrowserGlue.js
-          // https://git.sailfishos.org/mer-core/gecko-dev/blob/f2e8f311/browser/components/nsBrowserGlue.js#L219
-          // https://git.sailfishos.org/mer-core/gecko-dev/blob/f2e8f311/mobile/android/components/BrowserCLH.js#L86
-          // SHA1: f2e8f3117a814098cef28ef1000139b836d33a08
-          globalMM.addMessageListener("RemoteLogins:findLogins", LoginManagerParent);
-          globalMM.addMessageListener("RemoteLogins:findRecipes", LoginManagerParent);
-          globalMM.addMessageListener("RemoteLogins:onFormSubmit", LoginManagerParent);
-          globalMM.addMessageListener("RemoteLogins:autoCompleteLogins", LoginManagerParent);
-          globalMM.addMessageListener("RemoteLogins:removeLogin", LoginManagerParent);
-          globalMM.addMessageListener("RemoteLogins:insecureLoginFormPresent", LoginManagerParent);
-          // PLEASE KEEP THIS LIST IN SYNC WITH THE MOBILE LIST IN BrowserCLH.js AND WITH THE DESKTOP LIST IN nsBrowserGlue.js
+          var globalMM = Services.mm;
 
+          // TODO: Check / verify tht login manager works as it should (JB#55397 / JOLLA-337).
+          // Bug 1567175, support password manager in out of process iframes
+          // https://github.com/sailfishos-mirror/gecko-dev/commit/7410901165d99b03feb66a67d2fe7a114e251f0f
+
+          globalMM.addMessageListener("PasswordManager:findLogins", LoginManagerParent);
+          globalMM.addMessageListener("PasswordManager:findRecipes", LoginManagerParent);
+          globalMM.addMessageListener("PasswordManager:onFormSubmit", LoginManagerParent);
+          globalMM.addMessageListener("PasswordManager:autoCompleteLogins", LoginManagerParent);
+          globalMM.addMessageListener("PasswordManager:removeLogin", LoginManagerParent);
         } catch (e) {
           Logger.warn("E login manager:", e);
         }
