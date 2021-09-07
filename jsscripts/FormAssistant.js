@@ -7,8 +7,6 @@
 
 "use strict";
 
-var globalObject = null;
-
 function debug(msg) {
   Logger.debug("FormAssistant.js -", msg);
 }
@@ -38,13 +36,16 @@ FormAssistant.prototype = {
 
   // Weak-ref used to keep track of the currently focused element.
   _currentFocusedElement: null,
+  content: null,
 
-  _init: function() {
+  init: function(content) {
     Logger.debug("JSScript: FormAssistant.js loaded");
-    addEventListener("focus", this, true);
-    addEventListener("blur", this, true);
-    addEventListener("click", this, false);
-    addEventListener("input", this, false);
+    this.content = content;
+    let rootWindow = content.windowRoot;
+    rootWindow.addEventListener("focus", this, true);
+    rootWindow.addEventListener("blur", this, true);
+    rootWindow.addEventListener("click", this, false);
+    rootWindow.addEventListener("input", this, false);
   },
 
   get focusedElement() {
@@ -156,7 +157,7 @@ FormAssistant.prototype = {
     * Calls aCallback when done with a true argument if results were found and
     * false if no results were found.
     *
-    * aElement -- nsIDOMHTMLInputElement being autocompleted (may be null if from chrome)
+    * aElement -- HTMLInputElement being autocompleted (may be null if from chrome)
     * aCallback(boolean_results_found) is called when results are available.
     */
   _showAutoCompleteSuggestions: function(aElement, aCallback) {
@@ -195,7 +196,7 @@ FormAssistant.prototype = {
 
   // We only want to show login suggestions for certain elements
   _isAutoComplete: function(aElement) {
-    return (aElement instanceof Ci.nsIDOMHTMLInputElement) &&
+    return (ChromeUtils.getClassName(aElement) === "HTMLInputElement") &&
            !aElement.readOnly &&
            !this._isDisabledElement(aElement) &&
            (aElement.type !== "password") &&
@@ -261,7 +262,6 @@ var LoginUtils = {
 };
 
 function FormAssistant() {
-  this._init();
 }
 
-globalObject = new FormAssistant();
+var gFormAssistant = new FormAssistant();
