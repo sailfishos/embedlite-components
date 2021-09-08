@@ -6,7 +6,7 @@
 
 Logger.debug("JSScript: SelectAsyncHelper.js loaded");
 
-var gSelectAsyncHelper = null;
+var globalObject = null;
 
 function debug(msg) {
   Logger.debug("SelectAsyncHelper.js -", msg);
@@ -89,20 +89,19 @@ Dialog.prototype = {
 };
 
 function SelectHelper() {
+  this._init();
 }
 
 SelectHelper.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
                                           Ci.nsISupportsWeakReference]),
-  content: null,
+
   _selectElement: null,
   _dialog: null, // a proxy for modal subwindow
   _nodeMap: {},
 
-  init: function(content) {
-    this.content = content;
-    let rootWindow = content.windowRoot;
-    rootWindow.addEventListener("click", this, false);
+  _init: function() {
+    addEventListener("click", this, false);
   },
 
   handleEvent: function(aEvent) {
@@ -187,4 +186,4 @@ SelectHelper.prototype = {
   }
 };
 
-var gSelectAsyncHelper = new SelectHelper();
+globalObject = new SelectHelper();
