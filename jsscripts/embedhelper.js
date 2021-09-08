@@ -366,7 +366,7 @@ EmbedHelper.prototype = {
   _sendContextMenuEvent: function _sendContextMenuEvent(aElement, aX, aY) {
     let window = aElement.ownerDocument.defaultView;
     try {
-      let cwu = window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+      let cwu = window.windowUtils;
       cwu.sendMouseEventToWindow("contextmenu", aX, aY, 2, 1, 0, false);
     } catch(e) {
       Cu.reportError(e);
