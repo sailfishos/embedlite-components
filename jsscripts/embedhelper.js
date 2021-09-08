@@ -599,7 +599,6 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandl
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js");
-gSelectAsyncHelper.init(content)
 Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js");
 gFormAssistant.init(content)
 
