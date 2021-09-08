@@ -600,7 +600,6 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototy
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js");
 Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js");
-gFormAssistant.init(content)
 
 globalObject = new EmbedHelper();
 
