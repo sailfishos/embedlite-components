@@ -9,57 +9,54 @@ Logger.debug("JSScript: SelectionHandler.js loaded");
 
 function SelectionHandler() {
   SelectionPrototype.call(this);
-  this.init = function init(content) {
+  this.init = function init() {
     this.type = kContentSelector;
-    this.content = content;
     this.snap = false;
     this.lastYPos = this.lastXPos = null;
-    let messageManager = content.docShell.messageManager;
-    messageManager.addMessageListener("Browser:SelectionStart", this);
-    messageManager.addMessageListener("Browser:SelectionAttach", this);
-    messageManager.addMessageListener("Browser:SelectionEnd", this);
-    messageManager.addMessageListener("Browser:SelectionMoveStart", this);
-    messageManager.addMessageListener("Browser:SelectionMove", this);
-    messageManager.addMessageListener("Browser:SelectionMoveEnd", this);
-    messageManager.addMessageListener("Browser:SelectionSelectAll", this);
-    messageManager.addMessageListener("Browser:SelectionUpdate", this);
-    messageManager.addMessageListener("Browser:SelectionClose", this);
-    messageManager.addMessageListener("Browser:SelectionCopy", this);
-    messageManager.addMessageListener("Browser:SelectionDebug", this);
-    messageManager.addMessageListener("Browser:CaretAttach", this);
-    messageManager.addMessageListener("Browser:CaretMove", this);
-    messageManager.addMessageListener("Browser:CaretUpdate", this);
-    messageManager.addMessageListener("Browser:SelectionSwitchMode", this);
-    messageManager.addMessageListener("Browser:RepositionInfoRequest", this);
-    messageManager.addMessageListener("Browser:SelectionHandlerPing", this);
-    messageManager.addMessageListener("Browser:ResetLastPos", this);
+    addMessageListener("Browser:SelectionStart", this);
+    addMessageListener("Browser:SelectionAttach", this);
+    addMessageListener("Browser:SelectionEnd", this);
+    addMessageListener("Browser:SelectionMoveStart", this);
+    addMessageListener("Browser:SelectionMove", this);
+    addMessageListener("Browser:SelectionMoveEnd", this);
+    addMessageListener("Browser:SelectionSelectAll", this);
+    addMessageListener("Browser:SelectionUpdate", this);
+    addMessageListener("Browser:SelectionClose", this);
+    addMessageListener("Browser:SelectionCopy", this);
+    addMessageListener("Browser:SelectionDebug", this);
+    addMessageListener("Browser:CaretAttach", this);
+    addMessageListener("Browser:CaretMove", this);
+    addMessageListener("Browser:CaretUpdate", this);
+    addMessageListener("Browser:SelectionSwitchMode", this);
+    addMessageListener("Browser:RepositionInfoRequest", this);
+    addMessageListener("Browser:SelectionHandlerPing", this);
+    addMessageListener("Browser:ResetLastPos", this);
 
     // Handle orientation change, dynamic DOM manipulation etc
-    messageManager.addMessageListener("Viewport:Change", this);
+    addMessageListener("Viewport:Change", this);
   }
 
   this.shutdown = function shutdown() {
-    let messageManager = content.docShell.messageManager;
-    messageManager.removeMessageListener("Browser:SelectionStart", this);
-    messageManager.removeMessageListener("Browser:SelectionAttach", this);
-    messageManager.removeMessageListener("Browser:SelectionEnd", this);
-    messageManager.removeMessageListener("Browser:SelectionMoveStart", this);
-    messageManager.removeMessageListener("Browser:SelectionMove", this);
-    messageManager.removeMessageListener("Browser:SelectionMoveEnd", this);
-    messageManager.removeMessageListener("Browser:SelectionSelectAll", this);
-    messageManager.removeMessageListener("Browser:SelectionUpdate", this);
-    messageManager.removeMessageListener("Browser:SelectionClose", this);
-    messageManager.removeMessageListener("Browser:SelectionCopy", this);
-    messageManager.removeMessageListener("Browser:SelectionDebug", this);
-    messageManager.removeMessageListener("Browser:CaretAttach", this);
-    messageManager.removeMessageListener("Browser:CaretMove", this);
-    messageManager.removeMessageListener("Browser:CaretUpdate", this);
-    messageManager.removeMessageListener("Browser:SelectionSwitchMode", this);
-    messageManager.removeMessageListener("Browser:RepositionInfoRequest", this);
-    messageManager.removeMessageListener("Browser:SelectionHandlerPing", this);
-    messageManager.removeMessageListener("Browser:ResetLastPos", this);
+    removeMessageListener("Browser:SelectionStart", this);
+    removeMessageListener("Browser:SelectionAttach", this);
+    removeMessageListener("Browser:SelectionEnd", this);
+    removeMessageListener("Browser:SelectionMoveStart", this);
+    removeMessageListener("Browser:SelectionMove", this);
+    removeMessageListener("Browser:SelectionMoveEnd", this);
+    removeMessageListener("Browser:SelectionSelectAll", this);
+    removeMessageListener("Browser:SelectionUpdate", this);
+    removeMessageListener("Browser:SelectionClose", this);
+    removeMessageListener("Browser:SelectionCopy", this);
+    removeMessageListener("Browser:SelectionDebug", this);
+    removeMessageListener("Browser:CaretAttach", this);
+    removeMessageListener("Browser:CaretMove", this);
+    removeMessageListener("Browser:CaretUpdate", this);
+    removeMessageListener("Browser:SelectionSwitchMode", this);
+    removeMessageListener("Browser:RepositionInfoRequest", this);
+    removeMessageListener("Browser:SelectionHandlerPing", this);
+    removeMessageListener("Browser:ResetLastPos", this);
 
-    messageManager.removeMessageListener("Viewport:Change", this);
+    removeMessageListener("Viewport:Change", this);
   }
 
   this.sendAsync = function sendAsync(aMsg, aJson) {
@@ -517,10 +514,10 @@ function SelectionHandler() {
    * outside the bounds of an input control.
    */
   this.scrollTimerCallback = function scrollTimerCallback() {
-    let result = gSelectionHandler.updateTextEditSelection();
+    let result = SelectionHandler.updateTextEditSelection();
     // Update monocle position and speed if we've dragged off to one side
     if (result.trigger) {
-      gSelectionHandler._updateSelectionUI("update", result.start, result.end);
+      SelectionHandler._updateSelectionUI("update", result.start, result.end);
     }
   }
 
@@ -591,7 +588,7 @@ function SelectionHandler() {
         // Wait a bit to make sure we have the most up-to-date tap co-ordinates
         // before a call to _calcNewContentPosition() which accesses them.
         content.setTimeout (function () {
-          gSelectionHandler._repositionInfoRequest(json);
+          SelectionHandler._repositionInfoRequest(json);
         }, 50);
         break;
 
@@ -654,4 +651,5 @@ function SelectionHandler() {
 SelectionHandler.prototype = Object.create(SelectionPrototype.prototype);
 SelectionHandler.prototype.constructor = SelectionHandler;
 
-this.gSelectionHandler = new SelectionHandler;
+this.SelectionHandler = new SelectionHandler;
+this.SelectionHandler.init()
