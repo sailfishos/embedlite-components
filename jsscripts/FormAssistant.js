@@ -13,8 +13,6 @@ function debug(msg) {
   Logger.debug("FormAssistant.js -", msg);
 }
 
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-
 XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
 });
