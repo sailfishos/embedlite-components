@@ -7,6 +7,8 @@
 
 "use strict";
 
+var globalObject = null;
+
 function debug(msg) {
   Logger.debug("FormAssistant.js -", msg);
 }
@@ -36,16 +38,13 @@ FormAssistant.prototype = {
 
   // Weak-ref used to keep track of the currently focused element.
   _currentFocusedElement: null,
-  content: null,
 
-  init: function(content) {
+  _init: function() {
     Logger.debug("JSScript: FormAssistant.js loaded");
-    this.content = content;
-    let rootWindow = content.windowRoot;
-    rootWindow.addEventListener("focus", this, true);
-    rootWindow.addEventListener("blur", this, true);
-    rootWindow.addEventListener("click", this, false);
-    rootWindow.addEventListener("input", this, false);
+    addEventListener("focus", this, true);
+    addEventListener("blur", this, true);
+    addEventListener("click", this, false);
+    addEventListener("input", this, false);
   },
 
   get focusedElement() {
@@ -262,6 +261,7 @@ var LoginUtils = {
 };
 
 function FormAssistant() {
+  this._init();
 }
 
-var gFormAssistant = new FormAssistant();
+globalObject = new FormAssistant();
