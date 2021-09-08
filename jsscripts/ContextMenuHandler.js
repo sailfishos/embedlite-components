@@ -4,8 +4,6 @@
 
 const kXLinkNamespace = "http://www.w3.org/1999/xlink";
 
-let Node = Ci.nsIDOMNode;
-
 Logger.debug("JSScript: ContextMenuHandler.js loaded");
 
 var ContextMenuHandler = {
@@ -87,7 +85,7 @@ var ContextMenuHandler = {
     };
 
     // Do checks for nodes that never have children.
-    if (popupNode.nodeType == Node.ELEMENT_NODE) {
+    if (popupNode.nodeType == content.Node.ELEMENT_NODE) {
       // See if the user clicked on an image.
       if (popupNode instanceof Ci.nsIImageLoadingContent && popupNode.currentURI) {
         state.types.push("image");
@@ -122,7 +120,7 @@ var ContextMenuHandler = {
 
 
     while (elem) {
-      if (elem.nodeType == Node.ELEMENT_NODE) {
+      if (elem.nodeType == content.Node.ELEMENT_NODE) {
         // is the target a link or a descendant of a link?
         if (Util.isLink(elem)) {
           // If this is an image that links to itself, don't include both link and
