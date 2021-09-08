@@ -38,6 +38,17 @@ const availableLocales = [
   "ru"
 ];
 
+// Hack for time being to get sendAsyncMessages to get routed to Browser side.
+// This should be removed after JB#55464 / JOLLA-356.
+function sendAsyncMessage(messageName, message) {
+  try {
+    let winId = Services.embedlite.getIDByWindow(content);
+    Services.embedlite.sendAsyncMessage(winId, messageName, JSON.stringify(message));
+  } catch (e) {
+    Logger.warn("EmbedLiteChromeListener: sending async message failed", e)
+  }
+}
+
 function EmbedHelper() {
   this.contentDocumentIsDisplayed = true;
   this._init();
