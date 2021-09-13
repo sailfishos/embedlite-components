@@ -230,13 +230,13 @@ EmbedHelper.prototype = {
         // aMessage.data contains: 1) list of 'links' loaded from DB, 2) current 'index'.
 
         let docShell = content.docShell;
-        let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
-        let legacyHistory = webNav.sessionHistory.legacySHistory;
+        let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
+        let legacyHistory = sessionHistory.legacySHistory;
         let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
         try {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
-          webNav.sessionHistory.PurgeHistory(1);
+          sessionHistory.PurgeHistory(1);
         } catch (e) {
             Logger.warn("Warning: couldn't PurgeHistory. Was it a file download?", e);
         }
@@ -271,9 +271,9 @@ EmbedHelper.prototype = {
             Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
             legacyHistory.getEntryAtIndex(0);
             index = 0;
-        } else if (index >= webNav.sessionHistory.count) {
-            let lastIndex = webNav.sessionHistory.count - 1;
-            Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + webNav.sessionHistory.count +
+        } else if (index >= sessionHistory.count) {
+            let lastIndex = sessionHistory.count - 1;
+            Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + sessionHistory.count +
                  " item(s) in the session history. Returning index " + lastIndex);
             legacyHistory.getEntryAtIndex(lastIndex);
             index = lastIndex;
