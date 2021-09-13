@@ -448,7 +448,7 @@ EmbedHelper.prototype = {
       let uri = this._getLinkURI(target);
       if (uri) {
         try {
-          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null, null);
+          Services.io.speculativeConnect(uri, aEvent.target.nodePrincipal, null);
         } catch (e) {
           Logger.warn("Speculative connection error:", e)
         }
