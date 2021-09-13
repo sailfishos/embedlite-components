@@ -236,7 +236,9 @@ EmbedHelper.prototype = {
 
         try {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
-          sessionHistory.PurgeHistory(1);
+          if (legacyHistory.count > 0) {
+            legacyHistory.PurgeHistory(1);
+          }
         } catch (e) {
             Logger.warn("Warning: couldn't PurgeHistory. Was it a file download?", e);
         }
