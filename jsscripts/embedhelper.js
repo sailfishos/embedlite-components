@@ -38,6 +38,17 @@ const availableLocales = [
   "ru"
 ];
 
+// Hack for time being to get sendAsyncMessages to get routed to Browser side.
+// This should be removed after JB#55464 / JOLLA-356.
+function sendAsyncMessage(messageName, message) {
+  try {
+    let winId = Services.embedlite.getIDByWindow(content);
+    Services.embedlite.sendAsyncMessage(winId, messageName, JSON.stringify(message));
+  } catch (e) {
+    Logger.warn("EmbedLiteChromeListener: sending async message failed", e)
+  }
+}
+
 function EmbedHelper() {
   this.contentDocumentIsDisplayed = true;
   this._init();
@@ -115,8 +126,8 @@ EmbedHelper.prototype = {
         break;
       }
       case "Gesture:SingleTap": {
-        if (gSelectionHandler.isActive) {
-            gSelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
+        if (SelectionHandler.isActive) {
+            SelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
         }
 
         try {
@@ -156,7 +167,7 @@ EmbedHelper.prototype = {
         let element = this._touchElement;
         if (element) {
           let [x, y] = [aMessage.json.x, aMessage.json.y];
-          gContextMenuHandler._processPopupNode(element, x, y, Ci.nsIDOMMouseEvent.MOZ_SOURCE_UNKNOWN);
+          ContextMenuHandler._processPopupNode(element, x, y, MouseEvent.MOZ_SOURCE_UNKNOWN);
         }
         this._touchElement = null;
         break;
@@ -357,7 +368,7 @@ EmbedHelper.prototype = {
   _sendMouseEvent: function _sendMouseEvent(aName, window, aX, aY) {
     try {
       let cwu = window.windowUtils;
-      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, Ci.nsIDOMMouseEvent.MOZ_SOURCE_TOUCH);
+      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, MouseEvent.MOZ_SOURCE_TOUCH);
     } catch(e) {
       Cu.reportError(e);
     }
@@ -366,7 +377,7 @@ EmbedHelper.prototype = {
   _sendContextMenuEvent: function _sendContextMenuEvent(aElement, aX, aY) {
     let window = aElement.ownerDocument.defaultView;
     try {
-      let cwu = window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
+      let cwu = window.windowUtils;
       cwu.sendMouseEventToWindow("contextmenu", aX, aY, 2, 1, 0, false);
     } catch(e) {
       Cu.reportError(e);
@@ -466,7 +477,7 @@ EmbedHelper.prototype = {
   },
 
   _getLinkURI: function(aElement) {
-    if (aElement && aElement.nodeType == Node.ELEMENT_NODE &&
+    if (aElement && aElement.nodeType == content.Node.ELEMENT_NODE &&
         ((ChromeUtils.getClassName(aElement) === "HTMLAnchorElement" && aElement.href) ||
          (ChromeUtils.getClassName(aElement) === "HTMLAreaElement" && aElement.href))) {
       try {
@@ -593,17 +604,13 @@ let ContentScroll =  {
 };
 this.ContentScroll = ContentScroll;
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Util.js");
-Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandler.js");
-gContextMenuHandler.init(content);
-Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js");
-Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js");
-gSelectionHandler.init(content)
-Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js");
-gSelectAsyncHelper.init(content)
-Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js");
-gFormAssistant.init(content)
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Util.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandler.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js", this);
 
 globalObject = new EmbedHelper();
 
