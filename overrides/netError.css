@@ -11,23 +11,26 @@ body {
   --moz-background-height: 32px;
 }
 
+html {
+  background-color: #ffc700;
+}
+
 body {
-  /* Add a set of stripes at the top of pages */
-  background-image: linear-gradient(-45deg, #dfe8ee,     #dfe8ee 33%,
-                                            #ecf0f3 33%, #ecf0f3 66%,
-                                            #dfe8ee 66%, #dfe8ee);
   background-size: 64px var(--moz-background-height);
   background-repeat: repeat-x;
 
   background-color: #f1f1f1;
-  padding: 0 20px;
+  padding: 0;
 
   font-weight: 300;
   font-size: 13px;
   -moz-text-size-adjust: none;
   font-family: sans-serif;
-}
 
+  margin: 7px 7px 7px 7px;
+  border: 1px solid #ffc700;
+  border-radius: 4px;
+}
 
 ul {
   /* Shove the list indicator so that its left aligned, but use outside so that text
@@ -60,7 +63,6 @@ h1 {
   /* Since this has an underline, use padding for vertical spacing rather than margin */
   padding: var(--moz-vertical-spacing) 0;
   font-weight: 300;
-  border-bottom: 1px solid #e0e2e5;
 }
 
 h2 {
@@ -82,16 +84,18 @@ button {
   font-family: sans-serif;
   background-color: #e0e2e5;
   font-weight: 300;
-  border-radius: 2px;
+  border-radius: 6px;
   background-image: none;
   margin: var(--moz-vertical-spacing) 0 0;
+  font-size: 13px;
+  color: #000000;
 }
 
 button.inProgress {
-  background-image: linear-gradient(-45deg, #dfe8ee,     #dfe8ee 33%,
-                                            #ecf0f3 33%, #ecf0f3 66%,
-                                            #dfe8ee 66%, #dfe8ee);
-  background-size: 37px 5px;
+  background-image: linear-gradient(90deg, #ffc700,     #ffc700 33%,
+                                           #ecf0f3 33%, #ecf0f3 66%,
+                                           #ffc700 66%, #ffc700);
+  background-size: 37px 2px;
   background-repeat: repeat-x;
   animation: progress 6s linear infinite;
 }
@@ -102,26 +106,26 @@ button.inProgress {
 }
 
 .certerror {
-  background-image: linear-gradient(-45deg, #f0d000,     #f0d000 33%,
-                                            #fedc00 33%, #fedc00 66%,
-                                            #f0d000 66%, #f0d000);
 }
 
 .blockedsite {
-  background-image: linear-gradient(-45deg, #9b2e2e,     #9b2e2e 33%,
-                                            #a83232 33%, #a83232 66%,
-                                            #9b2e2e 66%, #9b2e2e);
   background-color: #b14646;
   color: white;
 }
 
 #errorPageContainer {
   /* If the page is greater than 550px center the content.
-   * This number should be kept in sync with the media query for tablets below */
-  max-width: 550px;
+   * Achieved using the horizontal padding and @media query below */
+
   margin: 0 auto;
   transform: translateY(var(--moz-background-height));
-  padding-bottom: var(--moz-vertical-spacing);
+  padding-bottom: 40px;
+  margin-bottom: 40px;
+  padding-left: 20px;
+  padding-right: 20px;
+  background-color: #f1f1f1;
+  border-bottom: 1px solid #ffc700;
+  border-radius: 4px;
 
   min-height: calc(100% - var(--moz-background-height) - var(--moz-vertical-spacing));
   display: flex;
@@ -191,9 +195,9 @@ div[collapsed="true"] > .expander + * {
 /* On large screen devices (hopefully a 7+ inch tablet, we already center content (see #errorPageContainer above).
    Apply tablet specific styles here */
 @media (min-width: 550px) {
-  button {
-    min-width: 160px;
-    width: auto;
+  #errorPageContainer {
+    padding-right: calc(50vw - 225px);
+    padding-left: calc(50vw - 225px);
   }
 
   /* If the tablet is tall as well, add some padding to make content feel a bit more centered */
@@ -214,13 +218,16 @@ div[collapsed="true"] > .expander + * {
 #searchbox > input {
   flex: 3;
   padding: 0em 3em 0em 1em;
+  margin-right: 12px;
   width: 100%;
-  border: none;
   font-family: sans-serif;
   background-image: none;
   background-color: white;
-  border-radius-top-right: none;
-  border-radius-bottom-right: none;
+  border-radius: 0px;
+  border-top: 0px;
+  border-left: 0px;
+  border-right: 0px;
+  border-bottom: 1px solid black;
 }
 
 #searchbox > button {
