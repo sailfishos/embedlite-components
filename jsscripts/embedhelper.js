@@ -231,7 +231,7 @@ EmbedHelper.prototype = {
 
         let docShell = content.docShell;
         let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
-        let shist = webNav.sessionHistory.legacySHistory;
+        let legacyHistory = webNav.sessionHistory.legacySHistory;
         let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
         try {
@@ -262,26 +262,26 @@ EmbedHelper.prototype = {
                 Logger.debug("Warning: no protocol provided for uri '" + link + "'. Assuming http..." + e);
                 uri = ioService.newURI("http://" + link, null, null);
             }
-            let historyEntry = shist.createEntry();
+            let historyEntry = legacyHistory.createEntry();
             historyEntry.URI = uri;
             historyEntry.triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-            shist.addEntry(historyEntry, true);
+            legacyHistory.addEntry(historyEntry, true);
         });
         if (index < 0) {
             Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
-            shist.getEntryAtIndex(0);
+            legacyHistory.getEntryAtIndex(0);
             index = 0;
         } else if (index >= webNav.sessionHistory.count) {
             let lastIndex = webNav.sessionHistory.count - 1;
             Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + webNav.sessionHistory.count +
                  " item(s) in the session history. Returning index " + lastIndex);
-            shist.getEntryAtIndex(lastIndex);
+            legacyHistory.getEntryAtIndex(lastIndex);
             index = lastIndex;
         } else {
-            shist.getEntryAtIndex(index);
+            legacyHistory.getEntryAtIndex(index);
         }
 
-        shist.updateIndex();
+        legacyHistory.updateIndex();
 
         let initialURI;
         try {
