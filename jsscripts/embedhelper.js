@@ -230,13 +230,15 @@ EmbedHelper.prototype = {
         // aMessage.data contains: 1) list of 'links' loaded from DB, 2) current 'index'.
 
         let docShell = content.docShell;
-        let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
-        let shist = webNav.sessionHistory.legacySHistory;
+        let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
+        let legacyHistory = sessionHistory.legacySHistory;
         let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
         try {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
-          webNav.sessionHistory.PurgeHistory(1);
+          if (legacyHistory.count > 0) {
+            legacyHistory.PurgeHistory(1);
+          }
         } catch (e) {
             Logger.warn("Warning: couldn't PurgeHistory. Was it a file download?", e);
         }
@@ -262,26 +264,26 @@ EmbedHelper.prototype = {
                 Logger.debug("Warning: no protocol provided for uri '" + link + "'. Assuming http..." + e);
                 uri = ioService.newURI("http://" + link, null, null);
             }
-            let historyEntry = shist.createEntry();
+            let historyEntry = legacyHistory.createEntry();
             historyEntry.URI = uri;
             historyEntry.triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-            shist.addEntry(historyEntry, true);
+            legacyHistory.addEntry(historyEntry, true);
         });
         if (index < 0) {
             Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
-            shist.getEntryAtIndex(0);
+            legacyHistory.getEntryAtIndex(0);
             index = 0;
-        } else if (index >= webNav.sessionHistory.count) {
-            let lastIndex = webNav.sessionHistory.count - 1;
-            Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + webNav.sessionHistory.count +
+        } else if (index >= sessionHistory.count) {
+            let lastIndex = sessionHistory.count - 1;
+            Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + sessionHistory.count +
                  " item(s) in the session history. Returning index " + lastIndex);
-            shist.getEntryAtIndex(lastIndex);
+            legacyHistory.getEntryAtIndex(lastIndex);
             index = lastIndex;
         } else {
-            shist.getEntryAtIndex(index);
+            legacyHistory.getEntryAtIndex(index);
         }
 
-        shist.updateIndex();
+        legacyHistory.updateIndex();
 
         let initialURI;
         try {
@@ -449,7 +451,7 @@ EmbedHelper.prototype = {
       let uri = this._getLinkURI(target);
       if (uri) {
         try {
-          Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null, null);
+          Services.io.speculativeConnect(uri, aEvent.target.nodePrincipal, null);
         } catch (e) {
           Logger.warn("Speculative connection error:", e)
         }
