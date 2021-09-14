@@ -395,7 +395,8 @@ EmbedHelper.prototype = {
       }
       case "DOMAutoComplete":
       case "blur": {
-        LoginManagerContent.onUsernameInput(aEvent);
+        // JB#55434
+        // LoginManagerContent.onUsernameInput(aEvent);
         break;
       }
       case 'touchstart':
