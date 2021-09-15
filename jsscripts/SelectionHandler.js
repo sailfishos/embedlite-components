@@ -609,12 +609,6 @@ function SelectionHandler() {
    * Utilities
    */
 
-  this._getDocShell = function _getDocShell(aWindow) {
-    if (!aWindow)
-      return null;
-    return aWindow.docShell;
-  }
-
   this._getSelectedText = function _getSelectedText() {
     let selection = this._getSelection();
     if (selection)
@@ -623,23 +617,34 @@ function SelectionHandler() {
   }
 
   this._getSelection = function _getSelection() {
-    if (this._targetElement instanceof Ci.nsIDOMNSEditableElement) {
-      return this._targetElement
-                 .QueryInterface(Ci.nsIDOMNSEditableElement)
-                 .editor.selection;
+    // Don't get the selection for password fields. See bug 565717.
+    if (this._targetElement && (ChromeUtils.getClassName(this._targetElement) === "HTMLTextAreaElement" ||
+                                (ChromeUtils.getClassName(this._targetElement) === "HTMLInputElement" &&
+                                 this._targetElement.mozIsTextField(true)))) {
+      let selection = focusedElement.editor.selection;
+      return selection.toString();
     } else if (this._contentWindow)
       return this._contentWindow.getSelection();
     return null;
   }
 
   this._getSelectController = function _getSelectController() {
-    if (this._targetElement instanceof Ci.nsIDOMNSEditableElement) {
-      return this._targetElement
-                 .QueryInterface(Ci.nsIDOMNSEditableElement)
-                 .editor.selectionController;
+    // display: none iframes don't have a selection controller, see bug 493658
+    try {
+      if (!this._contentWindow.innerWidth || !this._contentWindow.innerHeight) {
+        return null;
+      }
+    } catch (e) {
+      // If getting innerWidth or innerHeight throws, we can't get a selection
+      // controller.
+      return null;
+    }
+
+    if (this._targetElement && this._targetElement.editor) {
+      return this._targetElement.editor.selectionController;
     } else {
-      let docShell = this._getDocShell(this._contentWindow);
-      if (docShell == null)
+      let docShell = this._contentWindow ? this._contentWindow.docShell : null;
+      if (!docShell)
         return null;
       return docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                      .getInterface(Ci.nsISelectionDisplay)

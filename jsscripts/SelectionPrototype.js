@@ -833,9 +833,10 @@ SelectionPrototype.prototype = {
         let newStartOffset = 0;
         let newEndNode = null;
         let newEndOffset = 0;
+
         for (let idx = 1; idx < selection.rangeCount; idx++) {
           let range = selection.getRangeAt(idx);
-          switch (startRange.compareBoundaryPoints(Ci.nsIDOMRange.START_TO_START, range)) {
+          switch (startRange.compareBoundaryPoints(Range.START_TO_START, range)) {
             case -1: // startRange is before
               newStartNode = startRange.startContainer;
               newStartOffset = startRange.startOffset;
@@ -849,7 +850,7 @@ SelectionPrototype.prototype = {
               newStartOffset = range.startOffset;
               break;
           }
-          switch (startRange.compareBoundaryPoints(Ci.nsIDOMRange.END_TO_END, range)) {
+          switch (startRange.compareBoundaryPoints(Range.END_TO_END, range)) {
             case -1: // startRange is before
               newEndNode = range.endContainer;
               newEndOffset = range.endOffset;
