@@ -359,7 +359,7 @@ EmbedHelper.prototype = {
   _sendMouseEvent: function _sendMouseEvent(aName, window, aX, aY) {
     try {
       let cwu = window.windowUtils;
-      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, MouseEvent.MOZ_SOURCE_TOUCH);
+      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, false, 0, MouseEvent.MOZ_SOURCE_TOUCH);
     } catch(e) {
       Cu.reportError(e);
     }
