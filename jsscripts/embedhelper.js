@@ -12,8 +12,8 @@ ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
 Cu.importGlobalProperties(["InspectorUtils"]);
 
-XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
-                                  "resource://gre/modules/LoginManagerContent.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerChild",
+                                  "resource://gre/modules/LoginManagerChild.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerParent",
                                   "resource://gre/modules/LoginManagerParent.jsm");
 
@@ -381,13 +381,13 @@ EmbedHelper.prototype = {
         let form = aEvent.target;
         let doc = form.ownerDocument;
         let win = doc.defaultView;
-        LoginManagerContent.onDOMFormHasPassword(aEvent, win);
+        LoginManagerChild.forWindow(win).onDOMFormHasPassword(aEvent);
         break;
       }
       case "DOMAutoComplete":
       case "blur": {
         // JB#55434
-        // LoginManagerContent.onUsernameInput(aEvent);
+        // LoginManagerChild.onUsernameInput(aEvent);
         break;
       }
       case 'touchstart':

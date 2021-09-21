@@ -27,7 +27,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   * The FormAssistant equivalent in Android also performs general autocomplete
   * functions, but we don't support those yet. Maybe in the future.
   *
-  * Modified from LoginManagerContent.jsm
+  * Modified from LoginManagerContent.jsm (now LoginManagerChild.jsm)
   * See gecko-dev/mobile/android/modules/FormAssistant.jsm
   */
 FormAssistant.prototype = {
@@ -219,7 +219,7 @@ FormAssistant.prototype = {
   * Allows extraction of origin information from form elements. These are
   * needed to identify any stored logins which relate to the form.
   *
-  * Modified from LoginManagerContent.jsm
+  * Modified from LoginManagerContent.jsm (now LoginManagerChild.jsm)
   * See gecko-dev/toolkit/components/passwordmgr/LoginManagerContent.jsm
   */
 var LoginUtils = {
