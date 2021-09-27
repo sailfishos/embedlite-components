@@ -24,6 +24,8 @@ function log(msg) {
 
 function Prompt(aOptions) {
   this.window = "window" in aOptions ? aOptions.window : null;
+  if (!this.window)
+    this.window = Services.ww.activeWindow;
 
   this.msg = {
     async: true,
