@@ -10,12 +10,20 @@ const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "ActorManagerParent",
+  "resource://gre/modules/ActorManagerParent.jsm"
+);
+
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // Common helper service
 
 function EmbedLiteGlobalHelper()
 {
+  ActorManagerParent.flush();
+
   Logger.debug("JSComp: EmbedLiteGlobalHelper.js loaded");
 }
 
