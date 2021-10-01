@@ -222,6 +222,7 @@ EmbedHelper.prototype = {
         let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
         let legacyHistory = sessionHistory.legacySHistory;
         let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
+        let originalCount = sessionHistory.count;
 
         try {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
@@ -245,6 +246,27 @@ EmbedHelper.prototype = {
         // Adjust index to the range max session history entries.
         let index = Math.max(0, (aMessage.data.index - itemsToRemove));
         links.splice(0, itemsToRemove);
+        // If we are reloading a previous session, the links will include
+        // an about:blank page and the currently loading page, as well as
+        // a leading about:blank page, potentially.  Remove these entries.
+        let removedSpurious = false;
+        if (originalCount === 0 && links[links.length - 1] == "about:blank") {
+            // remove trailing about:blank
+            links.splice(links.length-1, 1);
+            index -= 1;
+            removedSpurious = true;
+            // remove currently loading page
+            if (links.length > 0) {
+                links.splice(links.length-1, 1);
+                index -= 1;
+            }
+            // remove leading about:blank
+            if (links.length > 0 && links[0] == "about:blank") {
+                links.splice(0, 1);
+                index -= 1;
+            }
+        }
+
         links.forEach(function(link) {
             let uri;
             try {
@@ -273,6 +295,11 @@ EmbedHelper.prototype = {
         }
 
         legacyHistory.updateIndex();
+
+        if (removedSpurious) {
+            // reloading session, no need to set current URI.
+            break;
+        }
 
         let initialURI;
         try {
