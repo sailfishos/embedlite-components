@@ -13,11 +13,10 @@ const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
 
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/Task.jsm");
 
-ChromeUtils.import("resource://gre/modules/DownloadPaths.jsm");
-ChromeUtils.import("resource://gre/modules/Downloads.jsm");
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+const { DownloadPaths } = ChromeUtils.import("resource://gre/modules/DownloadPaths.jsm");
+const { Downloads } = ChromeUtils.import("resource://gre/modules/Downloads.jsm");
+const { FileUtils } = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -73,7 +72,7 @@ HelperAppLauncherDialog.prototype = {
 //      aLauncher.MIMEInfo.preferredAction = Ci.nsIMIMEInfo.useSystemDefault;
 //      aLauncher.launchWithApplication(null, false);
 //    }
-    aLauncher.saveToDisk(null, false);
+    aLauncher.promptForSaveDestination();
   },
 
   promptForSaveToFileAsync: function hald_promptForSaveToFileAsync(aLauncher, aWindowContext, aDefaultFileName,
