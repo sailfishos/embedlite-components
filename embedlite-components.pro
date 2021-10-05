@@ -14,7 +14,6 @@ OTHER_FILES += \
     jscomps/*.manifest \
     jscomps/*.am \
     overrides/*.* \
-    overrides/images/* \
     overrides/en-US/* \
     overrides/fi/* \
     overrides/ru/* \

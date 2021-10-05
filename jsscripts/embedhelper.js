@@ -7,8 +7,11 @@
 let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { ActorManagerChild } = ChromeUtils.import("resource://gre/modules/ActorManagerChild.jsm");
 ChromeUtils.import("resource://gre/modules/Geometry.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+
+ActorManagerChild.attach(this);
 
 Cu.importGlobalProperties(["InspectorUtils"]);
 

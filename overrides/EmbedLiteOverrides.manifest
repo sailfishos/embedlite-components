@@ -12,4 +12,3 @@ locale branding ru ru/locale/branding/
 locale browser ru ru/locale/ru/browser/
 override chrome://global/locale/netError.dtd chrome://browser/locale/netError.dtd
 override chrome://global/locale/appstrings.properties chrome://browser/locale/appstrings.properties
-override chrome://global/skin/media/videocontrols.css chrome://browser/skin/touchcontrols.css
