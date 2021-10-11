@@ -7,11 +7,32 @@
 let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { ActorManagerChild } = ChromeUtils.import("resource://gre/modules/ActorManagerChild.jsm");
 ChromeUtils.import("resource://gre/modules/Geometry.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
-ActorManagerChild.attach(this);
+let actorManagerChildAttached = false;
+
+const CHILD_SINGLETON_ACTORS = "ChildSingletonActors";
+
+function canInitializeActorManagerChild() {
+  if (actorManagerChildAttached)
+    return false;
+
+  const { sharedData } = Services.cpmm;
+  return sharedData.get(CHILD_SINGLETON_ACTORS);
+}
+
+function initializeActorManagerChild() {
+  try {
+    if (canInitializeActorManagerChild()) {
+      const { ActorManagerChild } = ChromeUtils.import("resource://gre/modules/ActorManagerChild.jsm");
+      ActorManagerChild.attach(this);
+      actorManagerChildAttached = true;
+    }
+  } catch (e) {}
+}
+
+initializeActorManagerChild();
 
 Cu.importGlobalProperties(["InspectorUtils"]);
 
@@ -76,6 +97,7 @@ EmbedHelper.prototype = {
     addMessageListener("Gesture:ContextMenuSynth", this);
     addMessageListener("embed:ContextMenuCreate", this);
     Services.obs.addObserver(this, "embedlite-before-first-paint", true);
+    Services.cpmm.sharedData.addEventListener("change", this);
 
     Logger.debug("Available locales: " + availableLocales.join(", "));
     Services.locale.availableLocales = availableLocales;
@@ -404,6 +426,13 @@ EmbedHelper.prototype = {
         break;
       case "mozfullscreenchange":
         this._handleFullScreenChanged(aEvent);
+        break;
+      case "change":
+        // ActorManagerParent.jsm sets data and SharedMap triggers broadcasting
+        // upon KeyChanged. See EmbedLiteGlobalHelper where we flush().
+        if (aEvent.changedKeys.includes("ChildSingletonActors")) {
+          initializeActorManagerChild();
+        }
         break;
     }
   },
