@@ -195,7 +195,10 @@ var UserAgent = {
       if (this._debug) {
         Logger.debug("Loading principal uri:", loadingPrincipalURI.asciiHost, "Uri:", uri.asciiHost, "UA:", ua);
       }
-      return ua;
+      // Fall through to default user-agent if there is no override for the loadingPrincipalURI.
+      if (ua) {
+        return ua;
+      }
     }
     return defaultUA;
   },
