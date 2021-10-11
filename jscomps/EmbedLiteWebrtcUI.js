@@ -25,8 +25,9 @@ function debug(...args)
   Logger.debug("JSComp: EmbedLiteWebrtcUI.js:", args);
 }
 
-function WebrtcPermissionRequest(uri, devices, constraints, callID) {
+function WebrtcPermissionRequest(uri, principal, devices, constraints, callID) {
   this.uri = uri;
+  this.princial = principal;
   this.id = callID
   this.permissions = {}
   this.allowedDevices = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
@@ -37,11 +38,11 @@ function WebrtcPermissionRequest(uri, devices, constraints, callID) {
     let device = dev.QueryInterface(Ci.nsIMediaDevice);
     debug("Found " + device.type + " device '" + device.name + "'");
     switch (device.type) {
-      case "audio":
+      case "audioinput":
         if (constraints.audio)
           audioDevices.push(device);
         break;
-      case "video":
+      case "videoinput":
         if (constraints.video)
           videoDevices.push(device);
         break;
@@ -66,6 +67,7 @@ WebrtcPermissionRequest.prototype = {
     for (var type in this.permissions) {
       let availableDevices = this.permissions[type]
       let selection = this._autoSelectDevice(type, availableDevices);
+
       if (selection == undefined) {
         // The permission is not handled. Ask user, what to do.
         permsToAsk[type] = availableDevices
@@ -116,11 +118,11 @@ WebrtcPermissionRequest.prototype = {
 
   _autoSelectDevice: function(type, availableDevices) {
     // If the permission has already been granted
-    let result = Services.perms.testExactPermission(this.uri, type);
+    let result = Services.perms.testExactPermissionFromPrincipal(this.principal, type);
     if (result == Ci.nsIPermissionManager.ALLOW_ACTION) {
       if (type == "camera") {
         // Add one-shot permission to use camera
-        Services.perms.add(this.uri, "MediaManagerVideo",
+        Services.perms.addFromPrincipal(this.principal, "MediaManagerVideo",
                            Ci.nsIPermissionManager.ALLOW_ACTION,
                            Ci.nsIPermissionManager.EXPIRE_SESSION);
       }
@@ -237,9 +239,10 @@ EmbedLiteWebrtcUI.prototype = {
     }
 
     let uri = aContentWindow.document.documentURIObject;
+    let principal = aContentWindow.document.principal
     let winId = Services.embedlite.getIDByWindow(aContentWindow);
 
-    let request = new WebrtcPermissionRequest(uri, aDevices, aConstraints, aCallID);
+    let request = new WebrtcPermissionRequest(uri, principal, aDevices, aConstraints, aCallID);
     this._submitRequest(request, winId)
       .then(allowedDevices => {
         if (allowedDevices && allowedDevices.length) {
