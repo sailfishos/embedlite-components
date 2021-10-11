@@ -82,6 +82,7 @@ var UserAgent = {
   _tabs: [],
   overrideMap: new Map,
   initilized: false,
+  userAgent: "",
   DESKTOP_UA: null,
   GOOGLE_DOMAIN: /(^|\.)google\.com$/,
   GOOGLE_MAPS_DOMAIN: /(^|\.)maps\.google\.com$/,
@@ -96,12 +97,15 @@ var UserAgent = {
     Services.obs.addObserver(this.onModifyRequest.bind(this),
                              "http-on-modify-request");
     Services.prefs.addObserver(PREF_OVERRIDE, this, false);
+
+    this.userAgent = Cc["@mozilla.org/network/protocol;1?name=http"]
+                       .getService(Ci.nsIHttpProtocolHandler).userAgent
+
     this._customUA = this.getCustomUserAgent();
     UserAgentOverrides.init();
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
     // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent/Firefox
-    this.DESKTOP_UA = Cc["@mozilla.org/network/protocol;1?name=http"]
-                        .getService(Ci.nsIHttpProtocolHandler).userAgent
+    this.DESKTOP_UA = this.userAgent
                         .replace(/Sailfish \d.+?; [a-zA-Z]+/, "X11; Linux x86_64")
                         .replace(/Gecko\/[0-9\.]+/, "Gecko/20100101");
 
@@ -139,7 +143,12 @@ var UserAgent = {
   },
 
   getDefaultUserAgent : function ua_getDefaultUserAgent() {
-    return this._customUA ? this._customUA : this.DESKTOP_UA;
+    if (this._customUA) {
+      return this._customUA;
+    } else if (this.userAgent) {
+      return this.userAgent;
+    }
+    return this.DESKTOP_UA;
   },
 
   uninit: function ua_uninit() {
