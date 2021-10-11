@@ -4,6 +4,7 @@ jsscripts_manifest_DATA = \
 	Logger.js \
 	Feeds.jsm \
 	FormAssistant.js \
+	InputMethodHandler.js \
 	ContentLinkHandler.jsm \
 	OrientationChangeHandler.jsm \
 	UserAgentUpdates.jsm \
