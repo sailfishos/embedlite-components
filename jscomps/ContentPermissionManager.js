@@ -28,25 +28,10 @@ function sendResult(topic, result) {
   Services.obs.notifyObservers(null, topic, JSON.stringify(result));
 }
 
-function permissionToCookieAccess(permission) {
-    switch(permission) {
-    case Ci.nsIPermissionManager.ALLOW_ACTION:
-        return Ci.nsICookiePermission.ACCESS_ALLOW;
-    case Ci.nsIPermissionManager.DENY_ACTION:
-        return Ci.nsICookiePermission.ACCESS_DENY;
-    default:
-        return Ci.nsICookiePermission.ACCESS_DEFAULT;
-    }
-}
-
 ContentPermissionManager.prototype = {
   classID: Components.ID("{86d354c6-81bc-4eb5-82c3-4c9859586165}"),
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
-
-  get cookiePermission() {
-    return Cc["@mozilla.org/cookie/permission;1"].getService(Ci.nsICookiePermission);
-  },
 
   observe: function(aSubject, aTopic, aData) {
       switch (aTopic) {
@@ -59,16 +44,14 @@ ContentPermissionManager.prototype = {
           switch (data.msg) {
           case "get-all":
               let permissionList = [];
-              let iterator = Services.perms.enumerator;
-              while (iterator.hasMoreElements()) {
-                  let permission = iterator.getNext().QueryInterface(Ci.nsIPermission);
+              Services.perms.all.forEach(permission => {
                   permissionList.push({
                                   type: permission.type,
                                   uri: permission.principal.origin,
                                   capability: permission.capability,
                                   expireType: permission.expireType
                               })
-              }
+              });
               sendResult("embed:perms:all", permissionList);
               break;
           case "get-all-for-uri":
@@ -86,22 +69,17 @@ ContentPermissionManager.prototype = {
               sendResult("embed:perms:all-for-uri", result);
               break;
           case "add":
-              if (data.type === "cookie") {
-                this.cookiePermission.setAccess(Services.io.newURI(data.uri, null, null),
-                                                permissionToCookieAccess(parseInt(data.permission)));
-              }
-              Services.perms.add(Services.io.newURI(data.uri, null, null),
-                                 data.type, parseInt(data.permission), parseInt(data.expireType));
+              Services.perms.addFromPrincipal(Services.scriptSecurityManager.createContentPrincipal(Services.io.newURI(data.uri, null, null), {}),
+                                              data.type,
+                                              parseInt(data.permission),
+                                              parseInt(data.expireType));
               debug("set, uri: " + data.uri
                     + ", type: " + data.type
                     + ", permission: " + data.permission);
               break;
           case "remove":
-              if (data.type === "cookie") {
-                this.cookiePermission.setAccess(Services.io.newURI(data.uri, null, null),
-                                                Ci.nsICookiePermission.ACCESS_DEFAULT);
-              }
-              Services.perms.remove(Services.io.newURI(data.uri, null, null), data.type);
+              Services.perms.removeFromPrincipal(Services.scriptSecurityManager.createContentPrincipal(Services.io.newURI(data.uri, null, null), {}),
+                                                 data.type);
               debug("remove type: " + data.type + ", for uri: " + data.uri);
               break;
           case "remove-all":
