@@ -43,8 +43,8 @@ var ClickEventBlocker = {
         // Do not block clicks to the same origin links or form actions
         return;
       }
-      event.preventDefault();
       if (href) {
+        event.preventDefault();
         sendAsyncMessage("embed:OpenLink", {
                           "uri":  href
                         })
