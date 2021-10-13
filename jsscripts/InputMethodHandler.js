@@ -13,8 +13,6 @@ function debug(msg) {
   Logger.debug("InputMethodHandler.js -", msg);
 }
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-
 XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
 });
@@ -26,9 +24,9 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   * element for predictive input.
   */
 InputMethodHandler.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference,
-                                         Ci.nsISelectionListener]),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsISupportsWeakReference,
+                                          Ci.nsISelectionListener]),
 
   // Weak-ref used to keep track of the currently focused element.
   _currentFocusedElement: null,
