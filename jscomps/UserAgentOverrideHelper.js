@@ -101,11 +101,9 @@ var UserAgent = {
     UserAgentOverrides.init();
     UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
     // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent/Firefox
-    this.DESKTOP_UA = Cc["@mozilla.org/network/protocol;1?name=http"]
-                        .getService(Ci.nsIHttpProtocolHandler).userAgent
-                        .replace(/Sailfish \d.+?; [a-zA-Z]+/, "X11; Linux x86_64")
-                        .replace(/Gecko\/[0-9\.]+/, "Gecko/20100101");
-
+    // Same as in moz.configure/init.configure to split the MOZILLA_UAVERSION
+    let version = Services.appinfo.version.split(".")[0] + ".0";
+    this.DESKTOP_UA = "Mozilla/5.0 (X11; Linux x86_64; rv:" + version + ") Gecko/20100101 Firefox/" + version;
     this.initilized = true;
   },
 
