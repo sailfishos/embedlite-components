@@ -9,6 +9,11 @@ chromeskin_manifest_DATA = \
 	netError.css \
 	$(NULL)
 
+mozappsskin_manifestdir=$(libdir)/mozembedlite/chrome/mozapps/skin/places
+mozappsskin_manifest_DATA = \
+	defaultFavicon.svg \
+	$(NULL)
+
 manifestsscript_manifestdir=$(libdir)/mozembedlite/chrome
 manifestsscript_manifest_DATA = \
 	EmbedLiteOverrides.manifest \
