@@ -1,4 +1,5 @@
 skin browser classic/1.0 chrome/skin/
+skin mozapps mobile/1.0 mozapps/skin/
 content branding chrome/content/branding/
 override chrome://global/content/netError.xhtml chrome://browser/content/netError.xhtml
 override chrome://global/skin/netError.css chrome://browser/skin/netError.css
