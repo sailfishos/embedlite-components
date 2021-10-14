@@ -6,8 +6,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/Services.jsm");
-let makeURI = Components.utils.import("resource://gre/modules/BrowserUtils.jsm", {}).BrowserUtils.makeURI;
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+let makeURI = ChromeUtils.import("resource://gre/modules/BrowserUtils.jsm", {}).BrowserUtils.makeURI;
 
 var ClickEventBlocker = {
   _context: null,
@@ -45,9 +45,10 @@ var ClickEventBlocker = {
       }
       if (href) {
         event.preventDefault();
-        sendAsyncMessage("embed:OpenLink", {
+        var winid = Services.embedlite.getIDByWindow(event.target.ownerGlobal);
+        Services.embedlite.sendAsyncMessage(winid, "embed:OpenLink", JSON.stringify({
                           "uri":  href
-                        })
+                        }));
       }
     }
   },
@@ -84,6 +85,7 @@ var ClickEventBlocker = {
    * @return [referrerURI, href, isForm].
    */
   _hrefForClickEvent(event) {
+    let content = event.target.ownerGlobal;
     function isHTMLLink(aNode) {
       // Be consistent with what nsContextMenu.js does.
       return ((aNode instanceof content.HTMLAnchorElement && aNode.href) ||
