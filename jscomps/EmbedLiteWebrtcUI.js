@@ -27,7 +27,7 @@ function debug(...args)
 
 function WebrtcPermissionRequest(uri, principal, devices, constraints, callID) {
   this.uri = uri;
-  this.princial = principal;
+  this.principal = principal;
   this.id = callID
   this.permissions = {}
   this.allowedDevices = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
@@ -145,7 +145,7 @@ WebrtcPermissionRequest.prototype = {
         if (response.checkedDontAsk) {
           const policy = response.allow ? Ci.nsIPermissionManager.ALLOW_ACTION
                                         : Ci.nsIPermissionManager.DENY_ACTION;
-          Services.perms.add(this.uri, type, policy);
+          Services.perms.addFromPrincipal(this.principal, type, policy);
         }
 
         // Append the selected device to the list of allowed
@@ -158,7 +158,7 @@ WebrtcPermissionRequest.prototype = {
             this.allowedDevices.appendElement(availableDevices[selectedIndex]);
             // Add one-shot permission to use camera
             if (type == "camera") {
-              Services.perms.add(this.uri, "MediaManagerVideo",
+              Services.perms.addFromPrincipal(this.principal, "MediaManagerVideo",
                                  Ci.nsIPermissionManager.ALLOW_ACTION,
                                  Ci.nsIPermissionManager.EXPIRE_SESSION);
             }
@@ -239,7 +239,7 @@ EmbedLiteWebrtcUI.prototype = {
     }
 
     let uri = aContentWindow.document.documentURIObject;
-    let principal = aContentWindow.document.principal
+    let principal = Services.scriptSecurityManager.createContentPrincipal(uri, {});
     let winId = Services.embedlite.getIDByWindow(aContentWindow);
 
     let request = new WebrtcPermissionRequest(uri, principal, aDevices, aConstraints, aCallID);
