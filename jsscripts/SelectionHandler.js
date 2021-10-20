@@ -198,7 +198,7 @@ function SelectionHandler() {
       return;
     }
 
-    if (this._targetElement instanceof Ci.nsIDOMNSEditableElement) {
+    if (this._targetIsEditable) {
       this._targetElement.select()
     } else if (this._contentWindow) {
       this._contentWindow.getSelection().selectAllChildren(this._contentWindow.document.body);

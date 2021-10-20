@@ -52,10 +52,9 @@ InputMethodHandler.prototype = {
         let currentElement = aEvent.target;
         if (this._isAutoComplete(currentElement)) {
           this._currentFocusedElement = Cu.getWeakReference(currentElement);
-          let selPriv = currentElement.editor.selectionController
-                        .getSelection(Ci.nsISelectionController.SELECTION_NORMAL)
-                        .QueryInterface(Ci.nsISelectionPrivate);
-          selPriv.addSelectionListener(this);
+          let selection = currentElement.editor.selectionController
+                          .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
+          selection.addSelectionListener(this);
         }
         break;
       }
@@ -63,10 +62,9 @@ InputMethodHandler.prototype = {
       case "blur": {
         let focused = this.focusedElement;
         if (focused) {
-          let selPriv = focused.editor.selectionController
-                        .getSelection(Ci.nsISelectionController.SELECTION_NORMAL)
-                        .QueryInterface(Ci.nsISelectionPrivate);
-          selPriv.removeSelectionListener(this);
+          let selection = focused.editor.selectionController
+                          .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
+          selection.removeSelectionListener(this);
           this._resetInputContext(focused);
         }
         this._currentFocusedElement = null;
@@ -110,7 +108,7 @@ InputMethodHandler.prototype = {
   },
 
   _isAutoComplete: function(aElement) {
-    return (aElement instanceof Ci.nsIDOMNSEditableElement && aElement.editor) &&
+    return (Util.isEditable(aElement) && aElement.editor) &&
            !aElement.readOnly &&
            !this._isDisabledElement(aElement) &&
            (aElement.type !== "password") &&
