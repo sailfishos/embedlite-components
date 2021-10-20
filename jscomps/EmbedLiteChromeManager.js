@@ -135,7 +135,6 @@ EmbedLiteChromeManager.prototype = {
     Services.obs.addObserver(this, "embedliteviewcreated", true);
     Services.obs.addObserver(this, "embed-network-link-status", true)
     Services.obs.addObserver(this, "domwindowclosed", true);
-    Services.obs.addObserver(this, "xpcom-shutdown", false);
     Services.obs.addObserver(this, "keyword-uri-fixup", true);
   },
 
