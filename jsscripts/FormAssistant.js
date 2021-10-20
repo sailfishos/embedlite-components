@@ -126,7 +126,7 @@ FormAssistant.prototype = {
     }
 
     let hostname = aElement.baseURIObject.displayPrePath;
-    let actionUri = LoginUtils._getActionOrigin(aElement.form);
+    let actionUri = LoginUtils._getActionOrigin(aElement);
     var suggestions = []
     // We only present suggestions if the form value is empty; this is so that:
     // 1. user selections will "replace" the full contents of the field; and
@@ -247,8 +247,15 @@ var LoginUtils = {
     return realm;
   },
 
-  _getActionOrigin(form) {
-    var uriString = form.action;
+  _getActionOrigin(element) {
+    let form = element.form;
+    let formAction = element.formAction;
+    var uriString = "";
+    if (form && form.action) {
+      uriString = form.action
+    } else if (formAction) {
+      uriString = formAction;
+    }
 
     // A blank or missing action submits to where it came from.
     if (uriString == "")
