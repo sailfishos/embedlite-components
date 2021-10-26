@@ -668,14 +668,14 @@ LoginManagerPrompter.prototype = {
                  " @ " + hostname + " (" + httpRealm + ")");
 
         if (notifyObj)
-          this._showSaveLoginNotification(newLogin);
+          this._showSaveLoginNotification(this._chromeWindow, newLogin);
         else
           this._pwmgr.addLogin(newLogin);
       } else if (password != selectedLogin.password) {
         this.log("Updating password for " + username +
                  " @ " + hostname + " (" + httpRealm + ")");
         if (notifyObj)
-          this._showChangeLoginNotification(selectedLogin, newLogin);
+          this._showChangeLoginNotification(this._chromeWindow, selectedLogin, newLogin);
         else
           this._updateLogin(selectedLogin, newLogin);
       } else {
@@ -759,40 +759,77 @@ LoginManagerPrompter.prototype = {
     this._opener = aOpener;
   },
 
-  promptToSavePassword : function (aLogin) {
+  /**
+   * Ask the user if they want to save a login (Yes, Never, Not Now)
+   *
+   * @param aBrowser
+   *        The browser of the webpage request that triggered the prompt.
+   * @param aLogin
+   *        The login to be saved.
+   * @param dismissed (optional)
+   *        A boolean value indicating whether the save logins doorhanger should
+   *        be dismissed automatically when shown.
+   * @param notifySaved (optional)
+   *        A boolean value indicating whether the notification should indicate that
+   *        a login has been saved
+   * @param autoFilledLoginGuid (optional)
+   *        A string guid value for the login which was autofilled into the form
+   */
+  promptToSavePassword : function (aBrowser, aLogin) {
     this.log("promptToSavePassword");
-    this._showSaveLoginNotification(aLogin);
+    this._showSaveLoginNotification(aBrowser, aLogin);
   },
 
   /**
-   * Called when we think we detect a password or username change for
-   * an existing login, when the form being submitted contains multiple
-   * password fields.
+   * Ask the user if they want to change a login's password or username.
+   * If the user consents, modifyLogin() will be called.
    *
-   * @param {nsILoginInfo} aOldLogin
-   *                       The old login we may want to update.
-   * @param {nsILoginInfo} aNewLogin
-   *                       The new login from the page form.
+   * @param aBrowser
+   *        The browser of the webpage request that triggered the prompt.
+   * @param aOldLogin
+   *        The existing login (with the old password).
+   * @param aNewLogin
+   *        The new login.
+   * @param dismissed (optional)
+   *        A boolean value indicating whether the save logins doorhanger should
+   *        be dismissed automatically when shown.
+   * @param notifySaved (optional)
+   *        A boolean value indicating whether the notification should indicate that
+   *        a login has been saved
+   * @param autoSavedLoginGuid (optional)
+   *        A string guid value for the old login to be removed if the changes
+   *        match it to a different login
+   * @param autoFilledLoginGuid (optional)
+   *        A string guid value for the login which was autofilled into the form
    */
-  promptToChangePassword(aOldLogin, aNewLogin) {
+  promptToChangePassword(aBrowser, aOldLogin, aNewLogin) {
     this.log("promptToChangePassword");
-    this._showChangeLoginNotification(aOldLogin, aNewLogin);
+    this._showChangeLoginNotification(aBrowser, aOldLogin, aNewLogin);
   },
 
   /**
-   * Called when we detect a password change in a form submission, but we
-   * don't know which existing login (username) it's for. Asks the user
-   * to select a username and confirm the password change.
+   * Ask the user if they want to change the password for one of
+   * multiple logins, when the caller can't determine exactly which
+   * login should be changed. If the user consents, modifyLogin() will
+   * be called.
    *
-   * Note: The caller doesn't know the username for aNewLogin, so this
-   *       function fills in .username and .usernameField with the values
-   *       from the login selected by the user.
+   * @param aBrowser
+   *        The browser of the webpage request that triggered the prompt.
+   * @param logins
+   *        An array of existing logins.
+   * @param aNewLogin
+   *        The new login.
    *
-   * Note; XPCOM stupidity: |count| is just |logins.length|.
+   * Note: Because the caller does not know the username of the login
+   *       to be changed, aNewLogin.username and aNewLogin.usernameField
+   *       will be set (using the user's selection) before modifyLogin()
+   *       is called.
+   *
+   * Note: XPCOM stupidity: |count| is just |logins.length|.
    */
-  promptToChangePasswordWithUsernames : function (logins, count, aNewLogin) {
+  promptToChangePasswordWithUsernames : function (aBrowser, logins, count, aNewLogin) {
     this.log("promptToChangePasswordWithUsernames");
-    this._showChangeLoginWithUsernamesNotification(logins, aNewLogin);
+    this._showChangeLoginWithUsernamesNotification(aBrowser, logins, aNewLogin);
   },
 
   onMessageReceived: function(messageName, message) {
@@ -819,9 +856,10 @@ LoginManagerPrompter.prototype = {
   /**
    * Displays a notification bar.
    */
-  _showLoginNotification : function (aName, aTextBundle, aButtons, aFormData) {
+  _showLoginNotification : function (aBrowser, aName, aTextBundle, aButtons, aFormData) {
     this.log("Adding new " + aName + " notification bar");
 
+    this._chromeWindow = aBrowser;
     let notifyWin = this._chromeWindow && this._chromeWindow.top || null;
 
     // The page we're going to hasn't loaded yet, so we want to persist
@@ -858,7 +896,7 @@ LoginManagerPrompter.prototype = {
    * @param aLogin
    *        The login captured from the form.
    */
-  _showSaveLoginNotification : function (aLogin) {
+  _showSaveLoginNotification : function (aBrowser, aLogin) {
     var displayHost = this._getShortDisplayHost(aLogin.hostname);
     var notificationTextBundle = ["rememberPasswordMsgNoUsername", displayHost];
     var formData = {
@@ -905,7 +943,7 @@ LoginManagerPrompter.prototype = {
       }
     ];
 
-    this._showLoginNotification("password-save", notificationTextBundle,
+    this._showLoginNotification(aBrowser, "password-save", notificationTextBundle,
                                 buttons, formData);
 
     Services.obs.notifyObservers(aLogin, "passwordmgr-prompt-save", null);
@@ -937,13 +975,14 @@ LoginManagerPrompter.prototype = {
   /**
    * Shows the Change Password notification bar or popup notification.
    *
+   * @param aBrowser
+   *        The browser of the webpage request that triggered the prompt.
    * @param aOldLogin
    *        The stored login we want to update.
-   *
    * @param aNewLogin
    *        The login object with the changes we want to make.
    */
-  _showChangeLoginNotification(aOldLogin, aNewLogin) {
+  _showChangeLoginNotification(aBrowser, aOldLogin, aNewLogin) {
     // We reuse the existing message, even if it expects a username, until we
     // switch to the final terminology in bug 1144856.
     var displayHost = this._getShortDisplayHost(aOldLogin.hostname);
@@ -986,7 +1025,7 @@ LoginManagerPrompter.prototype = {
       }
     ];
 
-    this._showLoginNotification("password-change", notificationTextBundle,
+    this._showLoginNotification(aBrowser, "password-change", notificationTextBundle,
                                 buttons, formData);
 
     let oldGUID = aOldLogin.QueryInterface(Ci.nsILoginMetaInfo).guid;
@@ -997,13 +1036,14 @@ LoginManagerPrompter.prototype = {
    * Shows the Change Password notification bar or popup notification which
    * allows the user to select a username to update.
    *
+   * @param aBrowser
+   *        The browser of the webpage request that triggered the prompt.
    * @param logins
    *        The list of possible usernames for the user to select.
-   *
    * @param aNewLogin
    *        The login object with the changes we want to make.
    */
-  _showChangeLoginWithUsernamesNotification(logins, aNewLogin) {
+  _showChangeLoginWithUsernamesNotification(aBrowser, logins, aNewLogin) {
     // We reuse the existing message, even if it expects a username, until we
     // switch to the final terminology in bug 1144856.
     var displayHost = this._getShortDisplayHost(aNewLogin.hostname);
@@ -1050,7 +1090,7 @@ LoginManagerPrompter.prototype = {
       }
     ];
 
-    this._showLoginNotification("password-update-multiuser", notificationTextBundle,
+    this._showLoginNotification(aBrowser, "password-update-multiuser", notificationTextBundle,
                                 buttons, formData);
   },
 
