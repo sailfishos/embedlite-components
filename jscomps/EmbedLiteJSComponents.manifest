@@ -13,9 +13,9 @@ contract @mozilla.org/network/protocol/about;1?what=embedlite {59f3da9a-6c88-11e
 contract @mozilla.org/network/protocol/about;1?what=certerror {59f3da9a-6c88-11e2-b875-33d1bd379849}
 contract @mozilla.org/network/protocol/about;1?what=home {59f3da9a-6c88-11e2-b875-33d1bd379849}
 
-# nsLoginManagerPrompter.js
-component {8aa66d77-1bbb-45a6-991e-b8f47751c291} nsLoginManagerPrompter.js
-component {72de694e-6c88-11e2-a4ee-6b515bdf0cb7} nsLoginManagerPrompter.js
+# LoginManagerPrompter.js
+component {8aa66d77-1bbb-45a6-991e-b8f47751c291} LoginManagerPrompter.js
+component {72de694e-6c88-11e2-a4ee-6b515bdf0cb7} LoginManagerPrompter.js
 contract @mozilla.org/login-manager/prompter;1 {8aa66d77-1bbb-45a6-991e-b8f47751c291}
 contract @mozilla.org/passwordmanager/authpromptfactory;1 {72de694e-6c88-11e2-a4ee-6b515bdf0cb7}
 

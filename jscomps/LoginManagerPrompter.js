@@ -748,7 +748,7 @@ LoginManagerPrompter.prototype = {
     this._opener = null;
     this._factory = aFactory || null;
 
-    this.log("JSComp: nsLoginManagerPrompter initialized");
+    this.log("JSComp: LoginManagerPrompter initialized");
   },
 
   set browser(aBrowser) {
@@ -833,16 +833,16 @@ LoginManagerPrompter.prototype = {
   },
 
   onMessageReceived: function(messageName, message) {
-    this.log("nsLoginManagerPrompter.js on message received: top:", messageName, ", msg:", message);
+    this.log("LoginManagerPrompter.js on message received: top:", messageName, ", msg:", message);
     var ret = JSON.parse(message);
     // Send Request
     if (!ret.id) {
-      this.warn("nsLoginManagerPrompter.js: Request id not defined in response");
+      this.warn("LoginManagerPrompter.js: Request id not defined in response");
       return;
     }
     let request = this._pendingRequests[ret.id];
     if (!request) {
-      this.warn("nsLoginManagerPrompter.js: Wrong request id:", ret.id);
+      this.warn("LoginManagerPrompter.js: Wrong request id:", ret.id);
       return;
     }
     let selectedIndex = ret.selectedIndex || 0;
@@ -884,7 +884,7 @@ LoginManagerPrompter.prototype = {
                                                          }));
       this._pendingRequests[uniqueid] = aButtons;
     } catch (e) {
-      Logger.warn("nsLoginManagerPrompter: sending async message failed", e)
+      Logger.warn("LoginManagerPrompter: sending async message failed", e)
     }
   },
 

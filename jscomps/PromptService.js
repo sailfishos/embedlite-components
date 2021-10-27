@@ -438,7 +438,7 @@ InternalPrompt.prototype = {
   /* ----------  nsIAuthPrompt  ---------- */
 
   nsIAuthPrompt_prompt : function (title, text, passwordRealm, savePassword, defaultText, result) {
-    // TODO: Port functions from nsLoginManagerPrompter.js to here
+    // TODO: Port functions from LoginManagerPrompter.js to here
     if (defaultText)
       result.value = defaultText;
     return this.nsIPrompt_prompt(title, text, result, null, {});
