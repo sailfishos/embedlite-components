@@ -248,7 +248,7 @@ SelectionPrototype.prototype = {
 
       // Don't extend the selection into a new container.
       if (selection.focusNode != focusNode) {
-        let nextContainer = (selection.focusNode.nodeType == Ci.nsIDOMNode.TEXT_NODE) ?
+        let nextContainer = (selection.focusNode.nodeType === content.Node.TEXT_NODE) ?
           selection.focusNode.parentNode : selection.focusNode;
         if (nextContainer.matches &&
             nextContainer.matches(PHONE_NUMBER_CONTAINERS)) {
