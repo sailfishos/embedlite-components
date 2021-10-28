@@ -98,16 +98,15 @@ EmbedLiteChromeListener.prototype = {
       message["type"] = event.type;
       break;
     case "DOMPopupBlocked":
-      let permissions = Services.perms.getAllForURI(Services.io.newURI(event.target.URL, null, null));
-      while (permissions.hasMoreElements()) {
-        let permission = permissions.getNext().QueryInterface(Ci.nsIPermission);
+      let permissions = Services.perms.getAllForPrincipal(Services.scriptSecurityManager.createContentPrincipal(event.popupWindowURI, {}));
+      for (let permission of permissions) {
         if (permission.type == "popup" && permission.capability == Ci.nsIPermissionManager.DENY_ACTION) {
           // Ignore popup
           return;
         }
       }
       messageName = "embed:popupblocked";
-      message["host"] = event.target.URL;
+      message["host"] = event.popupWindowURI.displaySpec;
       break;
     }
 

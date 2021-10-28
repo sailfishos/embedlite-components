@@ -56,9 +56,8 @@ ContentPermissionManager.prototype = {
               break;
           case "get-all-for-uri":
               let result = [];
-              let permissions = Services.perms.getAllForURI(Services.io.newURI(data.uri, null, null));
-              while (permissions.hasMoreElements()) {
-                  let permission = permissions.getNext().QueryInterface(Ci.nsIPermission);
+              let permissions = Services.perms.getAllForPrincipal(Services.scriptSecurityManager.createContentPrincipal(Services.io.newURI(data.uri, null, null), {}));
+              for (let permission of permissions) {
                   result.push({
                                   type: permission.type,
                                   uri: data.uri,
