@@ -30,7 +30,7 @@ PrivateDataManager.prototype = {
     (async () => {
       await new Promise(function(resolve) {
         Services.clearData.deleteData(dataType, resolve);
-        debug("Data cleared")
+        debug("Data cleared", dataType)
       });
     })().catch(Cu.reportError);
   },
@@ -42,8 +42,8 @@ PrivateDataManager.prototype = {
         debug("Passwords removed");
         break;
       }
-      case "cookies": {
-        this.clearData(Ci.nsIClearDataService.CLEAR_COOKIES);
+      case "cookies-and-site-data": {
+        this.clearData(Ci.nsIClearDataService.CLEAR_COOKIES | Ci.nsIClearDataService.CLEAR_DOM_STORAGES);
         break;
       }
       case "cache": {
