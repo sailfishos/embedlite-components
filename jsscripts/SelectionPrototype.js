@@ -324,9 +324,9 @@ SelectionPrototype.prototype = {
 
     let searchUri = "";
     try {
-      let searchEngine = Services.search.currentEngine;
+      let searchEngine = Services.search.defaultEngine;
       if (searchEngine) {
-        searchUri = Services.search.currentEngine.getSubmission(this._cache.text).uri.spec;
+        searchUri = Services.search.defaultEngine.getSubmission(this._cache.text).uri.spec;
       }
     } catch (e) {
       Logger.warn("Failed to get current search engine:", e)
