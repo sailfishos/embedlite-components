@@ -21,26 +21,6 @@ EmbedLiteSearchEngine.prototype = {
   classID: Components.ID("{924fe7ba-afa1-11e2-9d4f-533572064b73}"),
 
   observe: function (aSubject, aTopic, aData) {
-    let searchCallback = {
-      onSuccess: function (engine) {
-        var message = {
-          "msg": "search-engine-added",
-          "engine": (engine && engine.name) || "",
-          "errorCode": 0,
-        }
-        Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
-      },
-      onError: function (errorCode) {
-        // Checked possible failures from nsIBrowserSearchService.idl
-        var message = {
-          "msg": "search-engine-added",
-          "engine": "",
-          "errorCode": errorCode
-        }
-        Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
-      }
-    }
-
     switch(aTopic) {
       // Engine DownloadManager notifications
       case "app-startup": {
@@ -69,29 +49,25 @@ EmbedLiteSearchEngine.prototype = {
         var data = JSON.parse(aData);
         switch (data.msg) {
           case "loadxml": {
-            Services.search.addEngine(data.uri, Ci.nsISearchEngine.DATA_XML, null, data.confirm, searchCallback);
-            break;
-          }
-          case "restoreDefault": {
-            Services.search.restoreDefaultEngines();
-            break;
-          }
-          case "loadtext": {
-            Services.search.addEngine(data.uri, Ci.nsISearchEngine.DATA_TEXT, null, data.confirm);
-            break;
-          }
-          case "remove": {
-            var engine = Services.search.getEngineByName(data.name);
-            if (engine) {
-              Services.search.removeEngine(engine);
-            }
-            break;
-          }
-          case "setcurrent": {
-            var engine = Services.search.getEngineByName(data.name);
-            if (engine) {
-              Services.search.currentEngine = engine;
-            }
+            Services.search.addEngine(data.uri, null, data.confirm).then(
+              engine => {
+                var message = {
+                  "msg": "search-engine-added",
+                  "engine": (engine && engine.name) || "",
+                  "errorCode": 0,
+                }
+                Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+              },
+              errorCode => {
+                // For failure conditions see nsISearchService.idl
+                var message = {
+                  "msg": "search-engine-added",
+                  "engine": "",
+                  "errorCode": errorCode
+                }
+                Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+              }
+            );
             break;
           }
           case "setdefault": {
@@ -101,48 +77,9 @@ EmbedLiteSearchEngine.prototype = {
             }
             break;
           }
-          case "getlist": {
-            Services.search.getEngines().then((engines) => {
-              var json = [];
-              if (engines) {
-                for (var i = 0; i < engines.length; i++) {
-                  let engine = engines[i];
-                  let serEn = { name: engine.name,
-                                isDefault: Services.search.defaultEngine === engine,
-                                isCurrent: Services.search.currentEngine === engine };
-                  json.push(serEn);
-                }
-              }
-              Services.obs.notifyObservers(null, "embed:search", JSON.stringify({ msg: "pluginslist", list: json}));
-            });
+          default:
+            Logger.debug("Unhandled embedui:search message: " + data.msg);
             break;
-          }
-          case "getsuggestions": {
-            let submission = Services.search.currentEngine.getSubmission(data.searchinput, "application/x-suggestions+json");
-            let httpReq = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance(Ci.nsIXMLHttpRequest);
-            httpReq.onload = function(e) {
-              let response = JSON.parse(this.responseText);
-
-              // according to the standard there must be at least two elements in list
-              if (!Array.isArray(response) && response.length < 2) {
-                return;
-              }
-
-              let suggestions = {
-                "msg": "suggestions",
-                "query": response[0],
-                "completions": response[1],
-                "descriptions": response[2] ? response[2] : [],
-                "urls": response[3] ? response[3] : []
-              };
-
-              Services.obs.notifyObservers(null, "embed:search", JSON.stringify(suggestions));
-
-            };
-            httpReq.open("get", submission.uri.spec, true);
-            httpReq.send();
-            break;
-          }
         }
         break;
       }
