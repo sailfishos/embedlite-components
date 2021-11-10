@@ -200,19 +200,17 @@ EmbedHelper.prototype = {
           return;
         }
 
+        let result = null;
         if (!this._finder) {
           const {Finder} = ChromeUtils.import("resource://gre/modules/Finder.jsm", {});
           this._finder = new Finder(docShell);
-          this._finder.fastFind(searchText, false, true);
+          result = this._finder.fastFind(searchText, false, true);
         } else if (!searchAgain) {
-          this._finder.fastFind(searchText, false, true);
+          result = this._finder.fastFind(searchText, false, true);
         } else {
-          this._finder.findAgain(searchBackwards, false, true);
+          result = this._finder.findAgain(searchText, searchBackwards, false, true);
         }
-
-        // Hackish way to abusing internals of Finder.
-        // We should implement FinderHelper (JB#53008).
-        sendAsyncMessage("embed:find", { r: this._finder._lastFindResult });
+        sendAsyncMessage("embed:find", { r: result.result });
         break;
       }
       case "Viewport:Change": {
