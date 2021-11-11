@@ -58,13 +58,11 @@ AboutRedirector.prototype = {
     return flags | Ci.nsIAboutModule.ALLOW_SCRIPT;
   },
 
-  newChannel: function(aURI) {
+  newChannel: function(aURI, aLoadInfo) {
     let moduleInfo = this._getModuleInfo(aURI);
 
-    var ios = Cc["@mozilla.org/network/io-service;1"].
-              getService(Ci.nsIIOService);
-
-    var channel = ios.newChannel(moduleInfo.uri, null, null);
+    let pageURI = Services.io.newURI(moduleInfo.uri);
+    var channel = Services.io.newChannelFromURIWithLoadInfo(pageURI, aLoadInfo);
 
     if (!moduleInfo.privileged) {
       // Setting the owner to null means that we'll go through the normal
