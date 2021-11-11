@@ -17,6 +17,9 @@ const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm
 
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "MediaManagerService",
+                                   "@mozilla.org/mediaManagerService;1",
+                                   "nsIMediaManagerService");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -270,6 +273,7 @@ EmbedLiteWebrtcUI.prototype = {
         Services.obs.addObserver(this, "getUserMedia:ask-device-permission", false);
         Services.obs.addObserver(this, "getUserMedia:request", false);
         Services.obs.addObserver(this, "PeerConnection:request", false);
+        Services.obs.addObserver(this, "recording-device-events", false);
         break;
 
       case "getUserMedia:ask-device-permission":
@@ -305,6 +309,38 @@ EmbedLiteWebrtcUI.prototype = {
           aSubject.callID
         );
         break;
+
+      case "recording-device-events":
+        let windows = MediaManagerService.activeMediaCaptureWindows;
+        let webrtcMediaInfo = { "video": false, "audio": false};
+
+        for (let i = 0; i < windows.length; i++) {
+          let win = windows.queryElementAt(i, Ci.nsIDOMWindow);
+          let hasCamera = {};
+          let hasMicrophone = {};
+          let screenShare = {};
+          let windowShare = {};
+          let browserShare = {};
+          let mediaDevices = {};
+
+          MediaManagerService.mediaCaptureWindowState(
+            win,
+            hasCamera,
+            hasMicrophone,
+            screenShare,
+            windowShare,
+            browserShare,
+            mediaDevices,
+            true /* aIncludeDescendants */);
+          if (hasCamera.value != MediaManagerService.STATE_NOCAPTURE)
+            webrtcMediaInfo.video = true;
+          if (hasMicrophone.value != MediaManagerService.STATE_NOCAPTURE)
+            webrtcMediaInfo.audio = true;
+        }
+
+        let info = JSON.stringify(webrtcMediaInfo)
+        debug("devices in use: " + info);
+        Services.obs.notifyObservers(null, "webrtc-media-info", info);
     }
   }
 };
