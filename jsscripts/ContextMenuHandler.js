@@ -82,6 +82,10 @@ var ContextMenuHandler = {
       contentType: "",
       contentDisposition: "",
       string: "",
+      visualViewport: {
+          offsetLeft: 0,
+          offsetTop: 0
+      }
     };
 
     // Do checks for nodes that never have children.
@@ -213,6 +217,11 @@ var ContextMenuHandler = {
     state.xPos = offsetX + aX;
     state.yPos = offsetY + aY;
     state.source = aInputSrc;
+
+    let currentWindow = popupNode.ownerDocument.defaultView;
+    let visualViewport = currentWindow.visualViewport;
+    state.visualViewport.offsetLeft = visualViewport.offsetLeft;
+    state.visualViewport.offsetTop = visualViewport.offsetTop;
 
     for (let i = 0; i < this._types.length; i++)
       if (this._types[i].handler(state, popupNode))

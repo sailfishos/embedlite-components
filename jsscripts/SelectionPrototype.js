@@ -967,7 +967,11 @@ SelectionPrototype.prototype = {
     let seldata = {
       start: {}, end: {}, caret: {},
       selection: { left: 0, top: 0, right: 0, bottom: 0 },
-      element: { left: 0, top: 0, right: 0, bottom: 0 }
+      element: { left: 0, top: 0, right: 0, bottom: 0 },
+      visualViewport: {
+        offsetLeft: 0,
+        offsetTop: 0
+      }
     };
 
     // When in an iframe, aRange coordinates are relative to the frame origin.
