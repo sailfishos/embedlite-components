@@ -60,6 +60,19 @@ function SelectionHandler() {
   }
 
   this.sendAsync = function sendAsync(aMsg, aJson) {
+    // Update visualViewport.offsetLeft and visualViewport.offsetTop for every
+    // send selection message.
+    if (this._contentWindow) {
+      if (!aJson.visualViewport) {
+        aJson["visualViewport"] = {offsetLeft: 0, offsetTop: 0}
+      }
+
+      aJson.visualViewport.offsetLeft = this._contentWindow.visualViewport.offsetLeft;
+      aJson.visualViewport.offsetTop = this._contentWindow.visualViewport.offsetTop;
+    } else {
+      Logger.warn("No content window, cannot send visual viewport offset.")
+    }
+
     sendAsyncMessage(aMsg, aJson);
   }
 
