@@ -48,7 +48,7 @@ function DocumentContentListener(aHttpChannel) {
 }
 
 DocumentContentListener.prototype = {
-  onDataAvailable: function(request, context, inputStream, offset, count) {
+  onDataAvailable: function(request, inputStream, offset, count) {
     var binaryInputStream = Cc["@mozilla.org/binaryinputstream;1"].createInstance(Ci["nsIBinaryInputStream"]);
     var storageStream = Cc["@mozilla.org/storagestream;1"].createInstance(Ci["nsIStorageStream"]);
     var binaryOutputStream = Cc["@mozilla.org/binaryoutputstream;1"].createInstance(Ci["nsIBinaryOutputStream"]);
@@ -63,7 +63,7 @@ DocumentContentListener.prototype = {
 
     binaryOutputStream.writeBytes(data, count);
 
-    this.originalListener.onDataAvailable(request, context, storageStream.newInputStream(0), offset, count);
+    this.originalListener.onDataAvailable(request, storageStream.newInputStream(0), offset, count);
   },
 
   onStartRequest: function(request, context) {
