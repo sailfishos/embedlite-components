@@ -114,6 +114,19 @@ var UserAgent = {
   onModifyRequest(aSubject, aTopic, aData) {
     if (aTopic === "http-on-modify-request") {
       let channel = aSubject.QueryInterface(Ci.nsIHttpChannel);
+
+      let loadInfo = channel.loadInfo;
+      if (loadInfo.securityMode === loadInfo.SEC_REQUIRE_CORS_DATA_INHERITS) {
+        // User-agent is not safelisted CORS request header so don't add it when in CORS mode. We may need to change this
+        // later to use nsILoadInfo securityFlags: https://bugzilla.mozilla.org/show_bug.cgi?id=1189945 (see also
+        // dom/fetch/InternalRequest::MapChannelToRequestMode).
+        //
+        // This approach works for now. Safelisted CORS request headers can be found here
+        // https://github.com/sailfishos-mirror/gecko-dev/blob/esr78/dom/fetch/InternalHeaders.cpp#L314.
+        // Fetch spec: https://fetch.spec.whatwg.org/#cors-safelisted-request-header
+        return;
+      }
+
       // Cover all google domains
       if (!channel.URI.schemeIs("https") && channel.URI.asciiHost.indexOf(".google.") !== -1) {
         channel.upgradeToSecure();
