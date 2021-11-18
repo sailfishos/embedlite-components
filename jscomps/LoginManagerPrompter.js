@@ -220,6 +220,14 @@ LoginManagerPromptFactory.prototype = {
               self.log(
                 "_doAsyncPrompt:run bypassed, UI is not available in this context"
               );
+            } else if (
+              e instanceof Components.Exception &&
+              e.result == Cr.NS_ERROR_FAILURE &&
+              e.message == "This login already exists."
+            ) {
+              // See gecko toolkit/components/passwordmgr/LoginHelper.jsm createLoginAlreadyExistsError
+              self.log("_doAsyncPrompt:run - login already exists");
+              ok = true;
             } else {
               Cu.reportError(
                 "LoginManagerAuthPrompter: _doAsyncPrompt:run: " + e + "\n"
