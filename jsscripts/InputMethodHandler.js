@@ -51,10 +51,14 @@ InputMethodHandler.prototype = {
       case "focus": {
         let currentElement = aEvent.target;
         if (this._isAutoComplete(currentElement)) {
-          this._currentFocusedElement = Cu.getWeakReference(currentElement);
-          let selection = currentElement.editor.selectionController
-                          .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
-          selection.addSelectionListener(this);
+          try {
+            this._currentFocusedElement = Cu.getWeakReference(currentElement);
+            let selection = currentElement.editor.selectionController
+                            .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
+            selection.addSelectionListener(this);
+          } catch (e) {
+            Logger.warn("InputMethodHandler: adding selection listener failed", e);
+          }
         }
         break;
       }
@@ -62,10 +66,14 @@ InputMethodHandler.prototype = {
       case "blur": {
         let focused = this.focusedElement;
         if (focused) {
-          let selection = focused.editor.selectionController
-                          .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
-          selection.removeSelectionListener(this);
-          this._resetInputContext(focused);
+          try {
+            let selection = focused.editor.selectionController
+                            .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
+            selection.removeSelectionListener(this);
+            this._resetInputContext(focused);
+          } catch (e) {
+            Logger.warn("InputMethodHandler: removing selection listener failed", e);
+          }
         }
         this._currentFocusedElement = null;
         break;
