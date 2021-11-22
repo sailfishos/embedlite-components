@@ -50,12 +50,15 @@ InputMethodHandler.prototype = {
     switch (aEvent.type) {
       case "focus": {
         let currentElement = aEvent.target;
-        if (this._isAutoComplete(currentElement)) {
+        if (this._isTextInput(currentElement)) {
+          this._sendInputAttributes(currentElement);
           try {
             this._currentFocusedElement = Cu.getWeakReference(currentElement);
-            let selection = currentElement.editor.selectionController
-                            .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
-            selection.addSelectionListener(this);
+            if (this._isInputContextAvailable(currentElement)) {
+              let selection = currentElement.editor.selectionController
+                              .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
+              selection.addSelectionListener(this);
+            }
           } catch (e) {
             Logger.warn("InputMethodHandler: adding selection listener failed", e);
           }
@@ -66,14 +69,17 @@ InputMethodHandler.prototype = {
       case "blur": {
         let focused = this.focusedElement;
         if (focused) {
-          try {
-            let selection = focused.editor.selectionController
-                            .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
-            selection.removeSelectionListener(this);
-            this._resetInputContext(focused);
-          } catch (e) {
-            Logger.warn("InputMethodHandler: removing selection listener failed", e);
+          if (this._isInputContextAvailable(focused)) {
+            try {
+              let selection = focused.editor.selectionController
+                              .getSelection(Ci.nsISelectionController.SELECTION_NORMAL);
+              selection.removeSelectionListener(this);
+              this._resetInputContext(focused);
+            } catch (e) {
+              Logger.warn("InputMethodHandler: removing selection listener failed", e);
+            }
           }
+          this._resetInputAttributes(focused);
         }
         this._currentFocusedElement = null;
         break;
@@ -91,7 +97,7 @@ InputMethodHandler.prototype = {
   },
 
   _sendInputContext: function(aElement) {
-    if (!this._isAutoComplete(aElement) || aElement !== this.focusedElement) {
+    if (!this._isInputContextAvailable(aElement) || aElement !== this.focusedElement) {
       return;
     }
 
@@ -115,12 +121,35 @@ InputMethodHandler.prototype = {
     }
   },
 
-  _isAutoComplete: function(aElement) {
+  _sendInputAttributes: function(aElement) {
+    try {
+      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+      Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:SetInputAttributes",
+                                          JSON.stringify({autocomplete: aElement.getAttribute("autocomplete"),
+                                                          autocapitalize: aElement.getAttribute("autocapitalize")}));
+    } catch (e) {
+      Logger.warn("InputMethodHandler: sending async message failed", e);
+    }
+  },
+
+  _resetInputAttributes: function(aElement) {
+    try {
+      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+      Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:ResetInputAttributes", "[]");
+    } catch (e) {
+      Logger.warn("InputMethodHandler: sending async message failed", e);
+    }
+  },
+
+  _isTextInput: function(aElement) {
     return (Util.isEditable(aElement) && aElement.editor) &&
            !aElement.readOnly &&
-           !this._isDisabledElement(aElement) &&
-           (aElement.type !== "password") &&
-           (aElement.autocomplete !== "off");
+           !this._isDisabledElement(aElement);
+  },
+
+  _isInputContextAvailable: function(aElement) {
+    return this._isTextInput(aElement) &&
+           (aElement.type !== "password");
   },
 
   _isDisabledElement: function(aElement) {
