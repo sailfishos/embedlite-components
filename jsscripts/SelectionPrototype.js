@@ -917,12 +917,16 @@ SelectionPrototype.prototype = {
             let selCtrl = this._getSelectController();
             // Expand the collapsed range such that it occupies a little space.
             if (aMarker == "start") {
+              let extend = true;
+              if (selection.focusOffset === 0) {
+                extend = false;
+              }
               // State: focus = anchor (collapseToEnd does this)
-              selCtrl.characterMove(false, true);
+              selCtrl.characterMove(false, extend);
               // State: focus = (anchor - 1)
               selection.collapseToStart();
               // State: focus = anchor and both are -1 from the original offset
-              selCtrl.characterMove(true, true);
+              selCtrl.characterMove(true, extend);
               // State: focus = anchor + 1, both have been moved back one char
             } else {
               selCtrl.characterMove(true, true);
