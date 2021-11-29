@@ -411,8 +411,9 @@ EmbedHelper.prototype = {
       }
       case "DOMAutoComplete":
       case "blur": {
-        // JB#55434
-        // LoginManagerChild.onUsernameInput(aEvent);
+        let form = aEvent.target;
+        let win = form.ownerDocument.defaultView;
+        LoginManagerChild.forWindow(win).onFieldAutoComplete(form, null);
         break;
       }
       case 'touchstart':
