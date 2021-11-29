@@ -295,6 +295,8 @@ EmbedHelper.prototype = {
             legacyHistory.getEntryAtIndex(index);
         }
 
+        // Update index value to enable forward and backward
+        legacyHistory.index = index;
         legacyHistory.updateIndex();
 
         let initialURI;
