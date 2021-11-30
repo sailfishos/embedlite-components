@@ -132,7 +132,7 @@ FormAssistant.prototype = {
     // 1. user selections will "replace" the full contents of the field; and
     // 2. we avoid synchronous search of the login database on every keypress.
     if (aElement.form && !aElement.value) {
-      let foundLogins = this._loginManager.findLogins({}, hostname, actionUri, null);
+      let foundLogins = this._loginManager.findLogins(hostname, actionUri, null);
       for (let pos = 0; pos < foundLogins.length; pos++) {
         // Filter suggestions based on the current input
         // Do not show the value if it is the current one in the input field
