@@ -38,6 +38,11 @@ EmbedLiteGlobalHelper.prototype = {
         Services.obs.addObserver(this, "invalidformsubmit", false);
         Services.obs.addObserver(this, "xpcom-shutdown", false);
         Services.obs.addObserver(this, "profile-after-change", false);
+
+        Services.ppmm.loadProcessScript(
+          "chrome://global/content/process-content.js",
+          true
+        );
         break;
       }
       case "invalidformsubmit": {
