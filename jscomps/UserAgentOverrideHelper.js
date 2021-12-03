@@ -11,6 +11,8 @@ const VIEW_CREATED              = "embedliteviewcreated";
 const VIEW_DESTROYED            = "embedliteviewdestroyed";
 const VIEW_DESKTOP_MODE_CHANGED = "embedliteviewdesktopmodechanged";
 const VIEW_UA_CHANGED           = "embedliteviewhttpuseragentchanged";
+const UA_LIST_CHANGED           = "useragentlistchanged";
+const UA_OVERRIDES_CHANGED      = "useragentoverrideschanged";
 const XPCOM_SHUTDOWN            = "xpcom-shutdown";
 const PREF_OVERRIDE             = "general.useragent.override";
 
@@ -38,6 +40,8 @@ UserAgentOverrideHelper.prototype = {
         Services.obs.addObserver(this, VIEW_DESKTOP_MODE_CHANGED, true);
         Services.obs.addObserver(this, VIEW_DESTROYED, true);
         Services.obs.addObserver(this, VIEW_UA_CHANGED, true);
+        Services.obs.addObserver(this, UA_LIST_CHANGED, true);
+        Services.obs.addObserver(this, UA_OVERRIDES_CHANGED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         UserAgent.init();
         break;
@@ -61,6 +65,46 @@ UserAgentOverrideHelper.prototype = {
         UserAgent.setUserAgentOverride(aSubject, aData);
         break;
       }
+      case UA_LIST_CHANGED: {
+        let data = JSON.parse(aData);
+
+        UserAgent.browsers = {};
+        data.forEach(function(browser) {
+          if (browser.hasOwnProperty("key") &&
+                  browser["key"] !== "" &&
+                  browser.hasOwnProperty("mobileUA") &&
+                  browser.hasOwnProperty("desktopUA")) {
+            UserAgent.browsers[browser["key"]] = [browser["mobileUA"], browser["desktopUA"]];
+          }
+        });
+
+        break;
+      }
+      case UA_OVERRIDES_CHANGED: {
+        let data = JSON.parse(aData);
+
+        if (Object.keys(data).length == 0) {
+          UserAgent.overrides = {};
+          break;
+        }
+
+        for (var host in data) {
+          let isKey = data[host][0];
+          let userAgent = data[host][1];
+
+          if (isKey) {
+            if (userAgent) {
+              UserAgent.overrides[host] = UserAgent.browsers[userAgent];
+            } else {
+              delete UserAgent.overrides[host];
+            }
+          } else {
+            UserAgent.overrides[host] = [userAgent, userAgent];
+          }
+        }
+
+        break;
+      }
       case XPCOM_SHUTDOWN: {
         Logger.debug("UserAgentOverrideHelper", XPCOM_SHUTDOWN);
         Services.obs.removeObserver(this, XPCOM_SHUTDOWN, false);
@@ -80,7 +124,8 @@ var UserAgent = {
   _debug: false,
   _customUA: null,
   _tabs: [],
-  overrideMap: new Map,
+  browsers: {},
+  overrides: {},
   initilized: false,
   userAgent: "",
   DESKTOP_UA: null,
@@ -174,6 +219,7 @@ var UserAgent = {
     let uri = channel.URI;
     let loadingPrincipalURI = null;
     let channelWindow = this._getWindowForRequest(channel);
+    let desktopMode = false;
 
     let tab = this.getTabForWindow(channelWindow);
     if (tab) {
@@ -181,10 +227,18 @@ var UserAgent = {
       if (tab.httpuseragentstring.length) {
         return tab.httpuseragentstring;
       }
-      // Send desktop UA if "Request Desktop Site" is enabled.
-      if (tab.desktopMode) {
-        return this.DESKTOP_UA;
-      }
+      desktopMode = tab.desktopMode;
+    }
+
+    ua = this.getUserAgentOverride(channel, uri, desktopMode)
+
+    if (ua) {
+      return ua;
+    }
+
+    // Send desktop UA if "Request Desktop Site" is enabled.
+    if (desktopMode) {
+      return this.DESKTOP_UA;
     }
 
     // Prefer current uri over the loading principal's uri in case both have overrides.
@@ -213,6 +267,38 @@ var UserAgent = {
       }
     }
     return defaultUA;
+  },
+
+  getUserAgentOverride: function(channel, uri, desktopMode) {
+    let ua = "";
+
+    if (uri && this.overrides.hasOwnProperty(uri.asciiHost)) {
+      ua = this.overrides[uri.asciiHost][Number(desktopMode)];
+    }
+
+    if (ua) {
+      // Requires also Logger to be enabled
+      if (this._debug) {
+        Logger.debug("Uri:", uri.asciiHost, "UA:", ua)
+      }
+
+      return ua
+    } else {
+      let loadInfo = channel.loadInfo;
+      let loadingPrincipalURI = loadInfo && loadInfo.loadingPrincipal && loadInfo.loadingPrincipal.URI;
+
+      if (loadingPrincipalURI && loadingPrincipalURI.asciiHost) {
+        if (this.overrides.hasOwnProperty(loadingPrincipalURI.asciiHost)) {
+          ua = this.overrides[loadingPrincipalURI.asciiHost][Number(desktopMode)];
+        }
+
+        if (this._debug) {
+          Logger.debug("Loading principal uri:", loadingPrincipalURI.asciiHost, "Uri:", uri.asciiHost, "UA:", ua);
+        }
+        return ua;
+      }
+    }
+    return null;
   },
 
   getTabForWindow: function getTabForWindow(aWindow) {
