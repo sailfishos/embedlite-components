@@ -9,6 +9,11 @@ const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/Geometry.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "LoginHelper",
+  "resource://gre/modules/LoginHelper.jsm"
+);
 
 let actorManagerChildAttached = false;
 
@@ -412,8 +417,13 @@ EmbedHelper.prototype = {
       case "DOMAutoComplete":
       case "blur": {
         let form = aEvent.target;
-        let win = form.ownerDocument.defaultView;
-        LoginManagerChild.forWindow(win).onFieldAutoComplete(form, null);
+        if (form.ownerDocument &&
+                ChromeUtils.getClassName(form) === "HTMLInputElement" &&
+                (form.hasBeenTypePassword ||
+                  LoginHelper.isUsernameFieldType(form))) {
+          let win = form.ownerDocument.defaultView;
+          LoginManagerChild.forWindow(win).onFieldAutoComplete(form, null);
+        }
         break;
       }
       case 'touchstart':
