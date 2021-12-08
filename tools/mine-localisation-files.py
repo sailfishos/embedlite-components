@@ -24,7 +24,7 @@
 
 import argparse, datetime, subprocess, os, shutil, re, textwrap
 
-DEFAULT_DATE = '2019-10-21'
+DEFAULT_DATE = '2021-05-03'
 
 def get_git_root():
     try:
