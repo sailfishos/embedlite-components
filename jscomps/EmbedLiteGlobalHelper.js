@@ -10,6 +10,11 @@ const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
 
+// Touch the recipeParentPromise lazy getter so we don't get
+// `this._recipeManager is undefined` errors during tests.
+// Inspered by browser/components/extensions/test/browser/head.js
+void LoginManagerParent.recipeParentPromise;
+
 ChromeUtils.defineModuleGetter(
   this,
   "ActorManagerParent",
