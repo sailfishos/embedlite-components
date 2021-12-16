@@ -166,6 +166,9 @@ def mine_locale(locale, date):
         # overrides/en-US/brand.properties
         shutil.copyfile(git_root + '/overrides/en-US/brand.properties', folder + '/brand.properties')
 
+        # overrides/en-US/brand.ftl
+        shutil.copyfile(git_root + '/overrides/en-US/brand.ftl', folder + '/brand.ftl')
+
         # ./mobile/overrides/appstrings.properties
         convert_file('appstrings.properties', './mobile/overrides', folder)
 
@@ -174,6 +177,9 @@ def mine_locale(locale, date):
 
         # ./mobile/android/chrome/aboutCertError.dtd
         convert_file('aboutCertError.dtd', './mobile/android/chrome', folder)
+
+        # ./browser/browser/aboutCertError.ftl
+        convert_file('aboutCertError.ftl', './browser/browser', folder)
 
     # Clean up
     if cloned:

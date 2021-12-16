@@ -141,19 +141,21 @@ button.inProgress {
  * This shows an arrow to the right of the h2 element, and hides the content when collapsed="true". */
 .expander {
   margin: var(--moz-vertical-spacing) 0;
-  background-image: url("chrome://geckoview/skin/images/dropmarker.svg");
-  background-repeat: no-repeat;
-  /* dropmarker.svg is 10x7. Ensure that its centered in the middle of an 18x18 box */
-  background-position: 3px 5.5px;
-  background-size: 10px 7px;
-  padding-left: 18px;
+  display: flex;
+  align-items: center
 }
 
-div[collapsed="true"] > .expander {
-  background-image: url("chrome://geckoview/skin/images/dropmarker-right.svg");
-  /* dropmarker.svg is 7x10. Ensure that its centered in the middle of an 18x18 box */
-  background-size: 7px 10px;
-  background-position: 5.5px 4px;
+.expander-caret {
+  background-image: url("chrome://embedlite/skin/images/dropmarker.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline flex;
+  width: 18px;
+  height: 18px;
+}
+
+div[collapsed="true"] .expander-caret {
+  transform: rotate(270deg)
 }
 
 div[hidden] > .expander,

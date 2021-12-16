@@ -9,6 +9,7 @@ const Cr = Components.results;
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
+const { L10nRegistry, FileSource } = ChromeUtils.import("resource://gre/modules/L10nRegistry.jsm");
 
 // Touch the recipeParentPromise lazy getter so we don't get
 // `this._recipeManager is undefined` errors during tests.
@@ -28,6 +29,11 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 function EmbedLiteGlobalHelper()
 {
   ActorManagerParent.flush();
+
+  L10nRegistry.registerSource(new FileSource(
+                                  "0-mozembedlite",
+                                  ["en-US", "fi", "ru"],
+                                  "chrome://browser/content/localization/{locale}/"))
 
   Logger.debug("JSComp: EmbedLiteGlobalHelper.js loaded");
 }
