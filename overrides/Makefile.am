@@ -58,4 +58,34 @@ localebrowser_ru_manifest_DATA = \
 	ru/netError.dtd \
 	$(NULL)
 
+localizationbrowser_manifestdir=$(libdir)/mozembedlite/chrome/chrome/content/localization/en-US/browser
+localizationbrowser_manifest_DATA = \
+	en-US/aboutCertError.ftl \
+	$(NULL)
+
+localizationbrowser_fi_manifestdir=$(libdir)/mozembedlite/chrome/chrome/content/localization/fi/browser
+localizationbrowser_fi_manifest_DATA = \
+	fi/aboutCertError.ftl \
+	$(NULL)
+
+localizationbrowser_ru_manifestdir=$(libdir)/mozembedlite/chrome/chrome/content/localization/ru/browser
+localizationbrowser_ru_manifest_DATA = \
+	ru/aboutCertError.ftl \
+	$(NULL)
+
+localizationbranding_manifestdir=$(libdir)/mozembedlite/chrome/chrome/content/localization/en-US/branding
+localizationbranding_manifest_DATA = \
+	en-US/brand.ftl \
+	$(NULL)
+
+localizationbranding_fi_manifestdir=$(libdir)/mozembedlite/chrome/chrome/content/localization/fi/branding
+localizationbranding_fi_manifest_DATA = \
+	fi/brand.ftl \
+	$(NULL)
+
+localizationbranding_ru_manifestdir=$(libdir)/mozembedlite/chrome/chrome/content/localization/ru/branding
+localizationbranding_ru_manifest_DATA = \
+	ru/brand.ftl \
+	$(NULL)
+
 AM_CPPFLAGS = $(DEPS_CFLAGS)
