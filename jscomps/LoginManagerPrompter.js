@@ -1491,7 +1491,7 @@ LoginManagerPrompter.prototype = {
    *        The login captured from the form.
    */
   _showSaveLoginNotification : function (aBrowser, aLogin) {
-    var displayHost = this._getShortDisplayHost(aLogin.hostname);
+    var displayHost = aLogin.displayOrigin;
     var notificationTextBundle = ["rememberPasswordMsgNoUsername", displayHost];
     var formData = {
       "displayHost": displayHost
