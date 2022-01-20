@@ -1049,7 +1049,7 @@ LoginManagerPrompter.prototype = {
 
     // We reuse the existing message, even if it expects a username, until we
     // switch to the final terminology in bug 1144856.
-    var displayHost = this._getShortDisplayHost(aNewLogin.hostname);
+    var displayHost = aNewLogin.displayOrigin;
     var notificationTextBundle = ["passwordChangeTitle"];
     var usernames = logins.map(l => this._sanitizeUsername(l.username));
     var dialogTextBundle  = ["userSelectText2"];
@@ -1138,7 +1138,7 @@ LoginManagerPrompter.prototype = {
   _showChangeLoginNotification(aBrowser, aOldLogin, aNewLogin) {
     // We reuse the existing message, even if it expects a username, until we
     // switch to the final terminology in bug 1144856.
-    var displayHost = this._getShortDisplayHost(aOldLogin.origin);
+    var displayHost = aOldLogin.displayOrigin;
     var notificationTextBundle;
     var formData = {
       "displayHost": displayHost
@@ -1419,32 +1419,7 @@ LoginManagerPrompter.prototype = {
     return uri.scheme + "://" + uri.displayHostPort;
   },
 
-  /**
-   * Converts a login's origin field to a short string for
-   * prompting purposes. Eg, "http://foo.com" --> "foo.com", or
-   * "ftp://www.site.co.uk" --> "site.co.uk".
-   */
-  _getShortDisplayHost(aURIString) {
-    var displayHost;
-
-    var idnService = Cc["@mozilla.org/network/idn-service;1"].getService(
-      Ci.nsIIDNService
-    );
-    try {
-      var uri = Services.io.newURI(aURIString);
-      var baseDomain = Services.eTLD.getBaseDomain(uri);
-      displayHost = idnService.convertToDisplayIDN(baseDomain, {});
-    } catch (e) {
-      log.warn("_getShortDisplayHost couldn't process", aURIString);
-    }
-
-    if (!displayHost) {
-      displayHost = aURIString;
-    }
-
-    return displayHost;
-  },
-
+    
   /* ---------- Internal Methods (new) ---------- */
 
   /**
