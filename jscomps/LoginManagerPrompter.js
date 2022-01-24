@@ -1418,7 +1418,6 @@ LoginManagerPrompter.prototype = {
 
     return uri.scheme + "://" + uri.displayHostPort;
   },
-
     
   /* ---------- Internal Methods (new) ---------- */
 
