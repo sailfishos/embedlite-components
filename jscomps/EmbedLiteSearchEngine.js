@@ -74,6 +74,13 @@ EmbedLiteSearchEngine.prototype = {
             var engine = Services.search.getEngineByName(data.name);
             if (engine) {
               Services.search.defaultEngine = engine;
+              var message = {
+                "msg": "search-engine-default-changed",
+                "defaultEngine": (engine && engine.name) || "",
+                "errorCode": 0,
+              }
+
+              Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
             }
             break;
           }
