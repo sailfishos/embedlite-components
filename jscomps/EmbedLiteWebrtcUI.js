@@ -13,6 +13,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
@@ -345,4 +346,4 @@ EmbedLiteWebrtcUI.prototype = {
   }
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedLiteWebrtcUI]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteWebrtcUI]);

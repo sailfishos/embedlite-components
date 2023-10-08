@@ -8,6 +8,7 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
@@ -128,4 +129,4 @@ LoginsHelper.prototype = {
   },
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([LoginsHelper]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([LoginsHelper]);
