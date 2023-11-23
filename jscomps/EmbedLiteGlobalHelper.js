@@ -6,7 +6,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
 const { L10nRegistry, FileSource } = ChromeUtils.import("resource://gre/modules/L10nRegistry.jsm");
@@ -28,12 +28,10 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 function EmbedLiteGlobalHelper()
 {
-  ActorManagerParent.flush();
-
-  L10nRegistry.registerSource(new FileSource(
-                                  "0-mozembedlite",
-                                  ["en-US", "fi", "ru"],
-                                  "chrome://browser/content/localization/{locale}/"))
+  L10nRegistry.registerSources([new FileSource(
+                                   "0-mozembedlite",
+                                   ["en-US", "fi", "ru"],
+                                   "chrome://browser/content/localization/{locale}/")])
 
   Logger.debug("JSComp: EmbedLiteGlobalHelper.js loaded");
 }
@@ -105,4 +103,4 @@ EmbedLiteGlobalHelper.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference, Ci.nsIFormSubmitObserver])
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedLiteGlobalHelper]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteGlobalHelper]);
