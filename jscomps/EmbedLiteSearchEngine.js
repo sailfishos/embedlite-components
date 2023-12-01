@@ -50,7 +50,7 @@ EmbedLiteSearchEngine.prototype = {
         var data = JSON.parse(aData);
         switch (data.msg) {
           case "loadxml": {
-            Services.search.addEngine(data.uri, null, data.confirm).then(
+            Services.search.addOpenSearchEngine(data.uri, null).then(
               engine => {
                 var message = {
                   "msg": "search-engine-added",
