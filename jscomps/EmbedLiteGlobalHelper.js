@@ -28,6 +28,9 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 function EmbedLiteGlobalHelper()
 {
+  // Touch ActorManagerParent so that it gets initialised
+  var actor = ActorManagerParent;
+
   L10nRegistry.registerSources([new FileSource(
                                    "0-mozembedlite",
                                    ["en-US", "fi", "ru"],
