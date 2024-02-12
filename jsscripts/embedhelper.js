@@ -262,10 +262,10 @@ EmbedHelper.prototype = {
         try {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
           if (legacyHistory.count > 0) {
-            legacyHistory.PurgeHistory(1);
+            legacyHistory.purgeHistory(1);
           }
         } catch (e) {
-            Logger.warn("Warning: couldn't PurgeHistory. Was it a file download?", e);
+            Logger.warn("Warning: couldn't purgeHistory. Was it a file download?", e);
         }
 
         // Use same default value as there is in nsSHistory.cpp of Gecko.
