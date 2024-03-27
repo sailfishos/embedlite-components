@@ -21,7 +21,7 @@ Summary:    EmbedLite components Qt5
 Version:    1.23.0
 Release:    1
 License:    MPLv2.0
-URL:        https://git.sailfishos.org/mer-core/embedlite-components
+URL:        https://github.com/sailfishos/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires:  libtool
