@@ -15,6 +15,7 @@ const Cu = Components.utils;
 const Cr = Components.results;
 
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { PrivateBrowsingUtils } = ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
@@ -78,6 +79,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-done",
                                        id: download.id,
+                                       privateMode: PrivateBrowsingUtils.isContentWindowPrivate(Services.ww.activeWindow) || false,
                                        saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
@@ -89,6 +91,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-fail",
                                        id: download.id,
+                                       privateMode: PrivateBrowsingUtils.isContentWindowPrivate(Services.ww.activeWindow) || false,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -98,6 +101,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-cancel",
                                        id: download.id,
+                                       privateMode: PrivateBrowsingUtils.isContentWindowPrivate(Services.ww.activeWindow) || false,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
