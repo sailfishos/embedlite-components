@@ -55,6 +55,7 @@ let DownloadView = {
                                  JSON.stringify({
                                      msg: "dl-start",
                                      id: this.counter,
+                                     privateMode: download.source.isPrivate || false,
                                      saveAsPdf: download.saveAsPdf || false,
                                      displayName: download.target.path.split('/').slice(-1)[0],
                                      sourceUrl: download.source.url,
@@ -68,6 +69,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-progress",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
@@ -78,6 +80,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-done",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
@@ -89,6 +92,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-fail",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -98,6 +102,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-cancel",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -109,6 +114,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-progress",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
@@ -120,6 +126,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-done",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
@@ -132,6 +139,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-fail",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -142,6 +150,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-cancel",
                                        id: download.id,
+                                       privateMode: download.source.isPrivate || false,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -152,6 +161,7 @@ let DownloadView = {
                                    JSON.stringify({
                                      msg: "dl-start",
                                      id: download.id,
+                                     privateMode: download.source.isPrivate || false,
                                      saveAsPdf: download.saveAsPdf || false,
                                      displayName: download.target.path.split('/').slice(-1)[0],
                                      sourceUrl: download.source.url,
