@@ -66,6 +66,16 @@ DocumentContentListener.prototype = {
     this.originalListener.onDataAvailable(request, storageStream.newInputStream(0), offset, count);
   },
 
+  // Taken from gecko-dev/toolkit/components/places/tests/head_common.js
+  base64EncodeString: function(aString) {
+    var stream = Cc["@mozilla.org/io/string-input-stream;1"]
+                 .createInstance(Ci.nsIStringInputStream);
+    stream.setData(aString, aString.length);
+    var encoder = Cc["@mozilla.org/scriptablebase64encoder;1"]
+                  .createInstance(Ci.nsIScriptableBase64Encoder);
+    return encoder.encodeToString(stream, aString.length);
+  },
+
   onStartRequest: function(request, context) {
     this.originalListener.onStartRequest(request, context);
     var visitor = new DebugHeaderVisitor()
@@ -80,19 +90,12 @@ DocumentContentListener.prototype = {
 
   onStopRequest: function(request, context, statusCode) {
     // Get entire response
-    var responseSource = this.receivedData.join("").substring(0, this.maxDebugPrint);
+    var responseSource = this.base64EncodeString(this.receivedData.join(""));
     this.originalListener.onStopRequest(request, context, statusCode);
 
     // Output the content (sometimes)
     Logger.debug("    [ Document content -------------------------------------- ]");
-    if (this.httpChannel.contentCharset !== "") {
-      Logger.debug(responseSource);
-      if (this.httpChannel.decodedBodySize > this.maxDebugPrint) {
-        Logger.debug("        Document output truncated by", (this.httpChannel.decodedBodySize - this.maxDebugPrint),"bytes");
-      }
-    } else {
-        Logger.debug("        Document output skipped, content-type non-text or unknown");
-    }
+    Logger.debug(responseSource);
     Logger.debug("    [ Document content ends --------------------------------- ]");
   },
 
