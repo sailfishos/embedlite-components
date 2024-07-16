@@ -4,6 +4,7 @@
 
 const Ci = Components.interfaces;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
@@ -42,4 +43,4 @@ WebInstallPrompt.prototype = {
   }
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([WebInstallPrompt]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([WebInstallPrompt]);
