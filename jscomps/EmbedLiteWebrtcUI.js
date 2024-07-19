@@ -29,6 +29,58 @@ function debug(...args)
   Logger.debug("JSComp: EmbedLiteWebrtcUI.js:", args);
 }
 
+/**
+ * GlobalMuteListener is a process-global object that listens for changes to
+ * the global mute state of the camera and microphone. When it notices a
+ * change in that state, it tells the underlying platform code to mute or
+ * unmute those devices.
+ */
+const GlobalMuteListener = {
+  _initted: false,
+
+  /**
+   * Initializes the listener if it hasn't been already. This will also
+   * ensure that the microphone and camera are initially in the right
+   * muting state.
+   */
+  init() {
+    if (!this._initted) {
+      Services.cpmm.sharedData.addEventListener("change", this);
+      this._updateCameraMuteState();
+      this._updateMicrophoneMuteState();
+      this._initted = true;
+    }
+  },
+
+  handleEvent(event) {
+    if (event.changedKeys.includes("WebRTC:GlobalCameraMute")) {
+      this._updateCameraMuteState();
+    }
+    if (event.changedKeys.includes("WebRTC:GlobalMicrophoneMute")) {
+      this._updateMicrophoneMuteState();
+    }
+  },
+
+  _updateCameraMuteState() {
+    let shouldMute = Services.cpmm.sharedData.get("WebRTC:GlobalCameraMute");
+    let topic = shouldMute
+      ? "getUserMedia:muteVideo"
+      : "getUserMedia:unmuteVideo";
+    Services.obs.notifyObservers(null, topic);
+  },
+
+  _updateMicrophoneMuteState() {
+    let shouldMute = Services.cpmm.sharedData.get(
+      "WebRTC:GlobalMicrophoneMute"
+    );
+    let topic = shouldMute
+      ? "getUserMedia:muteAudio"
+      : "getUserMedia:unmuteAudio";
+
+    Services.obs.notifyObservers(null, topic);
+  },
+};
+
 function WebrtcPermissionRequest(uri, principal, devices, constraints, callID) {
   this.uri = uri;
   this.principal = principal;
@@ -287,6 +339,13 @@ EmbedLiteWebrtcUI.prototype = {
         break;
 
       case "getUserMedia:request":
+        // Now that a getUserMedia request has been created, we should check
+        // to see if we're supposed to have any devices muted. This needs
+        // to occur after the getUserMedia request is made, since the global
+        // mute state is associated with the GetUserMediaWindowListener, which
+        // is only created after a getUserMedia request.
+        GlobalMuteListener.init();
+
         let constraints = aSubject.getConstraints();
         let contentWindow = Services.wm.getOuterWindowWithId(aSubject.windowID);
 
