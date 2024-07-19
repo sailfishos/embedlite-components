@@ -349,25 +349,12 @@ EmbedLiteWebrtcUI.prototype = {
         let constraints = aSubject.getConstraints();
         let contentWindow = Services.wm.getOuterWindowWithId(aSubject.windowID);
 
-        contentWindow.navigator.mozGetUserMediaDevices(
+        EmbedLiteWebrtcUI.prototype._prompt(
+          contentWindow,
+          aSubject.callID,
           constraints,
-          function(devices) {
-            if (!contentWindow.closed) {
-              EmbedLiteWebrtcUI.prototype._prompt(
-                contentWindow,
-                aSubject.callID,
-                constraints,
-                devices,
-                aSubject.isSecure);
-            }
-          },
-          function(error) {
-            Services.obs.notifyObservers(null, "getUserMedia:request:deny", aSubject.callID);
-            Cu.reportError(error);
-          },
-          aSubject.innerWindowID,
-          aSubject.callID
-        );
+          aSubject.devices,
+          aSubject.isSecure);
         break;
 
       case "recording-device-events":
