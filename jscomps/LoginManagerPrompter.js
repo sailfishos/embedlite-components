@@ -30,6 +30,7 @@
 
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
+
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { PrivateBrowsingUtils } = ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
@@ -1526,4 +1527,4 @@ XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
 });
 
 var component = [LoginManagerPromptFactory, LoginManagerPrompter];
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory(component);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory(component);

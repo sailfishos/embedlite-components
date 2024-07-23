@@ -10,6 +10,7 @@
 
 const {classes: Cc, interfaces: Ci, results: Cr} = Components;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import('resource://gre/modules/XPCOMUtils.jsm');
 
 function IntentProtocolHandler() {
@@ -31,4 +32,4 @@ IntentProtocolHandler.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolHandler])
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([IntentProtocolHandler]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([IntentProtocolHandler]);

@@ -14,6 +14,7 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
@@ -273,4 +274,4 @@ EmbedliteDownloadManager.prototype = {
   }
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedliteDownloadManager]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedliteDownloadManager]);

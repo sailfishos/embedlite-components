@@ -11,6 +11,7 @@ const PREF_BD_USEDOWNLOADDIR = "browser.download.useDownloadDir";
 const PREF_BD_DOWNLOADDIR = "browser.download.dir";
 const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
@@ -168,4 +169,4 @@ HelperAppLauncherDialog.prototype = {
   },
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([HelperAppLauncherDialog]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([HelperAppLauncherDialog]);

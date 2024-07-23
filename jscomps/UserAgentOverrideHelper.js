@@ -14,6 +14,7 @@ const VIEW_UA_CHANGED           = "embedliteviewhttpuseragentchanged";
 const XPCOM_SHUTDOWN            = "xpcom-shutdown";
 const PREF_OVERRIDE             = "general.useragent.override";
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { UserAgentOverrides } = ChromeUtils.import("chrome://embedlite/content/UserAgentOverrides.jsm");
@@ -284,4 +285,4 @@ var UserAgent = {
   }
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([UserAgentOverrideHelper]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([UserAgentOverrideHelper]);

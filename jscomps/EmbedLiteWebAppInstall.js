@@ -7,6 +7,7 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
@@ -42,7 +43,7 @@ EmbedLiteWebAppInstall.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([EmbedLiteWebAppInstall]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteWebAppInstall]);
 
 var WebappsUI = {
   init: function init() {

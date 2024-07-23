@@ -6,6 +6,7 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cc = Components.classes;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
@@ -157,4 +158,4 @@ ContentPermissionPrompt.prototype = {
 };
 
 //module initialization
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([ContentPermissionPrompt]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([ContentPermissionPrompt]);
