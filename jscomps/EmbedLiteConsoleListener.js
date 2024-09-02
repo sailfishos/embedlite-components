@@ -41,11 +41,12 @@ SPConsoleListener.prototype = {
 // Captures the data received on a channel for debug output
 // See https://developer.mozilla.org/en-US/docs/Mozilla/Creating_sandboxed_HTTP_connections
 // and http://www.softwareishard.com/blog/firebug/nsitraceablechannel-intercept-http-traffic/
-function DocumentContentListener(aHttpChannel) {
-    this.originalListener = null;
-    this.receivedData = [];
-    this.httpChannel = aHttpChannel;
-    this.maxDebugPrint = 32 * 1024;
+function DocumentContentListener(aHttpChannel, url) {
+  this.url = url;
+  this.originalListener = null;
+  this.receivedData = [];
+  this.httpChannel = aHttpChannel;
+  this.maxDebugPrint = 32 * 1024;
 }
 
 DocumentContentListener.prototype = {
@@ -77,16 +78,26 @@ DocumentContentListener.prototype = {
 
     Logger.debug("    [ Response headers -------------------------------------- ]");
     this.httpChannel.visitOriginalResponseHeaders(visitor);
+    this.contentType = visitor.contentType;
   },
 
   onStopRequest: function(request, context, statusCode) {
     // Get entire response
     var responseSource = this.receivedData.join("").substring(0, this.maxDebugPrint);
     this.originalListener.onStopRequest(request, context, statusCode);
+    const showContentType = [
+      "application/json",
+      "text/html",
+      "application/x-javascript",
+      "text/css",
+    ];
 
     // Output the content (sometimes)
+    Logger.debug("    [ Document URL ------------------------------------------ ]");
+    Logger.debug("        URL:", this.url);
+    Logger.debug("        ContentType:", this.contentType);
     Logger.debug("    [ Document content -------------------------------------- ]");
-    if (this.httpChannel.contentCharset !== "") {
+    if (this.httpChannel.contentCharset !== "" || showContentType.includes(this.contentType)) {
       Logger.debug(responseSource);
       if (this.httpChannel.decodedBodySize > this.maxDebugPrint) {
         Logger.debug("        Document output truncated by", (this.httpChannel.decodedBodySize - this.maxDebugPrint),"bytes");
@@ -108,10 +119,14 @@ DocumentContentListener.prototype = {
 
 // Used to cycle through all the headers
 function DebugHeaderVisitor() {
+  this.contentType = "unset";
 }
 
 DebugHeaderVisitor.prototype.visitHeader = function (aHeader, aValue) {
-    Logger.debug("       ", aHeader, ":", aValue);
+  Logger.debug("       ", aHeader, ":", aValue);
+  if (aHeader === "content-type") {
+    this.contentType = aValue;
+  }
 };
 
 // Sets up the channel for debug output
@@ -133,7 +148,7 @@ function LogChannelInfo(aSubject) {
     // At this point the headers and content-type may not be valid, for example if
     // the document is coming from the cache; they'll become available from the
     // listener's onStartRequest callback. See gecko bug 489317.
-    var newListener = new DocumentContentListener(httpChannel);
+    var newListener = new DocumentContentListener(httpChannel, httpChannel.URI.spec);
     aSubject.QueryInterface(Ci.nsITraceableChannel);
     newListener.originalListener = aSubject.setNewListener(newListener);
   }

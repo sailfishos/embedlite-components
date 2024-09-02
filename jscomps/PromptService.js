@@ -6,6 +6,7 @@ const Cc = Components.classes;
 const Cr = Components.results;
 const Cu = Components.utils;
 
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { PrivateBrowsingUtils } = ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
@@ -952,4 +953,4 @@ AuthPromptAdapter.prototype = {
   }
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([PromptService, AuthPromptAdapterFactory]);
+this.NSGetFactory = ComponentUtils.generateNSGetFactory([PromptService, AuthPromptAdapterFactory]);

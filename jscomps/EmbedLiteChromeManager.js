@@ -17,7 +17,6 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { NetErrorHelper } = ChromeUtils.import("chrome://embedlite/content/NetErrorHelper.jsm")
 
 XPCOMUtils.defineLazyModuleGetters(this, {
-  AboutCertViewerHandler: "resource://gre/modules/AboutCertViewerHandler.jsm",
   ContentLinkHandler: "chrome://embedlite/content/ContentLinkHandler.jsm",
   Feeds: "chrome://embedlite/content/Feeds.jsm"
 });
@@ -137,8 +136,6 @@ EmbedLiteChromeManager.prototype = {
     Services.obs.addObserver(this, "embed-network-link-status", true)
     Services.obs.addObserver(this, "domwindowclosed", true);
     Services.obs.addObserver(this, "keyword-uri-fixup", true);
-    Services.obs.addObserver(this, "browser-delayed-startup-finished");
-    Services.obs.addObserver(this, "xpcom-shutdown");
   },
 
   onWindowOpen(aWindow) {
@@ -209,13 +206,6 @@ EmbedLiteChromeManager.prototype = {
       Services.io.offline = network.offline;
       Services.obs.notifyObservers(null, "network:link-status-changed",
                                    network.offline ? "down" : "up");
-    case "browser-delayed-startup-finished":
-      AboutCertViewerHandler.init();
-      Services.obs.removeObserver(this, "browser-delayed-startup-finished");
-      break;
-    case "xpcom-shutdown":
-      AboutCertViewerHandler.uninit();
-      break;
     default:
       Logger.debug("EmbedLiteChromeManager subject", aSubject, "topic:", aTopic);
     }

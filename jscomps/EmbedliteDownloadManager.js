@@ -24,6 +24,25 @@ XPCOMUtils.defineLazyModuleGetter(this, "Services",
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
+const { DownloadSaver, DownloadError } = ChromeUtils.import(
+  "resource://gre/modules/DownloadCore.jsm"
+);
+
+XPCOMUtils.defineLazyModuleGetters(this, {
+  OS: "resource://gre/modules/osfile.jsm",
+});
+
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "gPrintSettingsService",
+  "@mozilla.org/gfx/printsettings-service;1",
+  Ci.nsIPrintSettingsService
+);
+
+const { PrivateBrowsingUtils } = ChromeUtils.import(
+  "resource://gre/modules/PrivateBrowsingUtils.jsm"
+);
+
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadViewer
 
@@ -254,13 +273,10 @@ EmbedliteDownloadManager.prototype = {
             if (Services.ww.activeWindow) {
               (async function() {
                 let list = await Downloads.getList(Downloads.ALL);
-                let download = await Downloads.createDownload({
+                let download = await DownloadPDFSaver.createDownload({
                   source: Services.ww.activeWindow,
-                  target: data.to,
-                  saver: "pdf",
-                  contentType: "application/pdf"
+                  target: data.to
                 });
-                download["saveAsPdf"] = true;
                 download.start();
                 list.add(download);
               })().then(null, Cu.reportError);
@@ -275,3 +291,154 @@ EmbedliteDownloadManager.prototype = {
 };
 
 this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedliteDownloadManager]);
+
+/**
+ * This DownloadSaver type creates a PDF file from the current document in a
+ * given window, specified using the windowRef property of the DownloadSource
+ * object associated with the download.
+ *
+ * In order to prevent the download from saving a different document than the one
+ * originally loaded in the window, any attempt to restart the download will fail.
+ *
+ * Since this DownloadSaver type requires a live document as a source, it cannot
+ * be persisted across sessions, unless the download already succeeded.
+ */
+var DownloadPDFSaver = function() {};
+
+DownloadPDFSaver.prototype = {
+  __proto__: DownloadSaver.prototype,
+
+  /**
+   * A CanonicalBrowsingContext instance for printing this page.
+   * This is null when saving has not started or has completed,
+   * or while the operation is being canceled.
+   */
+  _browsingContext: null,
+
+  /**
+   * Implements "DownloadSaver.execute".
+   */
+  async execute(aSetProgressBytesFn, aSetPropertiesFn) {
+    if (!this.download.source.windowRef) {
+      throw new DownloadError({
+        message:
+          "PDF saver must be passed an open window, and cannot be restarted.",
+        becauseSourceFailed: true,
+      });
+    }
+
+    let win = this.download.source.windowRef.get();
+
+    // Set windowRef to null to avoid re-trying.
+    this.download.source.windowRef = null;
+
+    if (!win) {
+      throw new DownloadError({
+        message: "PDF saver can't save a window that has been closed.",
+        becauseSourceFailed: true,
+      });
+    }
+
+    this.addToHistory();
+
+    let targetPath = this.download.target.path;
+
+    // An empty target file must exist for the PDF printer to work correctly.
+    let file = await OS.File.open(targetPath, { truncate: true });
+    await file.close();
+
+    let printSettings = gPrintSettingsService.newPrintSettings;
+
+    printSettings.printToFile = true;
+    printSettings.outputFormat = Ci.nsIPrintSettings.kOutputFormatPDF;
+    printSettings.toFileName = targetPath;
+
+    printSettings.printSilent = true;
+    printSettings.showPrintProgress = false;
+
+    printSettings.printBGImages = true;
+    printSettings.printBGColors = true;
+    printSettings.headerStrCenter = "";
+    printSettings.headerStrLeft = "";
+    printSettings.headerStrRight = "";
+    printSettings.footerStrCenter = "";
+    printSettings.footerStrLeft = "";
+    printSettings.footerStrRight = "";
+
+    this._browsingContext = BrowsingContext.getFromWindow(win)
+
+    try {
+      await new Promise((resolve, reject) => {
+        this._browsingContext.print(printSettings)
+        .then(() => {
+          resolve();
+        })
+        .catch(exception => {
+          reject(new DownloadError({ result: exception, inferCause: true }));
+        });
+      });
+    } finally {
+      // Remove the print object to avoid leaks
+      this._browsingContext = null;
+    }
+
+    let fileInfo = await OS.File.stat(targetPath);
+    aSetProgressBytesFn(fileInfo.size, fileInfo.size, false);
+  },
+
+  /**
+   * Implements "DownloadSaver.cancel".
+   */
+  cancel: function DCS_cancel() {
+    if (this._browsingContext) {
+      this._browsingContext.cancel();
+      this._browsingContext = null;
+    }
+  },
+
+  /**
+   * Implements "DownloadSaver.toSerializable".
+   */
+  toSerializable() {
+    if (this.download.succeeded) {
+      return DownloadCopySaver.prototype.toSerializable.call(this);
+    }
+
+    // This object needs a window to recreate itself. If it didn't succeded
+    // it will not be possible to restart. Returning null here will
+    // prevent us from serializing it at all.
+    return null;
+  },
+};
+
+/**
+ * Creates a new DownloadPDFSaver object, with its initial state derived from
+ * the provided properties.
+ *
+ * @param aProperties
+ *        Provides the initial properties for the newly created download.
+ *        This matches the serializable representation of a Download object.
+ *        Some of the most common properties in this object include:
+ *        {
+ *          source: An object providing a Ci.nsIDOMWindow interface.
+ *          target: String containing the path of the target file.
+ *        }
+ *
+ * @return The newly created DownloadPDFSaver object.
+ */
+DownloadPDFSaver.createDownload = async function(aProperties) {
+  let download = await Downloads.createDownload({
+    source: aProperties.source.location.href,
+    target: aProperties.target,
+    contentType: "application/pdf"
+  });
+  download.source.isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(
+    aProperties.source
+  );
+  download.source.windowRef = Cu.getWeakReference(aProperties.source);
+  download.saver = new DownloadPDFSaver();
+  download.saver.download = download;
+  download["saveAsPdf"] = true;
+
+  return download;
+};

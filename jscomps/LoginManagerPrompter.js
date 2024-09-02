@@ -35,6 +35,7 @@ const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { PrivateBrowsingUtils } = ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 const { PromptUtils } = ChromeUtils.import("resource://gre/modules/SharedPromptUtils.jsm", {});
+const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
                                   "resource://gre/modules/LoginHelper.jsm");
