@@ -987,7 +987,8 @@ LoginManagerPrompter.prototype = {
     aLogin,
     dismissed = false,
     notifySaved = false,
-    autoFilledLoginGuid = ""
+    autoFilledLoginGuid = "",
+    possibleValues = {}
   ) {
     this.log("promptToSavePassword");
     this._showSaveLoginNotification(aBrowser, aLogin);
@@ -1020,7 +1021,8 @@ LoginManagerPrompter.prototype = {
     dismissed = false,
     notifySaved = false,
     autoSavedLoginGuid = "",
-    autoFilledLoginGuid = ""
+    autoFilledLoginGuid = "",
+    possibleValues = {}
   ) {
     this.log("promptToChangePassword");
     this._showChangeLoginNotification(aBrowser, aOldLogin, aNewLogin);
