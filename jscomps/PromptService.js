@@ -38,19 +38,26 @@ PromptService.prototype = {
   },
 
   /* ----------  nsIPromptFactory  ---------- */
-  // XXX Copied from nsPrompter.js.
+  // XXX Copied from Prompter.jsm.
   getPrompt: function getPrompt(domWin, iid) {
     // This is still kind of dumb; the C++ code delegated to login manager
     // here, which in turn calls back into us via nsIPromptService.
+// Disabled due to fail to obtain chrome window and browser in _getChromeWindow
+// of LoginManagerPrompter.js
+/*
     if (iid.equals(Ci.nsIAuthPrompt2) || iid.equals(Ci.nsIAuthPrompt)) {
       try {
-        let pwmgr = Cc["@mozilla.org/passwordmanager/authpromptfactory;1"].getService(Ci.nsIPromptFactory);
+        let pwmgr = Cc[
+          "@mozilla.org/passwordmanager/authpromptfactory;1"
+        ].getService(Ci.nsIPromptFactory);
         return pwmgr.getPrompt(domWin, iid);
       } catch (e) {
-        Cu.reportError("nsPrompter: Delegation to password manager failed: " + e);
+        Cu.reportError(
+          "nsPrompter: Delegation to password manager failed: " + e
+        );
       }
     }
-
+*/
     let p = new InternalPrompt(domWin);
     p.QueryInterface(iid);
     return p;
