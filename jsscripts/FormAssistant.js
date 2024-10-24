@@ -240,7 +240,7 @@ var LoginUtils = {
     } catch (e) {
       // bug 159484 - disallow url types that don't support a hostPort.
       // (although we handle "javascript:..." as a special case above.)
-      log("Couldn't parse origin for", uriString, e);
+      Logger.warn("Couldn't parse origin for", uriString, e);
       realm = null;
     }
 
