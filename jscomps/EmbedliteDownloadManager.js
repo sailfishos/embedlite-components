@@ -16,6 +16,7 @@ const Cr = Components.results;
 
 const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { PrivateBrowsingUtils } = ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
@@ -71,10 +72,13 @@ let DownloadView = {
       stopped: download.stopped
     };
 
+    let isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(Services.ww.activeWindow) || false;
+
     Services.obs.notifyObservers(null, "embed:download",
                                  JSON.stringify({
                                      msg: "dl-start",
                                      id: this.counter,
+                                     privateMode: isPrivate,
                                      saveAsPdf: download.saveAsPdf || false,
                                      displayName: download.target.path.split('/').slice(-1)[0],
                                      sourceUrl: download.source.url,
@@ -88,6 +92,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-progress",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
@@ -98,6 +103,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-done",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
@@ -109,6 +115,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-fail",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -118,17 +125,20 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-cancel",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
   },
 
   onDownloadChanged: function(download) {
+    let isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(Services.ww.activeWindow) || false;
     if (download.prevState.progress !== download.progress) {
       Services.obs.notifyObservers(null, "embed:download",
                                    JSON.stringify({
                                        msg: "dl-progress",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false,
                                        percent: download.progress
                                    }));
@@ -140,6 +150,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-done",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false,
                                        targetPath: download.target.path
                                    }));
@@ -152,6 +163,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-fail",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -162,6 +174,7 @@ let DownloadView = {
                                    JSON.stringify({
                                        msg: "dl-cancel",
                                        id: download.id,
+                                       privateMode: isPrivate,
                                        saveAsPdf: download.saveAsPdf || false
                                    }));
     }
@@ -172,6 +185,7 @@ let DownloadView = {
                                    JSON.stringify({
                                      msg: "dl-start",
                                      id: download.id,
+                                     privateMode: isPrivate,
                                      saveAsPdf: download.saveAsPdf || false,
                                      displayName: download.target.path.split('/').slice(-1)[0],
                                      sourceUrl: download.source.url,
