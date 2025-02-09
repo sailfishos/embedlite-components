@@ -9,7 +9,6 @@ const Cr = Components.results;
 const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
-const { L10nRegistry, FileSource } = ChromeUtils.import("resource://gre/modules/L10nRegistry.jsm");
 
 // Touch the recipeParentPromise lazy getter so we don't get
 // `this._recipeManager is undefined` errors during tests.
@@ -31,8 +30,9 @@ function EmbedLiteGlobalHelper()
   // Touch ActorManagerParent so that it gets initialised
   var actor = ActorManagerParent;
 
-  L10nRegistry.registerSources([new FileSource(
+  L10nRegistry.getInstance().registerSources([new L10nFileSource(
                                    "0-mozembedlite",
+                                   "app",
                                    ["en-US", "fi", "ru"],
                                    "chrome://browser/content/localization/{locale}/")])
 
