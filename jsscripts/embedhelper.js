@@ -326,7 +326,7 @@ EmbedHelper.prototype = {
             Logger.debug("Warning: couldn't construct initial URI. Assuming a http:// URI is provided");
             initialURI = ioService.newURI("http://" + links[index], null, null);
         }
-        docShell.setCurrentURI(initialURI);
+        docShell.setCurrentURIForSessionStore(initialURI);
         break;
       }
       case "embedui:runjavascript": {
