@@ -204,12 +204,14 @@ EmbedHelper.prototype = {
         let searchAgain = aMessage.json.again;
         let searchBackwards = aMessage.json.backwards;
 
-        if (!searchText && this._finder) {
-          this._finder.removeSelection()
-          this._finder.destroy()
-          Services.focus.clearFocus(content);
+        if (!searchText) {
+          if (this._finder) {
+            this._finder.removeSelection()
+            this._finder.destroy()
+            Services.focus.clearFocus(content);
 
-          this._finder = null;
+            this._finder = null;
+          }
           return;
         }
 
