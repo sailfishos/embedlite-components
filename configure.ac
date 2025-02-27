@@ -1,13 +1,13 @@
-AC_INIT(configure.ac)
-AM_CONFIG_HEADER(config.h)
+AC_INIT([foocomponent], [1.0.0])
+AC_CONFIG_SRCDIR([configure.ac])
+AC_CONFIG_HEADERS(config.h)
 
-VERSION=1.0.0
+AM_INIT_AUTOMAKE
 
-AM_INIT_AUTOMAKE(foocomponent, $VERSION)
-
-AC_OUTPUT([
+AC_CONFIG_FILES([
     Makefile
     jscomps/Makefile
     jsscripts/Makefile
     overrides/Makefile
 ])
+AC_OUTPUT
