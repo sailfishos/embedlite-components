@@ -10,7 +10,6 @@ BuildRequires:  libtool
 BuildRequires:  automake
 BuildRequires:  autoconf
 Requires:  xulrunner-qt5
-Conflicts: embedlite-components
 
 %description
 EmbedLite Components required for embedded browser UI
