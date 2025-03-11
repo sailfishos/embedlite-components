@@ -94,6 +94,7 @@ EmbedHelper.prototype = {
     addMessageListener("Gesture:SingleTap", this);
     addMessageListener("Gesture:LongTap", this);
     addMessageListener("embedui:find", this);
+    addMessageListener("embedui:exitFullscreen", this);
     addMessageListener("embedui:zoomToRect", this);
     addMessageListener("embedui:scrollTo", this);
     addMessageListener("embedui:addhistory", this);
@@ -226,6 +227,10 @@ EmbedHelper.prototype = {
           result = this._finder.findAgain(searchText, searchBackwards, false, true);
         }
         sendAsyncMessage("embed:find", { r: result.result });
+        break;
+      }
+      case "embedui:exitFullscreen": {
+        content.document.exitFullscreen();
         break;
       }
       case "Viewport:Change": {
