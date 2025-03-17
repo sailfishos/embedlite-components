@@ -520,8 +520,14 @@ InternalPrompt.prototype = {
 
     PromptUtils.setAuthInfo(aAuthInfo, username.value, password.value);
 
-    if (ok && canSave && check.value)
-      PromptUtils.savePassword(foundLogins, username, password, hostname, httpRealm);
+    if (ok && canSave && check.value) {
+      // keep login going even if saving credentials fails
+      try {
+        PromptUtils.savePassword(foundLogins, username, password, hostname, httpRealm);
+      } catch (e) {
+        Logger.warn("PromptService.js / promptAuth failed to save password: " + e)
+      }
+    }
 
     return ok;
   },
