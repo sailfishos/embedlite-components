@@ -445,18 +445,18 @@ InternalPrompt.prototype = {
 
   /* ----------  nsIAuthPrompt  ---------- */
 
-  nsIAuthPrompt_prompt : function (title, text, passwordRealm, savePassword, defaultText, result) {
+  nsIAuthPrompt_prompt: function(title, text, passwordRealm, savePassword, defaultText, result) {
     // TODO: Port functions from LoginManagerPrompter.js to here
     if (defaultText)
       result.value = defaultText;
     return this.nsIPrompt_prompt(title, text, result, null, {});
   },
 
-  nsIAuthPrompt_promptUsernameAndPassword : function(aTitle, aText, aPasswordRealm, aSavePassword, aUser, aPass) {
+  nsIAuthPrompt_promptUsernameAndPassword: function(aTitle, aText, aPasswordRealm, aSavePassword, aUser, aPass) {
     return this.nsIAuthPrompt_loginPrompt(aTitle, aText, aPasswordRealm, aSavePassword, aUser, aPass);
   },
 
-  nsIAuthPrompt_promptPassword : function(aTitle, aText, aPasswordRealm, aSavePassword, aPass) {
+  nsIAuthPrompt_promptPassword: function(aTitle, aText, aPasswordRealm, aSavePassword, aPass) {
     return this.nsIAuthPrompt_loginPrompt(aTitle, aText, aPasswordRealm, aSavePassword, null, aPass);
   },
 
@@ -515,7 +515,8 @@ InternalPrompt.prototype = {
     if (!ok && aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD)
       ok = this.nonlocalized_promptPassword(null, message, hostname, httpRealm, password, checkMsg, check);
     else if (!ok)
-      ok = this.nonlocalized_promptUsernameAndPassword(null, message, hostname, httpRealm, username, password, checkMsg, check);
+      ok = this.nonlocalized_promptUsernameAndPassword(null, message, hostname, httpRealm,
+                                                       username, password, checkMsg, check);
 
     PromptUtils.setAuthInfo(aAuthInfo, username.value, password.value);
 
@@ -618,7 +619,7 @@ InternalPrompt.prototype = {
         channel: aChannel,
         authInfo: aAuthInfo,
         level: aLevel,
-        inProgress : false,
+        inProgress: false,
         prompter: this
       }
 
@@ -810,7 +811,7 @@ var PromptUtils = {
     return res;
   },
 
-  getAuthTarget : function pu_getAuthTarget(aChannel, aAuthInfo) {
+  getAuthTarget: function pu_getAuthTarget(aChannel, aAuthInfo) {
     let hostname, realm;
     // If our proxy is demanding authentication, don't use the
     // channel's actual destination.
@@ -844,7 +845,7 @@ var PromptUtils = {
     return [hostname, realm];
   },
 
-  getAuthInfo : function pu_getAuthInfo(aAuthInfo) {
+  getAuthInfo: function pu_getAuthInfo(aAuthInfo) {
     let flags = aAuthInfo.flags;
     let username = {value: ""};
     let password = {value: ""};
@@ -859,7 +860,7 @@ var PromptUtils = {
     return [username, password];
   },
 
-  setAuthInfo : function (aAuthInfo, username, password) {
+  setAuthInfo: function(aAuthInfo, username, password) {
     var flags = aAuthInfo.flags;
     if (flags & Ci.nsIAuthInformation.NEED_DOMAIN) {
       // Domain is separated from username by a backslash
@@ -868,7 +869,7 @@ var PromptUtils = {
         aAuthInfo.username = username;
       } else {
         aAuthInfo.domain   =  username.substring(0, idx);
-        aAuthInfo.username =  username.substring(idx+1);
+        aAuthInfo.username =  username.substring(idx + 1);
       }
     } else {
       aAuthInfo.username = username;
@@ -879,7 +880,7 @@ var PromptUtils = {
   /**
    * Strip out things like userPass and path for display.
    */
-  getFormattedHostname : function pu_getFormattedHostname(uri) {
+  getFormattedHostname: function pu_getFormattedHostname(uri) {
     return uri.scheme + "://" + uri.hostPort;
   },
 
