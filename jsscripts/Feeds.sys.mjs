@@ -4,10 +4,6 @@
 
 "use strict";
 
-const { BrowserUtils } = ChromeUtils.importESModule(
-  "resource://gre/modules/BrowserUtils.sys.mjs"
-);
-
 export const Feeds = {
   // Listeners are added in nsBrowserGlue.js
   receiveMessage(aMessage) {
@@ -73,9 +69,15 @@ export const Feeds = {
 
     if (aIsFeed) {
       try {
-        let href = BrowserUtils.makeURI(aLink.href, aLink.ownerDocument.characterSet);
-        BrowserUtils.urlSecurityCheck(href, aPrincipal,
-                                      Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
+        let href = Services.io.newURI(
+          aLink.href,
+          aLink.ownerDocument.characterSet
+        );
+        Services.scriptSecurityManager.checkLoadURIWithPrincipal(
+          aPrincipal,
+          href,
+          Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL
+        );
         return type || "application/rss+xml";
       } catch (ex) {
       }
