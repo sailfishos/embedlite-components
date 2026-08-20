@@ -46,6 +46,8 @@ export function HelperAppLauncherDialog() {
   Logger.debug("JSComp: HelperAppDialog.sys.mjs loaded");
   // Initialize data properties.
   this.mLauncher = null;
+  this.mWinId = 0;
+  this.mRequestId = "";
 }
 
 HelperAppLauncherDialog.prototype = {
@@ -54,9 +56,21 @@ HelperAppLauncherDialog.prototype = {
 
   observe: function(aSubject, aTopic, aData) {
         switch (aTopic) {
-        case "embedui:downloadpicker":
-            this.saveAndDownload(JSON.parse(aData));
+        case "embedui:downloadpicker": {
+            let data;
+            try {
+              data = JSON.parse(aData);
+            } catch (error) {
+              Logger.warn("HelperAppDialog: invalid picker response", error);
+              return;
+            }
+            if (data.requestId !== this.mRequestId ||
+                Number(data.winId) !== this.mWinId) {
+              return;
+            }
+            this.saveAndDownload(data);
             break;
+        }
         }
   },
 
@@ -98,10 +112,22 @@ HelperAppLauncherDialog.prototype = {
       }
     }
     try {
-      let winId = Services.embedlite.getIDByWindow(Services.ww.activeWindow);
+      let sourceWindow = null;
+      try {
+        sourceWindow = aWindowContext.getInterface(Ci.nsIDOMWindow);
+      } catch (error) {
+        Logger.warn("HelperAppDialog: no source window", error);
+      }
+      let winId = Services.embedlite.getIDByWindow(
+        sourceWindow || Services.ww.activeWindow);
+      this.mWinId = winId;
+      this.mRequestId = Services.uuid.generateUUID().toString();
+      result.winId = winId;
+      result.requestId = this.mRequestId;
       Services.embedlite.sendAsyncMessage(winId, "embed:downloadpicker", JSON.stringify(result));
     } catch (e) {
       Logger.warn("HelperAppDialog: sending async message failed", e)
+      this.finishDownloadPicker(null, true);
     }
   },
 
@@ -144,6 +170,10 @@ HelperAppLauncherDialog.prototype = {
     let file = null;
 
     (async () => {
+      if (data.cancelled) {
+        this.finishDownloadPicker(null, true);
+        return;
+      }
       let prefferedDir = data.downloadDirectory;
       let downloadFolder = new FileUtils.File(prefferedDir);
       if (!isUsableDirectory(downloadFolder)) {
@@ -159,10 +189,22 @@ HelperAppLauncherDialog.prototype = {
         Logger.warn(e);
       }
 
-      if (file && this.mLauncher) {
-        this.mLauncher.saveDestinationAvailable(file);
-      }
-      Services.obs.removeObserver(this, "embedui:downloadpicker", true);
+      this.finishDownloadPicker(file, !!data.requestId);
     })().catch(Cu.reportError);
+  },
+
+  finishDownloadPicker: function(file, dialogWasShown) {
+    let launcher = this.mLauncher;
+    this.mLauncher = null;
+    this.mWinId = 0;
+    this.mRequestId = "";
+    try {
+      Services.obs.removeObserver(this, "embedui:downloadpicker", true);
+    } catch (error) {
+      Logger.warn("HelperAppDialog: removing observer failed", error);
+    }
+    if (launcher) {
+      launcher.saveDestinationAvailable(file, dialogWasShown);
+    }
   },
 };

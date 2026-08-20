@@ -269,21 +269,38 @@ EmbedliteDownloadManager.prototype = {
             })().then(null, Cu.reportError);
             break;
 
-          case "saveAsPdf":
-            if (Services.ww.activeWindow) {
+          case "saveAsPdf": {
+            let source = null;
+            if (data.windowId !== undefined && data.tabId !== undefined) {
+              try {
+                source = {
+                  browsingContext: Services.embedlite
+                    .QueryInterface(Ci.nsIEmbedChromeAppService)
+                    .getChromeTabBrowsingContext(
+                      data.windowId, String(data.tabId))
+                };
+              } catch (error) {
+                Logger.warn("No hosted tab to print to pdf", error);
+              }
+            } else if (Services.ww.activeWindow) {
+              source = { window: Services.ww.activeWindow };
+            }
+
+            if (source) {
               (async function() {
                 let list = await Downloads.getList(Downloads.ALL);
                 let download = await DownloadPDFSaver.createDownload({
-                  source: Services.ww.activeWindow,
+                  ...source,
                   target: data.to
                 });
                 download.start();
                 list.add(download);
               })().then(null, Cu.reportError);
             } else {
-              Logger.warn("No active window to print to pdf")
+              Logger.warn("No active page to print to pdf");
             }
             break;
+          }
         }
         break;
     }
@@ -307,6 +324,12 @@ DownloadPDFSaver.prototype = {
   __proto__: DownloadSaver.prototype,
 
   /**
+   * Live hosted BrowsingContext used as the source for this save. This is not
+   * serializable and is cleared as soon as execution starts.
+   */
+  _sourceBrowsingContext: null,
+
+  /**
    * A CanonicalBrowsingContext instance for printing this page.
    * This is null when saving has not started or has completed,
    * or while the operation is being canceled.
@@ -317,22 +340,24 @@ DownloadPDFSaver.prototype = {
    * Implements "DownloadSaver.execute".
    */
   async execute(aSetProgressBytesFn, aSetPropertiesFn) {
-    if (!this.download.source.windowRef) {
+    if (!this.download.source.windowRef && !this._sourceBrowsingContext) {
       throw new DownloadError({
         message:
-          "PDF saver must be passed an open window, and cannot be restarted.",
+          "PDF saver must be passed an open page, and cannot be restarted.",
         becauseSourceFailed: true,
       });
     }
 
-    let win = this.download.source.windowRef.get();
+    let browsingContext = this._sourceBrowsingContext;
+    this._sourceBrowsingContext = null;
+    let win = this.download.source.windowRef?.get();
 
     // Set windowRef to null to avoid re-trying.
     this.download.source.windowRef = null;
 
-    if (!win) {
+    if (!browsingContext && !win) {
       throw new DownloadError({
-        message: "PDF saver can't save a window that has been closed.",
+        message: "PDF saver can't save a page that has been closed.",
         becauseSourceFailed: true,
       });
     }
@@ -362,7 +387,15 @@ DownloadPDFSaver.prototype = {
     printSettings.footerStrLeft = "";
     printSettings.footerStrRight = "";
 
-    this._browsingContext = BrowsingContext.getFromWindow(win)
+    this._browsingContext =
+      browsingContext || BrowsingContext.getFromWindow(win);
+    if (!this._browsingContext || this._browsingContext.isDiscarded) {
+      this._browsingContext = null;
+      throw new DownloadError({
+        message: "PDF saver can't save a discarded page.",
+        becauseSourceFailed: true,
+      });
+    }
 
     try {
       await new Promise((resolve, reject) => {
@@ -432,17 +465,28 @@ DownloadPDFSaver.prototype = {
  * @return The newly created DownloadPDFSaver object.
  */
 DownloadPDFSaver.createDownload = async function(aProperties) {
+  let browsingContext = aProperties.browsingContext || null;
+  let sourceWindow = aProperties.window || null;
+  let sourceUrl;
+  let isPrivate;
+  if (browsingContext) {
+    sourceUrl = browsingContext.currentURI?.spec || "about:blank";
+    isPrivate = browsingContext.usePrivateBrowsing;
+  } else {
+    sourceUrl = sourceWindow.location.href;
+    isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(sourceWindow);
+  }
   let download = await Downloads.createDownload({
-    source: aProperties.source.location.href,
+    source: sourceUrl,
     target: aProperties.target,
     contentType: "application/pdf"
   });
-  download.source.isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(
-    aProperties.source
-  );
-  download.source.windowRef = Cu.getWeakReference(aProperties.source);
+  download.source.isPrivate = isPrivate;
+  download.source.windowRef = sourceWindow
+    ? Cu.getWeakReference(sourceWindow) : null;
   download.saver = new DownloadPDFSaver();
   download.saver.download = download;
+  download.saver._sourceBrowsingContext = browsingContext;
   download["saveAsPdf"] = true;
 
   return download;
