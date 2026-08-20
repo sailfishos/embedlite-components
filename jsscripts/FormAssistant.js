@@ -166,9 +166,7 @@ FormAssistant.prototype = {
         return;
       }
 
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
-      Services.embedlite.sendAsyncMessage(winId, "FormAssist:AutoCompleteResult",
-                                          JSON.stringify(suggestions));
+      sendAsyncMessage("FormAssist:AutoCompleteResult", suggestions);
 
       aCallback(true);
     };
@@ -183,8 +181,7 @@ FormAssistant.prototype = {
     * _hideFormAssistPopup() in FormAssistant.jsm
     */
   _hideFormAssist: function(aElement) {
-    let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
-    Services.embedlite.sendAsyncMessage(winId, "FormAssist:Hide", "[]");
+    sendAsyncMessage("FormAssist:Hide", []);
   },
 
   // We only want to show login suggestions for certain elements

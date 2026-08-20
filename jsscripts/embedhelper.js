@@ -372,13 +372,10 @@ EmbedHelper.prototype = {
   },
 
   _handleFullScreenChanged: function(aEvent) {
-    let window = aEvent.target.ownerDocument.defaultView;
     try {
-      let winId = Services.embedlite.getIDByWindow(window);
-      Services.embedlite.sendAsyncMessage(winId, "embed:fullscreenchanged",
-                                          JSON.stringify({
-                                                           "fullscreen": aEvent.target.ownerDocument.mozFullScreen
-                                                         }));
+      sendAsyncMessage("embed:fullscreenchanged", {
+        "fullscreen": aEvent.target.ownerDocument.mozFullScreen
+      });
     } catch (e) {
       Logger.warn("emhedhelper: sending async message failed", e)
     }
