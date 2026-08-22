@@ -9,6 +9,7 @@ jscomps_manifest_DATA = \
 	ContentPermissionPrompt.sys.mjs \
 	ContentPermissionManager.sys.mjs \
 	EmbedLiteGlobalHelper.sys.mjs \
+	EmbedLitePromptParent.sys.mjs \
 	EmbedLiteConsoleListener.sys.mjs \
 	EmbedLiteChromeManager.sys.mjs \
 	EmbedLiteOrientationChangeHandler.sys.mjs \

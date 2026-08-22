@@ -19,6 +19,24 @@ const { Logger } = loggerScope;
 // Firefox's normal browser chrome bootstrap that would otherwise do this.
 ChromeUtils.importESModule("resource://gre/modules/ActorManagerParent.sys.mjs");
 
+// Firefox registers its Prompt actor from the desktop browser bootstrap.
+// EmbedLite does not run that bootstrap, but remote content still uses the
+// actor to ask the parent process to show JavaScript dialogs.
+try {
+  ChromeUtils.registerWindowActor("Prompt", {
+    parent: {
+      esModuleURI:
+        "resource://embedlite-components/EmbedLitePromptParent.sys.mjs",
+    },
+    allFrames: true,
+  });
+} catch (error) {
+  // A product embedding EmbedLite may already provide a Prompt actor.
+  if (error.result !== Cr.NS_ERROR_DOM_NOT_SUPPORTED_ERR) {
+    throw error;
+  }
+}
+
 // Keep the recipe manager eagerly initialized for password-manager queries.
 void LoginManagerParent.recipeParentPromise;
 

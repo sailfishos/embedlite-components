@@ -26,6 +26,7 @@ jscomps/FilePicker.js
 jscomps/ContentPermissionPrompt.sys.mjs
 jscomps/ContentPermissionManager.sys.mjs
 jscomps/EmbedLiteGlobalHelper.sys.mjs
+jscomps/EmbedLitePromptParent.sys.mjs
 jscomps/EmbedLiteConsoleListener.sys.mjs
 jscomps/EmbedPrefService.sys.mjs
 jscomps/EmbedLiteFaviconService.sys.mjs
