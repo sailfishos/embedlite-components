@@ -134,6 +134,7 @@ SelectHelper.prototype = {
 
       if (index === 0) {
         // don't open dialog for empty option lists
+        this.reset();
         return;
       }
 
@@ -153,7 +154,9 @@ SelectHelper.prototype = {
     } else if (this._selectElement && this._selectElement !== target) {
       // in case user clicked outside of subwindow
       debug("User manage to click outside of subwindow");
-      this._dialog.abort();
+      if (this._dialog) {
+        this._dialog.abort();
+      }
       this.reset();
     }
   },
@@ -167,9 +170,15 @@ SelectHelper.prototype = {
         }
       }
     } else if (HTMLSelectElement.isInstance(aElement)) {
+      if (!Array.isArray(aOptions)) {
+        return;
+      }
       let that = this;
       aOptions.forEach(function (option) {
-          that._nodeMap[option.index].selected = option.selected;
+          let node = that._nodeMap[option.index];
+          if (node) {
+            node.selected = option.selected;
+          }
       });
       this.fireOnChange(aElement);
     }
