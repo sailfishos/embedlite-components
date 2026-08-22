@@ -80,7 +80,9 @@ EmbedHelper.prototype = {
     Services.obs.addObserver(this, "embedlite-before-first-paint", true);
 
     Logger.debug("Available locales: " + availableLocales.join(", "));
-    Services.locale.availableLocales = availableLocales;
+    // LocaleService is parent-process-owned on current Gecko. Packaged
+    // locales are discovered through the chrome registry; mutating this list
+    // from a content frame script fails and aborts the remaining setup.
   },
 
   // Similar to HtmlInputElement IsExperimentalMobileType

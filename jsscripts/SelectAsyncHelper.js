@@ -101,14 +101,23 @@ SelectHelper.prototype = {
   _nodeMap: {},
 
   _init: function() {
+    // Hosted ESR140 input delivers touch events for native selects without
+    // synthesizing the click that older EmbedLite versions handled below.
+    addEventListener("touchend", this, true);
     addEventListener("click", this, true);
   },
 
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
+      case "touchend":
+        if (HTMLSelectElement.isInstance(aEvent.target)) {
+          aEvent.preventDefault();
+          this.onClicked(aEvent);
+        }
+        break;
       case "click":
-      this.onClicked(aEvent);
-      break;
+        this.onClicked(aEvent);
+        break;
     }
   },
 
