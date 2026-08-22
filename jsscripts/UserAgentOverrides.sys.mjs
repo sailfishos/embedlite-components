@@ -19,7 +19,7 @@ const PREF_OVERRIDES_ENABLED = "general.useragent.site_specific_overrides";
 const MAX_OVERRIDE_FOR_HOST_CACHE_SIZE = 250;
 
 // lazy load nsHttpHandler to improve startup performance.
-XPCOMUtils.defineLazyGetter(lazy, "DEFAULT_UA", function() {
+ChromeUtils.defineLazyGetter(lazy, "DEFAULT_UA", function() {
   return Cc["@mozilla.org/network/protocol;1?name=http"]
            .getService(Ci.nsIHttpProtocolHandler)
            .userAgent;

@@ -24,17 +24,17 @@ ChromeUtils.defineESModuleGetters(lazy, {
 XPCOMUtils.defineLazyServiceGetter(
   lazy, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
 
-XPCOMUtils.defineLazyGetter(lazy, "gApp",
+ChromeUtils.defineLazyGetter(lazy, "gApp",
   function() {
     return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo)
                                             .QueryInterface(Ci.nsIXULRuntime);
   });
 
-XPCOMUtils.defineLazyGetter(lazy, "gDecoder",
+ChromeUtils.defineLazyGetter(lazy, "gDecoder",
   function() { return new TextDecoder(); }
 );
 
-XPCOMUtils.defineLazyGetter(lazy, "gEncoder",
+ChromeUtils.defineLazyGetter(lazy, "gEncoder",
   function() { return new TextEncoder(); }
 );
 
