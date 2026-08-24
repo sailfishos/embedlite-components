@@ -37,6 +37,23 @@ try {
   }
 }
 
+// Search-engine configuration and submission generation are parent-owned on
+// current Gecko. Let the content selection helper request a submission URI
+// without instantiating the search service in the content process.
+try {
+  ChromeUtils.registerWindowActor("EmbedLiteSelection", {
+    parent: {
+      esModuleURI:
+        "resource://embedlite-components/EmbedLiteSelectionParent.sys.mjs",
+    },
+    allFrames: true,
+  });
+} catch (error) {
+  if (error.result !== Cr.NS_ERROR_DOM_NOT_SUPPORTED_ERR) {
+    throw error;
+  }
+}
+
 // Media capture requests originate in the content process. Firefox registers
 // its WebRTC actors from the desktop browser bootstrap, which EmbedLite does
 // not run, so register an EmbedLite-specific bridge here.

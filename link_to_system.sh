@@ -27,6 +27,7 @@ jscomps/ContentPermissionPrompt.sys.mjs
 jscomps/ContentPermissionManager.sys.mjs
 jscomps/EmbedLiteGlobalHelper.sys.mjs
 jscomps/EmbedLitePromptParent.sys.mjs
+jscomps/EmbedLiteSelectionParent.sys.mjs
 jscomps/EmbedLiteWebRTCChild.sys.mjs
 jscomps/EmbedLiteWebRTCParent.sys.mjs
 jscomps/EmbedLiteWebRTCProcessChild.sys.mjs
