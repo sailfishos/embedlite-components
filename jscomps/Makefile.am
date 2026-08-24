@@ -10,6 +10,9 @@ jscomps_manifest_DATA = \
 	ContentPermissionManager.sys.mjs \
 	EmbedLiteGlobalHelper.sys.mjs \
 	EmbedLitePromptParent.sys.mjs \
+	EmbedLiteWebRTCChild.sys.mjs \
+	EmbedLiteWebRTCParent.sys.mjs \
+	EmbedLiteWebRTCProcessChild.sys.mjs \
 	EmbedLiteConsoleListener.sys.mjs \
 	EmbedLiteChromeManager.sys.mjs \
 	EmbedLiteOrientationChangeHandler.sys.mjs \

@@ -37,6 +37,46 @@ try {
   }
 }
 
+// Media capture requests originate in the content process. Firefox registers
+// its WebRTC actors from the desktop browser bootstrap, which EmbedLite does
+// not run, so register an EmbedLite-specific bridge here.
+try {
+  ChromeUtils.registerWindowActor("EmbedLiteWebRTC", {
+    parent: {
+      esModuleURI:
+        "resource://embedlite-components/EmbedLiteWebRTCParent.sys.mjs",
+    },
+    child: {
+      esModuleURI:
+        "resource://embedlite-components/EmbedLiteWebRTCChild.sys.mjs",
+    },
+    allFrames: true,
+  });
+} catch (error) {
+  if (error.result !== Cr.NS_ERROR_DOM_NOT_SUPPORTED_ERR) {
+    throw error;
+  }
+}
+
+try {
+  ChromeUtils.registerProcessActor("EmbedLiteWebRTCProcess", {
+    kind: "JSProcessActor",
+    child: {
+      esModuleURI:
+        "resource://embedlite-components/EmbedLiteWebRTCProcessChild.sys.mjs",
+      observers: [
+        "getUserMedia:ask-device-permission",
+        "getUserMedia:request",
+        "PeerConnection:request",
+      ],
+    },
+  });
+} catch (error) {
+  if (error.result !== Cr.NS_ERROR_DOM_NOT_SUPPORTED_ERR) {
+    throw error;
+  }
+}
+
 // Keep the recipe manager eagerly initialized for password-manager queries.
 void LoginManagerParent.recipeParentPromise;
 

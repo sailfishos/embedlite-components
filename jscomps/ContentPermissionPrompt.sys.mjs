@@ -39,17 +39,39 @@ ContentPermissionPrompt.prototype = {
     return request.principal.URI.host + " " + type;
   },
 
+  _getWindowId: function(request) {
+    if (request.window) {
+      return Services.embedlite.getIDByWindow(request.window);
+    }
+
+    if (request.element && request.element.browsingContext) {
+      return Services.embedlite.getIDByBrowsingContext(
+        request.element.browsingContext
+      );
+    }
+
+    throw Components.Exception(
+      "Permission request has no window or browsing context",
+      Cr.NS_ERROR_NOT_AVAILABLE
+    );
+  },
+
   // Whether we are in private browsing mode
-  _getInPrivateBrowsing: function(window) {
-    if (window) {
-      return PrivateBrowsingUtils.isContentWindowPrivate(window);
+  _getInPrivateBrowsing: function(request) {
+    if (request.window) {
+      return PrivateBrowsingUtils.isContentWindowPrivate(request.window);
+    }
+    if (request.element) {
+      return PrivateBrowsingUtils.isBrowserPrivate(request.element);
     }
     // Assume that we're in private browsing mode if the caller did
     // not provide a window.  The callers which really care about this
     // will indeed pass down a window to us, and for those who don't,
     // we can just assume that we don't want to save the entered
     // permission information.
-    this.log("We have no chromeWindow so assume we're in a private context");
+    Logger.warn(
+      "ContentPermissionPrompt: no request context; assuming private browsing"
+    );
     return true;
   },
 
@@ -89,7 +111,7 @@ ContentPermissionPrompt.prototype = {
     if (ret.allow) {
       // When in private browing, even session storage is skipped to avoid the
       // decision leaking into normal browsing mode
-      if (!this._getInPrivateBrowsing(request.window)) {
+      if (!this._getInPrivateBrowsing(request)) {
         // If the user checked "Don't ask again", make a permanent exception
         if (ret.checkedDontAsk) {
           Services.perms.addFromPrincipal(request.principal, perm.type, Ci.nsIPermissionManager.ALLOW_ACTION);
@@ -103,7 +125,7 @@ ContentPermissionPrompt.prototype = {
     } else {
       // When in private browing, even session storage is skipped to avoid the
       // decision leaking into normal browsing mode
-      if (!this._getInPrivateBrowsing(request.window)) {
+      if (!this._getInPrivateBrowsing(request)) {
         // If the user checked "Don't ask again", make a permanent exception
         if (ret.checkedDontAsk) {
           Services.perms.addFromPrincipal(request.principal, perm.type, Ci.nsIPermissionManager.DENY_ACTION);
@@ -148,12 +170,12 @@ ContentPermissionPrompt.prototype = {
 
     Services.embedlite.addMessageListener("embedui:permissions", this);
     try {
-      var winId = Services.embedlite.getIDByWindow(request.window);
+      var winId = this._getWindowId(request);
       Services.embedlite.sendAsyncMessage(winId, "embed:permissions",
                                           JSON.stringify({title: entityName,
                                                           host: request.principal.URI.host,
                                                           id: reqkey,
-                                                          privateBrowsing: this._getInPrivateBrowsing(request.window)}));
+                                                          privateBrowsing: this._getInPrivateBrowsing(request)}));
     } catch (e) {
       Logger.warn("ContentPermissionPrompt: sending async message failed", e)
     }
