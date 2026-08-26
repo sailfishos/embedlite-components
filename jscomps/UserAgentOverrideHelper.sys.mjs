@@ -192,6 +192,21 @@ var UserAgent = {
       }
     }
 
+    // Hosted tabs are represented by browser elements in the chrome session
+    // and are therefore not registered in the legacy per-window tab list.
+    // Their BrowsingContext still carries the desktop viewport state.
+    let loadInfo = channel.loadInfo;
+    let browsingContext = loadInfo && loadInfo.browsingContext;
+    if (browsingContext) {
+      browsingContext = browsingContext.top;
+      if (browsingContext.customUserAgent) {
+        return browsingContext.customUserAgent;
+      }
+      if (browsingContext.forceDesktopViewport) {
+        return this.DESKTOP_UA;
+      }
+    }
+
     // Prefer current uri over the loading principal's uri in case both have overrides.
     ua = uri && UserAgentOverrides.getOverrideForURI(uri)
 
