@@ -17,26 +17,30 @@ let modules = {
   // about:
   "": {
     uri: "chrome://browser/content/about.xhtml",
-    privileged: true
+    flags: Ci.nsIAboutModule.ALLOW_SCRIPT
   },
 
   certerror: {
     uri: "chrome://global/content/aboutNetError.html",
-    privileged: false,
-    hide: true
+    flags: Ci.nsIAboutModule.URI_SAFE_FOR_UNTRUSTED_CONTENT |
+           Ci.nsIAboutModule.URI_CAN_LOAD_IN_CHILD |
+           Ci.nsIAboutModule.ALLOW_SCRIPT |
+           Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT
   },
 
   home: {
     uri: "about:mozilla",
-    privileged: false
+    flags: Ci.nsIAboutModule.URI_SAFE_FOR_UNTRUSTED_CONTENT |
+           Ci.nsIAboutModule.URI_MUST_LOAD_IN_CHILD
   },
 
   // about:fennec and about:firefox are aliases for about:,
   // but hidden from about:about
   embedlite: {
     uri: "https://wiki.mozilla.org/Embedding/IPCLiteAPI",
-    privileged: false,
-    hide: false
+    flags: Ci.nsIAboutModule.URI_SAFE_FOR_UNTRUSTED_CONTENT |
+           Ci.nsIAboutModule.URI_MUST_LOAD_IN_CHILD,
+    external: true
   }
 }
 
@@ -54,25 +58,21 @@ AboutRedirector.prototype = {
 
   // nsIAboutModule
   getURIFlags: function(aURI) {
-    let flags;
-    let moduleInfo = this._getModuleInfo(aURI);
-    if (moduleInfo.hide)
-      flags = Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT;
+    return this._getModuleInfo(aURI).flags;
+  },
 
-    return flags | Ci.nsIAboutModule.ALLOW_SCRIPT;
+  getChromeURI: function(aURI) {
+    return Services.io.newURI(this._getModuleInfo(aURI).uri);
   },
 
   newChannel: function(aURI, aLoadInfo) {
     let moduleInfo = this._getModuleInfo(aURI);
 
-    let pageURI = Services.io.newURI(moduleInfo.uri);
+    let pageURI = this.getChromeURI(aURI);
     var channel = Services.io.newChannelFromURIWithLoadInfo(pageURI, aLoadInfo);
 
-    if (!moduleInfo.privileged) {
-      // Setting the owner to null means that we'll go through the normal
-      // path in GetChannelPrincipal and create a codebase principal based
-      // on the channel's originalURI
-      channel.owner = null;
+    if (moduleInfo.external) {
+      aLoadInfo.resultPrincipalURI = pageURI;
     }
 
     channel.originalURI = aURI;
