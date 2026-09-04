@@ -201,6 +201,7 @@ EmbedliteDownloadManager.prototype = {
     switch (aTopic) {
       case "app-startup":
         Services.obs.addObserver(this, "profile-after-change", false);
+        Services.obs.addObserver(this, "before-cancel-download-prompt", false);
         break;
 
       case "profile-after-change":
@@ -222,6 +223,10 @@ EmbedliteDownloadManager.prototype = {
 
           await downloadList.addView(DownloadView);
         })().then(null, Cu.reportError);
+        break;
+
+      case "before-cancel-download-prompt":
+        aSubject.QueryInterface(Ci.nsISupportsPRBool).data = false;
         break;
 
       case "embedui:download":
