@@ -46,13 +46,12 @@ export class PromptParent extends JSWindowActorParent {
         topic = "embed:prompt";
         responseTopic = "promptresponse";
         break;
+      case "select":
+        topic = "embed:select";
+        responseTopic = "selectresponse";
+        break;
       default:
         return undefined;
-    }
-
-    if (args.promptType === "confirmEx" && args.button2Label) {
-      console.warn("EmbedLite does not support three-button confirmEx prompts");
-      return { ...args, promptAborted: true };
     }
 
     let embedService;
@@ -90,6 +89,12 @@ export class PromptParent extends JSWindowActorParent {
     if (args.promptType === "prompt") {
       payload.defaultValue = args.value || "";
       payload.inputs.push({ value: args.value || "" });
+    }
+    if (args.promptType === "select") {
+      payload.inputs.push({
+        type: "menulist",
+        values: Array.isArray(args.list) ? args.list : [],
+      });
     }
     if (args.checkLabel) {
       payload.inputs.push({
@@ -163,10 +168,43 @@ export class PromptParent extends JSWindowActorParent {
             return;
           }
 
+          if (args.promptType === "select") {
+            if (
+              response.button === 0 &&
+              Array.isArray(args.list) &&
+              Number.isInteger(response.menulist0) &&
+              response.menulist0 >= 0 &&
+              response.menulist0 < args.list.length
+            ) {
+              args.ok = true;
+              args.selected = response.menulist0;
+            } else {
+              args.ok = false;
+            }
+            finish(false);
+            return;
+          }
+
           if ("checkvalue" in response) {
             args.checked = !!response.checkvalue;
           }
-          if ("accepted" in response) {
+          if ("buttonNumClicked" in response) {
+            if (
+              Number.isInteger(response.buttonNumClicked) &&
+              response.buttonNumClicked >= 0 &&
+              response.buttonNumClicked <= 2
+            ) {
+              args.buttonNumClicked = response.buttonNumClicked;
+              args.ok = response.buttonNumClicked === 0;
+            } else {
+              console.warn(
+                "Invalid button index in EmbedLite prompt response",
+                response.buttonNumClicked
+              );
+              args.buttonNumClicked = 1;
+              args.ok = false;
+            }
+          } else if ("accepted" in response) {
             args.ok = !!response.accepted;
             args.buttonNumClicked = response.accepted ? 0 : 1;
           }
