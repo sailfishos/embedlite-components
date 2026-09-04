@@ -4,20 +4,21 @@
 
 "use strict";
 
-this.EXPORTED_SYMBOLS = ["OrientationChangeHandler"];
-
 const Ci = Components.interfaces;
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
-                                    "nsIEmbedAppService");
-XPCOMUtils.defineLazyModuleGetter(this, "Logger",
-                                  "chrome://embedlite/content/Logger.js");
+                                    Ci.nsIEmbedAppService);
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
-this.OrientationChangeHandler = function OrientationChangeHandler(window) {
+export function OrientationChangeHandler(window) {
   this.docShell = window.docShell;
 
   this.webProgress = this.docShell.QueryInterface(Ci.nsIInterfaceRequestor)

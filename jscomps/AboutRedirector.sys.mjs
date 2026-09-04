@@ -4,13 +4,14 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
-var EXPORTED_SYMBOLS = ["AboutRedirector"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 let modules = {
   // about:
@@ -20,7 +21,7 @@ let modules = {
   },
 
   certerror: {
-    uri: "chrome://global/content/aboutNetError.xhtml",
+    uri: "chrome://global/content/aboutNetError.html",
     privileged: false,
     hide: true
   },
@@ -39,7 +40,7 @@ let modules = {
   }
 }
 
-function AboutRedirector() {
+export function AboutRedirector() {
   Logger.debug("JSComp: AboutRedirector.js loaded");
 }
 AboutRedirector.prototype = {
@@ -79,8 +80,3 @@ AboutRedirector.prototype = {
     return channel;
   }
 };
-
-const components = [AboutRedirector];
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory(components);
-}

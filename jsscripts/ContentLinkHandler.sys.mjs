@@ -4,15 +4,9 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "ContentLinkHandler" ];
-
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-
-ChromeUtils.defineModuleGetter(this, "Feeds",
-  "chrome://embedlite/content/Feeds.jsm");
-ChromeUtils.defineESModuleGetters(this, {
-  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
-});
+const { Feeds } = ChromeUtils.importESModule(
+  "chrome://embedlite/content/Feeds.sys.mjs"
+);
 
 const SIZES_TELEMETRY_ENUM = {
   NO_SIZES: 0,
@@ -275,7 +269,7 @@ function handleFaviconLink(aLink, aIsRichIcon, aChromeGlobal, aFaviconLoads) {
   return true;
 }
 
-var ContentLinkHandler = {
+export const ContentLinkHandler = {
   init(chromeGlobal) {
     const faviconLoads = new Map();
     chromeGlobal.addEventListener("DOMLinkAdded", event => {
@@ -299,9 +293,10 @@ var ContentLinkHandler = {
     if (!link || !link.ownerDocument || !rel || !link.href)
       return;
 
-    // Ignore sub-frames (bugs 305472, 479408).
+    // Ignore sub-frames (bugs 305472, 479408). ownerGlobal is undefined for
+    // nodes whose document is already gone.
     let window = link.ownerGlobal;
-    if (window != window.top)
+    if (!window || window != window.top)
       return;
 
     // Note: following booleans only work for the current link, not for the

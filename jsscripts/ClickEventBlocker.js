@@ -7,7 +7,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 (function(global) {
-var Services = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 var BrowserUtils = ChromeUtils.importESModule(
   "resource://gre/modules/BrowserUtils.sys.mjs"
 ).BrowserUtils;

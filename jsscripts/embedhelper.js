@@ -4,15 +4,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
-const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { Point, Rect } = ChromeUtils.importESModule(
+var { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
+var { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
+var { Point, Rect } = ChromeUtils.importESModule(
   "resource://gre/modules/Geometry.sys.mjs"
 );
-const { FileUtils } = ChromeUtils.importESModule(
+var { FileUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/FileUtils.sys.mjs"
 );
+
+if (!this.__embedLiteEmbedHelperLoaded) {
 
 // ActorManagerChild is Firefox chrome-actor bootstrap. EmbedLite loads this
 // helper in its frame-script global and registers its own message handlers
@@ -31,11 +32,7 @@ Cu.importGlobalProperties(["InspectorUtils"]);
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
-                                    "nsIEmbedAppService");
-
-XPCOMUtils.defineLazyServiceGetter(Services, "locale",
-                                    "@mozilla.org/intl/localeservice;1",
-                                    "mozILocaleService");
+                                    Ci.nsIEmbedAppService);
 
 var globalObject = null;
 var gScreenWidth = 0;
@@ -81,7 +78,9 @@ EmbedHelper.prototype = {
     Services.obs.addObserver(this, "embedlite-before-first-paint", true);
 
     Logger.debug("Available locales: " + availableLocales.join(", "));
-    Services.locale.availableLocales = availableLocales;
+    // LocaleService is parent-process-owned on current Gecko. Packaged
+    // locales are discovered through the chrome registry; mutating this list
+    // from a content frame script fails and aborts the remaining setup.
   },
 
   // Similar to HtmlInputElement IsExperimentalMobileType
@@ -185,19 +184,12 @@ EmbedHelper.prototype = {
 
         let docShell = content.docShell;
         let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
-        let legacyHistory;
-        try {
-          legacyHistory = sessionHistory.legacySHistory;
-        } catch (e) {
-          Logger.warn("Warning: legacy session history is not available", e);
-          break;
-        }
         let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
         try {
           // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
-          if (legacyHistory.count > 0) {
-            legacyHistory.purgeHistory(1);
+          if (sessionHistory.count > 0) {
+            sessionHistory.purgeHistory(1);
           }
         } catch (e) {
             Logger.warn("Warning: couldn't purgeHistory. Was it a file download?", e);
@@ -224,28 +216,28 @@ EmbedHelper.prototype = {
                 Logger.debug("Warning: no protocol provided for uri '" + link + "'. Assuming http..." + e);
                 uri = ioService.newURI("http://" + link, null, null);
             }
-            let historyEntry = legacyHistory.createEntry();
+            let historyEntry = sessionHistory.createEntry();
             historyEntry.URI = uri;
             historyEntry.triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-            legacyHistory.addEntry(historyEntry, true);
+            sessionHistory.addEntry(historyEntry);
         });
         if (index < 0) {
             Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
-            legacyHistory.getEntryAtIndex(0);
+            sessionHistory.getEntryAtIndex(0);
             index = 0;
         } else if (index >= sessionHistory.count) {
             let lastIndex = sessionHistory.count - 1;
             Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + sessionHistory.count +
                  " item(s) in the session history. Returning index " + lastIndex);
-            legacyHistory.getEntryAtIndex(lastIndex);
+            sessionHistory.getEntryAtIndex(lastIndex);
             index = lastIndex;
         } else {
-            legacyHistory.getEntryAtIndex(index);
+            sessionHistory.getEntryAtIndex(index);
         }
 
         // Update index value to enable forward and backward
-        legacyHistory.index = index;
-        legacyHistory.updateIndex();
+        sessionHistory.index = index;
+        sessionHistory.updateIndex();
 
         let initialURI;
         try {
@@ -373,13 +365,10 @@ EmbedHelper.prototype = {
   },
 
   _handleFullScreenChanged: function(aEvent) {
-    let window = aEvent.target.ownerDocument.defaultView;
     try {
-      let winId = Services.embedlite.getIDByWindow(window);
-      Services.embedlite.sendAsyncMessage(winId, "embed:fullscreenchanged",
-                                          JSON.stringify({
-                                                           "fullscreen": aEvent.target.ownerDocument.mozFullScreen
-                                                         }));
+      sendAsyncMessage("embed:fullscreenchanged", {
+        "fullscreen": aEvent.target.ownerDocument.mozFullScreen
+      });
     } catch (e) {
       Logger.warn("emhedhelper: sending async message failed", e)
     }
@@ -567,5 +556,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js
 Services.scriptloader.loadSubScript("chrome://embedlite/content/InputMethodHandler.js", this);
 
 globalObject = new EmbedHelper();
+this.__embedLiteEmbedHelperLoaded = true;
 
 Logger.debug("Frame script: embedhelper.js loaded");
+}

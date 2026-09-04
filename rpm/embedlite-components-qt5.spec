@@ -1,6 +1,6 @@
 Name:       embedlite-components-qt5
 Summary:    EmbedLite components Qt5
-Version:    2.0.0
+Version:    2.1.0
 Release:    1
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/embedlite-components
@@ -9,7 +9,7 @@ Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  libtool
 BuildRequires:  automake
 BuildRequires:  autoconf
-Requires:  xulrunner-qt5 >= 115.35.0
+Requires:  xulrunner-qt5 >= 153.1.0
 
 %description
 EmbedLite Components required for embedded browser UI

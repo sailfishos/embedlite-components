@@ -13,10 +13,6 @@ function debug(msg) {
   Logger.debug("FormAssistant.js -", msg);
 }
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  Services: "resource://gre/modules/Services.jsm",
-});
-
 /**
   * FormAssistant
   *
@@ -119,30 +115,47 @@ FormAssistant.prototype = {
     * aCallback(array_of_suggestions) is called when results are available.
     */
   _getAutoCompleteSuggestions: function(aSearchString, aElement, aCallback) {
-    // Cache the form autocomplete service for future use
-    if (!this._loginManager) {
-      this._loginManager = Cc["@mozilla.org/login-manager;1"]
-          .getService(Ci.nsILoginManager);
-    }
-
-    let hostname = aElement.baseURIObject.displayPrePath;
-    let actionUri = LoginUtils._getActionOrigin(aElement);
-    var suggestions = []
     // We only present suggestions if the form value is empty; this is so that:
     // 1. user selections will "replace" the full contents of the field; and
     // 2. we avoid synchronous search of the login database on every keypress.
-    if (aElement.form && !aElement.value) {
-      let foundLogins = this._loginManager.findLogins(hostname, actionUri, null);
-      for (let pos = 0; pos < foundLogins.length; pos++) {
-        // Filter suggestions based on the current input
-        // Do not show the value if it is the current one in the input field
-        if (foundLogins[pos].username.startsWith(aSearchString)
-            && foundLogins[pos].username !== aSearchString) {
-          suggestions.push(foundLogins[pos].username);
+    if (!aElement.form || aElement.value) {
+      aCallback([]);
+      return;
+    }
+
+    let loginManager = aElement.ownerGlobal.windowGlobalChild?.getActor(
+      "LoginManager"
+    );
+    if (!loginManager) {
+      Logger.warn("FormAssistant could not get the LoginManager actor");
+      aCallback([]);
+      return;
+    }
+
+    loginManager.sendQuery("PasswordManager:findLogins", {
+      actionOrigin: LoginUtils._getActionOrigin(aElement),
+      options: { showPrimaryPassword: true },
+    }).then(result => {
+      // Ignore a result for an input whose value changed while the parent
+      // process was searching the login store.
+      if (aElement.value !== aSearchString) {
+        return;
+      }
+
+      let suggestions = [];
+      for (let login of result.logins) {
+        // Filter suggestions based on the current input. Do not show the value
+        // if it is the current one in the input field.
+        if (login.username.startsWith(aSearchString)
+            && login.username !== aSearchString) {
+          suggestions.push(login.username);
         }
       }
-    }
-    aCallback(suggestions);
+      aCallback(suggestions);
+    }, error => {
+      Logger.warn("FormAssistant failed to get login suggestions:", error);
+      aCallback([]);
+    });
   },
 
   /**
@@ -170,9 +183,7 @@ FormAssistant.prototype = {
         return;
       }
 
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
-      Services.embedlite.sendAsyncMessage(winId, "FormAssist:AutoCompleteResult",
-                                          JSON.stringify(suggestions));
+      sendAsyncMessage("FormAssist:AutoCompleteResult", suggestions);
 
       aCallback(true);
     };
@@ -187,8 +198,7 @@ FormAssistant.prototype = {
     * _hideFormAssistPopup() in FormAssistant.jsm
     */
   _hideFormAssist: function(aElement) {
-    let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
-    Services.embedlite.sendAsyncMessage(winId, "FormAssist:Hide", "[]");
+    sendAsyncMessage("FormAssist:Hide", []);
   },
 
   // We only want to show login suggestions for certain elements

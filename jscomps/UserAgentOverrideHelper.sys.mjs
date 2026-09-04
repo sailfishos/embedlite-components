@@ -14,17 +14,20 @@ const VIEW_UA_CHANGED           = "embedliteviewhttpuseragentchanged";
 const XPCOM_SHUTDOWN            = "xpcom-shutdown";
 const PREF_OVERRIDE             = "general.useragent.override";
 
-var EXPORTED_SYMBOLS = ["UserAgentOverrideHelper"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { UserAgentOverrides } = ChromeUtils.import("chrome://embedlite/content/UserAgentOverrides.jsm");
+const { UserAgentOverrides } = ChromeUtils.importESModule(
+  "chrome://embedlite/content/UserAgentOverrides.sys.mjs"
+);
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 // UserAgentOverrideHelper service
-function UserAgentOverrideHelper()
+export function UserAgentOverrideHelper()
 {
   Logger.debug("JSComp: UserAgentOverrideHelper.js loaded");
 }
@@ -285,7 +288,3 @@ var UserAgent = {
     }
   }
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([UserAgentOverrideHelper]);
-}

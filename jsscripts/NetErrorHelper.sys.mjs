@@ -5,19 +5,24 @@
  * Copyright (c) 2020 Open Mobile Platform LLC.
  */
 
+const lazy = {};
+ChromeUtils.defineESModuleGetters(lazy, {
+  SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+});
+
 "use strict";
 
-// For the Android variant see gecko-dev/mobile/android/modules/NetErrorHelper.jsm
+// For the Android variant see gecko-dev/mobile/android/modules/NetErrorHelper.sys.mjs
 
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
-
-var EXPORTED_SYMBOLS = ["NetErrorHelper"];
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 const KEY_CODE_ENTER = 13;
 
@@ -36,7 +41,7 @@ const KEY_CODE_ENTER = 13;
 
 var handlers = {};
 
-function NetErrorHelper(browser) {
+export function NetErrorHelper(browser) {
   browser.addEventListener("click", this.handleClick, true);
 
   let listener = () => {
@@ -105,12 +110,26 @@ handlers.searchbutton = {
     this.doSearch(value);
   },
 
-  doSearch: function(value) {
-    let engine = Services.search.defaultEngine;
-    let uri = engine.getSubmission(value).uri;
+  doSearch: async function(value) {
+    try {
+      let engine = await lazy.SearchService.getDefault();
+      let uri = engine?.getSubmission(value)?.uri;
+      if (!uri) {
+        Logger.warn("NetErrorHelper failed to create a search submission");
+        return;
+      }
 
-    // Reset the user search to whatever the new search term was
-    this._docShell.loadURI(uri.spec, Ci.nsIWebNavigation.LOAD_FLAGS_NONE, null, null, null);
+      // Reset the user search to whatever the new search term was
+      this._docShell.loadURI(
+        uri.spec,
+        Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
+        null,
+        null,
+        null
+      );
+    } catch (e) {
+      Logger.warn("NetErrorHelper failed to load the default search engine:", e);
+    }
   },
 };
 
@@ -185,4 +204,3 @@ handlers.wifi = {
     }
   }
 };
-

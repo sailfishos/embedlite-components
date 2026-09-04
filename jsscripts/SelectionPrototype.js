@@ -65,6 +65,9 @@ SelectionPrototype.prototype = {
   _debugOptions: { dumpRanges: false, displayRanges: false },
   _domWinUtils: null,
   _selectionMoveActive: false,
+  _searchRequestId: 0,
+  _searchText: "",
+  _searchUri: "",
   _snap: false,
   _type: 0,
 
@@ -322,16 +325,7 @@ SelectionPrototype.prototype = {
     this._cache.text = isPhoneNumber ? this._getSelectedPhoneNumber() : this._getSelectedText();
     this._cache.isPhoneNumber = !!isPhoneNumber;
 
-    let searchUri = "";
-    try {
-      let searchEngine = Services.search.defaultEngine;
-      if (searchEngine) {
-        searchUri = Services.search.defaultEngine.getSubmission(this._cache.text).uri.spec;
-      }
-    } catch (e) {
-      Logger.warn("Failed to get current search engine:", e)
-    }
-    this._cache.searchUri =  searchUri;
+    this._updateSearchUri(this._cache.text);
 
     // Snap to word when content is not editable
     if (this._cache.src == "start") {
@@ -340,6 +334,42 @@ SelectionPrototype.prototype = {
 
     // Get monocles positioned correctly
     this.sendAsync("Content:SelectionRange", this._cache);
+  },
+
+  _updateSearchUri: function _updateSearchUri(aText) {
+    if (aText === this._searchText) {
+      this._cache.searchUri = this._searchUri;
+      return;
+    }
+
+    this._searchText = aText;
+    this._searchUri = "";
+    this._cache.searchUri = "";
+
+    let requestId = ++this._searchRequestId;
+    let actor = this._contentWindow?.windowGlobalChild?.getActor(
+      "EmbedLiteSelection"
+    );
+    if (!actor) {
+      Logger.warn("Could not get the EmbedLiteSelection actor");
+      return;
+    }
+
+    actor.sendQuery("EmbedLiteSelection:GetSearchSubmission", {
+      text: aText,
+    }).then(searchUri => {
+      if (requestId !== this._searchRequestId
+          || aText !== this._searchText
+          || !this.isActive) {
+        return;
+      }
+
+      this._searchUri = searchUri || "";
+      this._cache.searchUri = this._searchUri;
+      this.sendAsync("Content:SelectionRange", this._cache);
+    }, error => {
+      Logger.warn("Failed to get current search engine:", error);
+    });
   },
 
   /*

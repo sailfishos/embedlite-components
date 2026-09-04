@@ -4,20 +4,23 @@
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
+const Cr = Components.results;
+const Cu = Components.utils;
 
-var EXPORTED_SYMBOLS = ["PrivateDataManager"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 function debug(aMsg) {
   Logger.debug("PrivateDataManager.js:", aMsg);
 }
 
-function PrivateDataManager() {
+export function PrivateDataManager() {
   Logger.debug("JSComp: PrivateDataManager.js loaded");
 }
 
@@ -109,8 +112,10 @@ PrivateDataManager.prototype = {
   clearPrivateData: function (aData) {
     switch (aData) {
       case "passwords": {
-        this.loginManager.removeAllLogins();
-        debug("Passwords removed");
+        this.loginManager.removeAllUserFacingLoginsAsync().then(
+          () => debug("Passwords removed"),
+          Cu.reportError
+        );
         break;
       }
       case "cookies-and-site-data": {
@@ -151,7 +156,3 @@ PrivateDataManager.prototype = {
     }
   }
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([PrivateDataManager]);
-}

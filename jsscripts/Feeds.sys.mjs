@@ -4,15 +4,7 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "Feeds" ];
-
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-
-ChromeUtils.defineESModuleGetters(this, {
-  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
-});
-
-var Feeds = {
+export const Feeds = {
   // Listeners are added in nsBrowserGlue.js
   receiveMessage(aMessage) {
     let data = aMessage.data;
@@ -77,9 +69,15 @@ var Feeds = {
 
     if (aIsFeed) {
       try {
-        let href = BrowserUtils.makeURI(aLink.href, aLink.ownerDocument.characterSet);
-        BrowserUtils.urlSecurityCheck(href, aPrincipal,
-                                      Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
+        let href = Services.io.newURI(
+          aLink.href,
+          aLink.ownerDocument.characterSet
+        );
+        Services.scriptSecurityManager.checkLoadURIWithPrincipal(
+          aPrincipal,
+          href,
+          Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL
+        );
         return type || "application/rss+xml";
       } catch (ex) {
       }

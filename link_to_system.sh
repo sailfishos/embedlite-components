@@ -19,24 +19,32 @@ mkdir -p $TARGET_DIR/components
 
 FILES_LIST="
 jscomps/EmbedLiteJSComponents.manifest
-jscomps/AboutRedirector.js
-jscomps/LoginManagerPrompter.js
-jscomps/HelperAppDialog.js
+jscomps/AboutRedirector.sys.mjs
+jscomps/LoginManagerPrompter.sys.mjs
+jscomps/HelperAppDialog.sys.mjs
 jscomps/FilePicker.js
-jscomps/ContentPermissionPrompt.js
-jscomps/ContentPermissionManager.js
-jscomps/EmbedLiteGlobalHelper.js
-jscomps/EmbedLiteConsoleListener.js
-jscomps/EmbedLiteSyncService.js
-jscomps/EmbedLiteFaviconService.js
-jscomps/EmbedLiteOrientationChangeHandler.js
-jscomps/EmbedLiteSearchEngine.js
-jscomps/EmbedLiteErrorPageHandler.js
-jscomps/UserAgentOverrideHelper.js
-jscomps/XPIDialogService.js
-jscomps/PrivateDataManager.js
-jscomps/EmbedliteDownloadManager.js
-jscomps/EmbedLiteWebrtcUI.js
+jscomps/ContentPermissionPrompt.sys.mjs
+jscomps/ContentPermissionManager.sys.mjs
+jscomps/EmbedLiteGlobalHelper.sys.mjs
+jscomps/EmbedLitePromptParent.sys.mjs
+jscomps/EmbedLiteSelectionParent.sys.mjs
+jscomps/EmbedLiteWebRTCChild.sys.mjs
+jscomps/EmbedLiteWebRTCParent.sys.mjs
+jscomps/EmbedLiteWebRTCProcessChild.sys.mjs
+jscomps/EmbedLiteConsoleListener.sys.mjs
+jscomps/EmbedPrefService.sys.mjs
+jscomps/EmbedLiteFaviconService.sys.mjs
+jscomps/EmbedLiteOrientationChangeHandler.sys.mjs
+jscomps/EmbedLiteChromeManager.sys.mjs
+jscomps/EmbedLiteSearchEngine.sys.mjs
+jscomps/EmbedLiteErrorPageHandler.sys.mjs
+jscomps/UserAgentOverrideHelper.sys.mjs
+jscomps/XPIDialogService.sys.mjs
+jscomps/PrivateDataManager.sys.mjs
+jscomps/EmbedliteDownloadManager.sys.mjs
+jscomps/LoginsHelper.sys.mjs
+jscomps/EmbedLiteWebrtcUI.sys.mjs
+jscomps/IntentProtocolHandler.sys.mjs
 "
 
 for str in $FILES_LIST; do
@@ -49,12 +57,14 @@ rm -f $TARGET_DIR/chrome/EmbedLiteJSScripts.manifest;
 ln -s $(pwd)/jsscripts/EmbedLiteJSScripts.manifest $TARGET_DIR/chrome/EmbedLiteJSScripts.manifest;
 
 rm -rf $TARGET_DIR/chrome/embedlite;
-mkdir -p $TARGET_DIR/chrome/embedlite/content/sync;
 mkdir -p $TARGET_DIR/chrome/embedlite/content/search-plugins;
 ln -s $(pwd)/jsscripts/embedhelper.js $TARGET_DIR/chrome/embedlite/content/embedhelper.js;
-ln -s $(pwd)/jsscripts/OrientationChangeHandler.jsm $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.jsm;
-ln -s $(pwd)/jsscripts/UserAgentUpdates.jsm $TARGET_DIR/chrome/embedlite/content/UserAgentUpdates.jsm;
-ln -s $(pwd)/jsscripts/UserAgentOverrides.jsm $TARGET_DIR/chrome/embedlite/content/UserAgentOverrides.jsm;
+ln -s $(pwd)/jsscripts/ContentLinkHandler.sys.mjs $TARGET_DIR/chrome/embedlite/content/ContentLinkHandler.sys.mjs;
+ln -s $(pwd)/jsscripts/Feeds.sys.mjs $TARGET_DIR/chrome/embedlite/content/Feeds.sys.mjs;
+ln -s $(pwd)/jsscripts/NetErrorHelper.sys.mjs $TARGET_DIR/chrome/embedlite/content/NetErrorHelper.sys.mjs;
+ln -s $(pwd)/jsscripts/OrientationChangeHandler.sys.mjs $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.sys.mjs;
+ln -s $(pwd)/jsscripts/UserAgentUpdates.sys.mjs $TARGET_DIR/chrome/embedlite/content/UserAgentUpdates.sys.mjs;
+ln -s $(pwd)/jsscripts/UserAgentOverrides.sys.mjs $TARGET_DIR/chrome/embedlite/content/UserAgentOverrides.sys.mjs;
 ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content/SelectAsyncHelper.js;
 ln -s $(pwd)/jsscripts/ClipboardReadPasteHelper.js $TARGET_DIR/chrome/embedlite/content/ClipboardReadPasteHelper.js;
 ln -s $(pwd)/jsscripts/SelectionHandler.js $TARGET_DIR/chrome/embedlite/content/SelectionHandler.js;
@@ -70,8 +80,6 @@ ln -s $(pwd)/search-engines/baidu.xml $TARGET_DIR/chrome/embedlite/content/searc
 ln -s $(pwd)/search-engines/duckduckgo.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/duckduckgo.xml;
 ln -s $(pwd)/search-engines/yandex.xml $TARGET_DIR/chrome/embedlite/content/search-plugins/yandex.xml;
 ln -s $(pwd)/search-engines/list.json $TARGET_DIR/chrome/embedlite/content/search-plugins/list.json;
-
-ln -s $(pwd)/jsscripts/sync/bookmarks.js $TARGET_DIR/chrome/embedlite/content/sync/bookmarks.js;
 
 rm -f $TARGET_DIR/chrome/EmbedLiteOverrides.manifest;
 ln -s $(pwd)/overrides/EmbedLiteOverrides.manifest $TARGET_DIR/chrome/EmbedLiteOverrides.manifest;
