@@ -150,11 +150,7 @@ Object.assign(ClipboardReadPasteHelper, {
   },
 
   _clipboardEventTarget: function _clipboardEventTarget() {
-    try {
-      return Services.embedlite.chromeEventHandler(content) || content;
-    } catch (e) {
-      return content;
-    }
+    return content;
   },
 
   _pasteDialogDelay: function _pasteDialogDelay() {

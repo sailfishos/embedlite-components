@@ -30,10 +30,6 @@ if (!Services.prefs.getBoolPref("dom.storage.enable_unsupported_legacy_implement
 Cu.importGlobalProperties(["InspectorUtils"]);
 
 
-XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
-                                    "@mozilla.org/embedlite-app-service;1",
-                                    Ci.nsIEmbedAppService);
-
 var globalObject = null;
 var gScreenWidth = 0;
 var gScreenHeight = 0;
@@ -160,15 +156,13 @@ EmbedHelper.prototype = {
       }
       case "embedui:zoomToRect": {
         if (aMessage.data) {
-          let winId = Services.embedlite.getIDByWindow(content);
-          // This is a hackish way as zoomToRect does not work if x-value has not changed or viewport has not been scaled (zoom animation).
-          // Thus, we're missing animation when viewport has not been scaled.
+          // Hosted zoom commands are handled by the browser parent before
+          // content delivery. Keep the old same-width scroll optimization for
+          // callers that intentionally send this message to the frame script.
           let scroll = this._viewportData && this._viewportData.cssCompositedRect.width === aMessage.data.width;
 
           if (scroll) {
             content.scrollTo(aMessage.data.x, aMessage.data.y);
-          } else {
-            Services.embedlite.zoomToRect(winId, aMessage.data.x, aMessage.data.y, aMessage.data.width, aMessage.data.height);
           }
         }
         break;
@@ -389,7 +383,7 @@ EmbedHelper.prototype = {
       let uri = this._getLinkURI(target);
       if (uri) {
         try {
-          Services.io.speculativeConnect(uri, aEvent.target.nodePrincipal, null);
+          Services.io.speculativeConnect(uri, aEvent.target.nodePrincipal, null, false);
         } catch (e) {
           Logger.warn("Speculative connection error:", e)
         }
@@ -465,8 +459,8 @@ EmbedHelper.prototype = {
     let element = utils.elementFromPoint(x, y, true, false);
     let offset = { x:0, y:0 };
 
-    while (element && (element instanceof content.HTMLIFrameElement ||
-                       element instanceof content.HTMLFrameElement)) {
+    while (element && (content.HTMLIFrameElement.isInstance(element) ||
+                       content.HTMLFrameElement.isInstance(element))) {
       // get the child frame position in client coordinates
       let rect = element.getBoundingClientRect();
 

@@ -16,10 +16,7 @@ jscomps_manifest_DATA = \
 	EmbedLiteWebRTCProcessChild.sys.mjs \
 	EmbedLiteConsoleListener.sys.mjs \
 	EmbedLiteChromeManager.sys.mjs \
-	EmbedLiteOrientationChangeHandler.sys.mjs \
-	EmbedLiteFaviconService.sys.mjs \
 	EmbedLiteSearchEngine.sys.mjs \
-	EmbedLiteErrorPageHandler.sys.mjs \
 	UserAgentOverrideHelper.sys.mjs \
 	XPIDialogService.sys.mjs \
 	PrivateDataManager.sys.mjs \

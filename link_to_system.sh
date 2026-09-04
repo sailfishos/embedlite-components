@@ -33,11 +33,8 @@ jscomps/EmbedLiteWebRTCParent.sys.mjs
 jscomps/EmbedLiteWebRTCProcessChild.sys.mjs
 jscomps/EmbedLiteConsoleListener.sys.mjs
 jscomps/EmbedPrefService.sys.mjs
-jscomps/EmbedLiteFaviconService.sys.mjs
-jscomps/EmbedLiteOrientationChangeHandler.sys.mjs
 jscomps/EmbedLiteChromeManager.sys.mjs
 jscomps/EmbedLiteSearchEngine.sys.mjs
-jscomps/EmbedLiteErrorPageHandler.sys.mjs
 jscomps/UserAgentOverrideHelper.sys.mjs
 jscomps/XPIDialogService.sys.mjs
 jscomps/PrivateDataManager.sys.mjs
@@ -59,10 +56,6 @@ ln -s $(pwd)/jsscripts/EmbedLiteJSScripts.manifest $TARGET_DIR/chrome/EmbedLiteJ
 rm -rf $TARGET_DIR/chrome/embedlite;
 mkdir -p $TARGET_DIR/chrome/embedlite/content/search-plugins;
 ln -s $(pwd)/jsscripts/embedhelper.js $TARGET_DIR/chrome/embedlite/content/embedhelper.js;
-ln -s $(pwd)/jsscripts/ContentLinkHandler.sys.mjs $TARGET_DIR/chrome/embedlite/content/ContentLinkHandler.sys.mjs;
-ln -s $(pwd)/jsscripts/Feeds.sys.mjs $TARGET_DIR/chrome/embedlite/content/Feeds.sys.mjs;
-ln -s $(pwd)/jsscripts/NetErrorHelper.sys.mjs $TARGET_DIR/chrome/embedlite/content/NetErrorHelper.sys.mjs;
-ln -s $(pwd)/jsscripts/OrientationChangeHandler.sys.mjs $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.sys.mjs;
 ln -s $(pwd)/jsscripts/UserAgentUpdates.sys.mjs $TARGET_DIR/chrome/embedlite/content/UserAgentUpdates.sys.mjs;
 ln -s $(pwd)/jsscripts/UserAgentOverrides.sys.mjs $TARGET_DIR/chrome/embedlite/content/UserAgentOverrides.sys.mjs;
 ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content/SelectAsyncHelper.js;
