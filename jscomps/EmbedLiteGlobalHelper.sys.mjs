@@ -37,6 +37,24 @@ try {
   }
 }
 
+try {
+  ChromeUtils.registerWindowActor("EmbedLiteNetError", {
+    child: {
+      esModuleURI:
+        "resource://embedlite-components/EmbedLiteNetErrorChild.sys.mjs",
+      events: {
+        DOMContentLoaded: {},
+      },
+    },
+    matches: ["about:certerror?*", "about:neterror?*"],
+    allFrames: true,
+  });
+} catch (error) {
+  if (error.result !== Cr.NS_ERROR_DOM_NOT_SUPPORTED_ERR) {
+    throw error;
+  }
+}
+
 // Search-engine configuration and submission generation are parent-owned on
 // current Gecko. Let the content selection helper request a submission URI
 // without instantiating the search service in the content process.

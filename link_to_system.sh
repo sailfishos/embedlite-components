@@ -26,6 +26,7 @@ jscomps/FilePicker.js
 jscomps/ContentPermissionPrompt.sys.mjs
 jscomps/ContentPermissionManager.sys.mjs
 jscomps/EmbedLiteGlobalHelper.sys.mjs
+jscomps/EmbedLiteNetErrorChild.sys.mjs
 jscomps/EmbedLitePromptParent.sys.mjs
 jscomps/EmbedLiteSelectionParent.sys.mjs
 jscomps/EmbedLiteWebRTCChild.sys.mjs
@@ -84,6 +85,7 @@ mkdir -p $TARGET_DIR/chrome/chrome/skin/images;
 ln -s $(pwd)/overrides/netError.xhtml $TARGET_DIR/chrome/chrome/content/
 ln -s $(pwd)/overrides/appstrings.properties $TARGET_DIR/chrome/chrome/content/
 ln -s $(pwd)/overrides/netError.css $TARGET_DIR/chrome/chrome/skin/
+ln -s $(pwd)/overrides/embedliteAboutNetError.css $TARGET_DIR/chrome/chrome/skin/
 ln -s $(pwd)/overrides/touchcontrols.css $TARGET_DIR/chrome/chrome/skin/
 ln -s $(pwd)/overrides/images/clicktoplay-bgtexture.png $TARGET_DIR/chrome/chrome/skin/images/
 ln -s $(pwd)/overrides/images/error.png $TARGET_DIR/chrome/chrome/skin/images/

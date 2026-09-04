@@ -9,6 +9,7 @@ jscomps_manifest_DATA = \
 	ContentPermissionPrompt.sys.mjs \
 	ContentPermissionManager.sys.mjs \
 	EmbedLiteGlobalHelper.sys.mjs \
+	EmbedLiteNetErrorChild.sys.mjs \
 	EmbedLitePromptParent.sys.mjs \
 	EmbedLiteSelectionParent.sys.mjs \
 	EmbedLiteWebRTCChild.sys.mjs \
