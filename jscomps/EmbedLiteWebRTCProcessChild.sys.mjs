@@ -6,12 +6,14 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
+const captureStates = new Map();
+
 export class EmbedLiteWebRTCProcessChild extends JSProcessActorChild {
   getActor(window) {
     return window.windowGlobalChild.getActor("EmbedLiteWebRTC");
   }
 
-  async observe(subject, topic) {
+  async observe(subject, topic, data) {
     switch (topic) {
       case "getUserMedia:ask-device-permission":
         // Sailjail grants the application-level device access separately.
@@ -44,7 +46,77 @@ export class EmbedLiteWebRTCProcessChild extends JSProcessActorChild {
           subject.callID
         );
         break;
+      case "recording-device-events": {
+        subject.QueryInterface(Ci.nsIPropertyBag2);
+        this.updateMediaCaptureState(subject.getProperty("window"));
+        break;
+      }
+      case "recording-device-stopped":
+        this.updateMediaCaptureState(
+          Services.wm.getOuterWindowWithId(subject.windowID),
+          subject.windowID
+        );
+        break;
+      case "recording-window-ended":
+        this.removeMediaCaptureState(data);
+        break;
     }
+  }
+
+  updateMediaCaptureState(
+    window,
+    windowId = window?.windowGlobalChild?.outerWindowId
+  ) {
+    if (!window || window.closed) {
+      if (windowId !== undefined) {
+        this.removeMediaCaptureState(windowId);
+      }
+      return;
+    }
+
+    let mediaManagerService = Cc[
+      "@mozilla.org/mediaManagerService;1"
+    ].getService(Ci.nsIMediaManagerService);
+    let state = { video: false, audio: false };
+    let camera = {};
+    let microphone = {};
+    let screen = {};
+    let windowShare = {};
+    let browser = {};
+    let mediaDevices = {};
+
+    mediaManagerService.mediaCaptureWindowState(
+      window,
+      camera,
+      microphone,
+      screen,
+      windowShare,
+      browser,
+      mediaDevices
+    );
+    state.video = camera.value !== mediaManagerService.STATE_NOCAPTURE;
+    state.audio = microphone.value !== mediaManagerService.STATE_NOCAPTURE;
+    if (state.video || state.audio) {
+      captureStates.set(windowId, state);
+    } else {
+      captureStates.delete(windowId);
+    }
+
+    this.sendMediaCaptureState();
+  }
+
+  removeMediaCaptureState(windowId) {
+    captureStates.delete(Number(windowId));
+    this.sendMediaCaptureState();
+  }
+
+  sendMediaCaptureState() {
+    let state = { video: false, audio: false };
+    for (let captureState of captureStates.values()) {
+      state.video ||= captureState.video;
+      state.audio ||= captureState.audio;
+    }
+    this.sendAsyncMessage("MediaCaptureState", state);
   }
 
   async handleMediaRequest(request) {

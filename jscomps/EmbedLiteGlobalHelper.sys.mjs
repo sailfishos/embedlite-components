@@ -96,6 +96,10 @@ try {
 try {
   ChromeUtils.registerProcessActor("EmbedLiteWebRTCProcess", {
     kind: "JSProcessActor",
+    parent: {
+      esModuleURI:
+        "resource://embedlite-components/EmbedLiteWebRTCProcessParent.sys.mjs",
+    },
     child: {
       esModuleURI:
         "resource://embedlite-components/EmbedLiteWebRTCProcessChild.sys.mjs",
@@ -103,6 +107,9 @@ try {
         "getUserMedia:ask-device-permission",
         "getUserMedia:request",
         "PeerConnection:request",
+        "recording-device-events",
+        "recording-device-stopped",
+        "recording-window-ended",
       ],
     },
   });

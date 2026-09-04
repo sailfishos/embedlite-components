@@ -15,6 +15,7 @@ jscomps_manifest_DATA = \
 	EmbedLiteWebRTCChild.sys.mjs \
 	EmbedLiteWebRTCParent.sys.mjs \
 	EmbedLiteWebRTCProcessChild.sys.mjs \
+	EmbedLiteWebRTCProcessParent.sys.mjs \
 	EmbedLiteConsoleListener.sys.mjs \
 	EmbedLiteChromeManager.sys.mjs \
 	EmbedLiteSearchEngine.sys.mjs \

@@ -32,6 +32,7 @@ jscomps/EmbedLiteSelectionParent.sys.mjs
 jscomps/EmbedLiteWebRTCChild.sys.mjs
 jscomps/EmbedLiteWebRTCParent.sys.mjs
 jscomps/EmbedLiteWebRTCProcessChild.sys.mjs
+jscomps/EmbedLiteWebRTCProcessParent.sys.mjs
 jscomps/EmbedLiteConsoleListener.sys.mjs
 jscomps/EmbedPrefService.sys.mjs
 jscomps/EmbedLiteChromeManager.sys.mjs
