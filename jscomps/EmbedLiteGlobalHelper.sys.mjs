@@ -161,6 +161,7 @@ EmbedLiteGlobalHelper.prototype = {
         break;
       }
       case "profile-after-change": {
+        this._migratePreferences();
         break;
       }
       case "xpcom-shutdown": {
@@ -170,6 +171,23 @@ EmbedLiteGlobalHelper.prototype = {
         break;
       }
     }
+  },
+
+  _migratePreferences() {
+    const pref = "apz.touch_start_tolerance";
+    const migrated = "embedlite.prefs.touch_start_tolerance_migrated";
+    // Wait for the Gecko package with the Firefox Android touch threshold.
+    if (Services.prefs.getDefaultBranch("").getStringPref(pref, "") !== "0.06" ||
+        Services.prefs.getBoolPref(migrated, false)) {
+      return;
+    }
+
+    // WebView used to save a Qt-derived threshold on first run. Remove it
+    // once per profile so Gecko's default applies; later user changes survive.
+    // Old automatic and manually set values cannot be distinguished.
+    Services.prefs.clearUserPref(pref);
+    Services.prefs.setBoolPref(migrated, true);
+    Services.prefs.savePrefFile(null);
   },
 
   notifyInvalidSubmit: function notifyInvalidSubmit(aFormElement, aInvalidElements) {
