@@ -459,7 +459,7 @@ EmbedHelper.prototype = {
     let element = utils.elementFromPoint(x, y, true, false);
     let offset = { x:0, y:0 };
 
-    while (element && (content.HTMLIFrameElement.isInstance(element) ||
+    while (typeof __embedLiteDocumentActor === "undefined" && element && (content.HTMLIFrameElement.isInstance(element) ||
                        content.HTMLFrameElement.isInstance(element))) {
       // get the child frame position in client coordinates
       let rect = element.getBoundingClientRect();

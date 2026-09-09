@@ -72,11 +72,14 @@ Dialog.prototype = {
                                           Ci.nsISupportsWeakReference]),
 
   _init: function(aData) {
+    this.id = Services.uuid.generateUUID().toString();
+    aData.id = this.id;
     addMessageListener("embedui:selectresponse", this);
     sendAsyncMessage("embed:selectasync", aData);
   },
 
   receiveMessage: function(aMessage) {
+    if (aMessage.json.id !== this.id) return;
     removeMessageListener("embedui:selectresponse", this);
     this.onDone(aMessage.json.result);
   },
@@ -84,7 +87,8 @@ Dialog.prototype = {
   onDone: function(aResult) {},
 
   abort: function() {
-    sendAsyncMessage("embed:selectabort");
+    removeMessageListener("embedui:selectresponse", this);
+    sendAsyncMessage("embed:selectabort", { id: this.id });
   }
 };
 

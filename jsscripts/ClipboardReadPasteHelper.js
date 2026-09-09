@@ -7,7 +7,6 @@
 var ClipboardReadPasteHelper = global.ClipboardReadPasteHelper || {};
 
 Object.assign(ClipboardReadPasteHelper, {
-  _requestId: ClipboardReadPasteHelper._requestId || 0,
   _pendingRequestId: null,
   _pendingClipboards: null,
   _eventTarget: ClipboardReadPasteHelper._eventTarget || null,
@@ -42,7 +41,7 @@ Object.assign(ClipboardReadPasteHelper, {
       this._respond(false);
     }
 
-    this._pendingRequestId = ++this._requestId;
+    this._pendingRequestId = Services.uuid.generateUUID().toString();
     this._pendingClipboards = clipboards;
     sendAsyncMessage("embed:clipboardreadpaste", {
       id: this._pendingRequestId,
