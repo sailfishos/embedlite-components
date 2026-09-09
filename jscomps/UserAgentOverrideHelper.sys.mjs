@@ -7,24 +7,23 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 
 const APP_STARTUP               = "app-startup"
-const VIEW_CREATED              = "embedliteviewcreated";
-const VIEW_DESTROYED            = "embedliteviewdestroyed";
-const VIEW_DESKTOP_MODE_CHANGED = "embedliteviewdesktopmodechanged";
-const VIEW_UA_CHANGED           = "embedliteviewhttpuseragentchanged";
 const XPCOM_SHUTDOWN            = "xpcom-shutdown";
 const PREF_OVERRIDE             = "general.useragent.override";
 
-var EXPORTED_SYMBOLS = ["UserAgentOverrideHelper"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { UserAgentOverrides } = ChromeUtils.import("chrome://embedlite/content/UserAgentOverrides.jsm");
+const { UserAgentOverrides } = ChromeUtils.importESModule(
+  "chrome://embedlite/content/UserAgentOverrides.sys.mjs"
+);
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 // UserAgentOverrideHelper service
-function UserAgentOverrideHelper()
+export function UserAgentOverrideHelper()
 {
   Logger.debug("JSComp: UserAgentOverrideHelper.js loaded");
 }
@@ -37,31 +36,8 @@ UserAgentOverrideHelper.prototype = {
       // Engine DownloadManager notifications
       case APP_STARTUP: {
         Logger.debug("UserAgentOverrideHelper app-startup");
-        Services.obs.addObserver(this, VIEW_CREATED, true);
-        Services.obs.addObserver(this, VIEW_DESKTOP_MODE_CHANGED, true);
-        Services.obs.addObserver(this, VIEW_DESTROYED, true);
-        Services.obs.addObserver(this, VIEW_UA_CHANGED, true);
         Services.obs.addObserver(this, XPCOM_SHUTDOWN, false);
         UserAgent.init();
-        break;
-      }
-      case VIEW_CREATED: {
-        UserAgent.addTabForWindow(aSubject)
-        break;
-      }
-      case VIEW_DESTROYED: {
-        UserAgent.removeTabForWindow(aSubject)
-        break;
-      }
-      case VIEW_DESKTOP_MODE_CHANGED: {
-        let tab = UserAgent.getTabForWindow(aSubject);
-        if (tab) {
-          tab.desktopMode = (aData === "true");
-        }
-        break;
-      }
-      case VIEW_UA_CHANGED: {
-        UserAgent.setUserAgentOverride(aSubject, aData);
         break;
       }
       case XPCOM_SHUTDOWN: {
@@ -81,7 +57,6 @@ UserAgentOverrideHelper.prototype = {
 var UserAgent = {
   _debug: false,
   _customUA: null,
-  _tabs: [],
   overrideMap: new Map,
   initilized: false,
   userAgent: "",
@@ -140,13 +115,6 @@ var UserAgent = {
     }
   },
 
-  setUserAgentOverride: function(aWindow, httpUserAgent) {
-    let tab = this.getTabForWindow(aWindow);
-    if (tab) {
-      tab.httpuseragentstring = httpUserAgent
-    }
-  },
-
   getCustomUserAgent: function() {
     if (Services.prefs.prefHasUserValue(PREF_OVERRIDE)) {
       let ua = Services.prefs.getCharPref(PREF_OVERRIDE);
@@ -175,16 +143,16 @@ var UserAgent = {
     let ua = "";
     let uri = channel.URI;
     let loadingPrincipalURI = null;
-    let channelWindow = this._getWindowForRequest(channel);
-
-    let tab = this.getTabForWindow(channelWindow);
-    if (tab) {
-      // Send assigned UA if it has been overridden
-      if (tab.httpuseragentstring.length) {
-        return tab.httpuseragentstring;
+    // Every document is hosted remotely. Its BrowsingContext carries both
+    // the per-tab desktop mode and any explicit user-agent override.
+    let loadInfo = channel.loadInfo;
+    let browsingContext = loadInfo && loadInfo.browsingContext;
+    if (browsingContext) {
+      browsingContext = browsingContext.top;
+      if (browsingContext.customUserAgent) {
+        return browsingContext.customUserAgent;
       }
-      // Send desktop UA if "Request Desktop Site" is enabled.
-      if (tab.desktopMode) {
+      if (browsingContext.forceDesktopViewport) {
         return this.DESKTOP_UA;
       }
     }
@@ -217,63 +185,6 @@ var UserAgent = {
     return defaultUA;
   },
 
-  getTabForWindow: function getTabForWindow(aWindow) {
-    let tabs = this._tabs;
-    for (let i = 0; i < tabs.length; i++) {
-      if (tabs[i].contentWindow == aWindow) {
-        return tabs[i];
-      }
-    }
-    return null;
-  },
-
-  addTabForWindow: function addTabForWindow(aWindow) {
-    this._tabs.push({
-      "contentWindow" : aWindow,
-      "desktopMode" : false,
-      "httpuseragentstring" : ""
-    });
-  },
-
-  removeTabForWindow: function removeTabForWindow(aWindow) {
-    let tabs = this._tabs;
-    for (let i = 0; i < tabs.length; i++) {
-      if (tabs[i].contentWindow == aWindow) {
-        tabs.splice(i, 1);
-        return;
-      }
-    }
-  },
-
-  _getRequestLoadContext: function ua_getRequestLoadContext(aRequest) {
-    if (aRequest && aRequest.notificationCallbacks) {
-      try {
-        return aRequest.notificationCallbacks.getInterface(Ci.nsILoadContext);
-      } catch (ex) { }
-    }
-
-    if (aRequest && aRequest.loadGroup && aRequest.loadGroup.notificationCallbacks) {
-      try {
-        return aRequest.loadGroup.notificationCallbacks.getInterface(Ci.nsILoadContext);
-      } catch (ex) { }
-    }
-
-    return null;
-  },
-
-  _getWindowForRequest: function ua_getWindowForRequest(aRequest) {
-    let loadContext = this._getRequestLoadContext(aRequest);
-    if (loadContext) {
-      try {
-        return loadContext.associatedWindow;
-      } catch (e) {
-        // loadContext.associatedWindow can throw when there's no window
-      }
-    }
-
-    return null;
-  },
-
   observe: function ua_observe(aSubject, aTopic, aData) {
     switch (aTopic) {
       case "nsPref:changed": {
@@ -285,7 +196,3 @@ var UserAgent = {
     }
   }
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([UserAgentOverrideHelper]);
-}

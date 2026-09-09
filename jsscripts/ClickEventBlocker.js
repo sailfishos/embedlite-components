@@ -7,7 +7,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 (function(global) {
-var Services = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 var BrowserUtils = ChromeUtils.importESModule(
   "resource://gre/modules/BrowserUtils.sys.mjs"
 ).BrowserUtils;
@@ -22,11 +21,11 @@ Object.assign(ClickEventBlocker, {
 
   init: function init(context, params) {
     if (this._context) {
-      Services.els.removeSystemEventListener(this._context, "click", this, true);
+      this._context.removeEventListener("click", this, true);
     }
     this._context = context;
     this._allowNavigationInSameOrigin = params && params.allowNavigationInSameOrigin;
-    Services.els.addSystemEventListener(context, "click", this, true);
+    context.addEventListener("click", this, true);
     this._rootOrigin = null;
   },
 
@@ -95,9 +94,9 @@ Object.assign(ClickEventBlocker, {
   _hrefForClickEvent(event) {
     function isHTMLLink(aNode) {
       // Be consistent with what nsContextMenu.js does.
-      return ((aNode instanceof content.HTMLAnchorElement && aNode.href) ||
-              (aNode instanceof content.HTMLAreaElement && aNode.href) ||
-              aNode instanceof content.HTMLLinkElement);
+      return ((content.HTMLAnchorElement.isInstance(aNode) && aNode.href) ||
+              (content.HTMLAreaElement.isInstance(aNode) && aNode.href) ||
+              content.HTMLLinkElement.isInstance(aNode));
     }
 
     let node = event.target;

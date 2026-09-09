@@ -638,8 +638,8 @@ function SelectionHandler() {
     if (this._targetElement && (ChromeUtils.getClassName(this._targetElement) === "HTMLTextAreaElement" ||
                                 (ChromeUtils.getClassName(this._targetElement) === "HTMLInputElement" &&
                                  this._targetElement.mozIsTextField(true)))) {
-      let selection = focusedElement.editor.selection;
-      return selection.toString();
+      let selection = this._targetElement.editor.selection;
+      return selection;
     } else if (this._contentWindow)
       return this._contentWindow.getSelection();
     return null;

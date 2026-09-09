@@ -8,34 +8,33 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = ["UserAgentUpdates"];
-
 const { AppConstants } = ChromeUtils.importESModule("resource://gre/modules/AppConstants.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Cu.importGlobalProperties(["XMLHttpRequest"]);
 
-ChromeUtils.defineESModuleGetters(this, {
+const lazy = {};
+
+ChromeUtils.defineESModuleGetters(lazy, {
   FileUtils: "resource://gre/modules/FileUtils.sys.mjs",
   NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
   UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
 });
 
 XPCOMUtils.defineLazyServiceGetter(
-  this, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
+  lazy, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", Ci.nsIUpdateTimerManager);
 
-XPCOMUtils.defineLazyGetter(this, "gApp",
+ChromeUtils.defineLazyGetter(lazy, "gApp",
   function() {
     return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo)
                                             .QueryInterface(Ci.nsIXULRuntime);
   });
 
-XPCOMUtils.defineLazyGetter(this, "gDecoder",
+ChromeUtils.defineLazyGetter(lazy, "gDecoder",
   function() { return new TextDecoder(); }
 );
 
-XPCOMUtils.defineLazyGetter(this, "gEncoder",
+ChromeUtils.defineLazyGetter(lazy, "gEncoder",
   function() { return new TextEncoder(); }
 );
 
@@ -61,17 +60,17 @@ var gInitialized = false;
 function readChannel(url) {
   return new Promise((resolve, reject) => {
     try {
-      let channel = NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true});
+      let channel = lazy.NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true});
       channel.contentType = "application/json";
 
-      NetUtil.asyncFetch(channel, (inputStream, status) => {
+      lazy.NetUtil.asyncFetch(channel, (inputStream, status) => {
         if (!Components.isSuccessCode(status)) {
           reject();
           return;
         }
 
         let data = JSON.parse(
-          NetUtil.readInputStreamToString(inputStream, inputStream.available())
+          lazy.NetUtil.readInputStreamToString(inputStream, inputStream.available())
         );
         resolve(data);
       });
@@ -82,7 +81,7 @@ function readChannel(url) {
   });
 }
 
-var UserAgentUpdates = {
+export const UserAgentUpdates = {
   init: function(callback) {
     if (gInitialized) {
       return;
@@ -123,11 +122,11 @@ var UserAgentUpdates = {
     let dirs = [KEY_PREFDIR, KEY_APPDIR];
 
     dirs.reduce((prevLoad, dir) => {
-      let file = FileUtils.getFile(dir, [FILE_UPDATES], true).path;
+      let file = lazy.FileUtils.getDir(dir, [FILE_UPDATES]).path;
       // tryNext returns promise to read file under dir and parse it
       let tryNext = () => IOUtils.read(file).then(
         (bytes) => {
-          let update = JSON.parse(gDecoder.decode(bytes));
+          let update = JSON.parse(lazy.gDecoder.decode(bytes));
           if (!update) {
             throw new Error("invalid update");
           }
@@ -152,9 +151,9 @@ var UserAgentUpdates = {
   },
 
   _saveToFile: function(update) {
-    let file = FileUtils.getFile(KEY_PREFDIR, [FILE_UPDATES], true);
+    let file = lazy.FileUtils.getDir(KEY_PREFDIR, [FILE_UPDATES]);
     let path = file.path;
-    let bytes = gEncoder.encode(JSON.stringify(update));
+    let bytes = lazy.gEncoder.encode(JSON.stringify(update));
     IOUtils.write(path, bytes, { tmpPath: path + ".tmp" }).then(
       () => {
         this._lastUpdated = Date.now();
@@ -180,12 +179,12 @@ var UserAgentUpdates = {
   _getParameters() {
     return {
       "%DATE%": function() { return Date.now().toString(); },
-      "%PRODUCT%": function() { return gApp.name; },
-      "%APP_ID%": function() { return gApp.ID; },
-      "%APP_VERSION%": function() { return gApp.version; },
-      "%BUILD_ID%": function() { return gApp.appBuildID; },
-      "%OS%": function() { return gApp.OS; },
-      "%CHANNEL%": function() { return UpdateUtils.UpdateChannel; },
+      "%PRODUCT%": function() { return lazy.gApp.name; },
+      "%APP_ID%": function() { return lazy.gApp.ID; },
+      "%APP_VERSION%": function() { return lazy.gApp.version; },
+      "%BUILD_ID%": function() { return lazy.gApp.appBuildID; },
+      "%OS%": function() { return lazy.gApp.OS; },
+      "%CHANNEL%": function() { return lazy.UpdateUtils.UpdateChannel; },
       "%DISTRIBUTION%": function() { return this._getPref(PREF_APP_DISTRIBUTION, ""); },
       "%DISTRIBUTION_VERSION%": function() { return this._getPref(PREF_APP_DISTRIBUTION_VERSION, ""); },
     };
@@ -233,14 +232,14 @@ var UserAgentUpdates = {
 
   _scheduleUpdate: function(retry) {
     // only schedule updates in the main process
-    if (gApp.processType !== Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
+    if (lazy.gApp.processType !== Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
       return;
     }
     let interval = this._getPref(PREF_UPDATES_INTERVAL, 604800 /* 1 week */);
     if (retry) {
       interval = this._getPref(PREF_UPDATES_RETRY, interval);
     }
-    gUpdateTimer.registerTimer(TIMER_ID, this, Math.max(1, interval));
+    lazy.gUpdateTimer.registerTimer(TIMER_ID, this, Math.max(1, interval));
   },
 
   notify: function(timer) {
