@@ -1,4 +1,4 @@
-# ESR115 registers XPCOM components statically in Gecko's
+# ESR140 registers XPCOM components statically in Gecko's
 # embedding/embedlite/components/components.conf. This manifest only
 # keeps the resource alias consumed by those component entries.
 resource embedlite-components .

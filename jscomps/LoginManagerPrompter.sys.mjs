@@ -32,18 +32,20 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
 const { PromptUtils } = ChromeUtils.importESModule("resource://gre/modules/PromptUtils.sys.mjs");
-var EXPORTED_SYMBOLS = ["LoginManagerPromptFactory", "LoginManagerPrompter"];
+const lazy = {};
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
-
-ChromeUtils.defineESModuleGetters(this, {
+ChromeUtils.defineESModuleGetters(lazy, {
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
 });
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 const LoginInfo = Components.Constructor(
   "@mozilla.org/login-manager/loginInfo;1",
@@ -123,7 +125,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
  *
  * Invoked by [toolkit/components/prompts/src/Prompter.jsm]
  */
-function LoginManagerPromptFactory() {
+export function LoginManagerPromptFactory() {
   Logger.debug("JSComp: LoginManagerPromptFactory loaded");
 
   Services.obs.addObserver(this, "passwordmgr-crypto-login", true);
@@ -148,12 +150,13 @@ LoginManagerPromptFactory.prototype = {
   // Promise used to defer prompts if the password manager isn't ready when
   // they're called.
   _uiBusyPromise: null,
+  _uiBusyResolve: null,
 
   observe(subject, topic, data) {
     this.log("Observed: " + topic);
     if (topic == "passwordmgr-crypto-login") {
       // Show the deferred prompters.
-      this._uiBusyPromise?.resolve();
+      this._uiBusyResolve?.();
     }
   },
 
@@ -211,23 +214,31 @@ LoginManagerPromptFactory.prototype = {
       return;
     }
 
-    let hasLogins = Services.logins.countLogins(origin, null, httpRealm) > 0;
+    let hasLogins =
+      (await Services.logins.countLoginsAsync(origin, null, httpRealm)) > 0;
     if (
       !hasLogins &&
-      LoginHelper.schemeUpgrades &&
+      lazy.LoginHelper.schemeUpgrades &&
       origin.startsWith("https://")
     ) {
       let httpOrigin = origin.replace(/^https:\/\//, "http://");
-      hasLogins = Services.logins.countLogins(httpOrigin, null, httpRealm) > 0;
+      hasLogins =
+        (await Services.logins.countLoginsAsync(
+          httpOrigin,
+          null,
+          httpRealm
+        )) > 0;
     }
     // We don't depend on saved logins.
     if (!hasLogins) {
       return;
     }
 
-    this.log("Waiting for master password UI");
+    this.log("Waiting for primary password UI");
 
-    this._uiBusyPromise = new Promise();
+    this._uiBusyPromise = new Promise(resolve => {
+      this._uiBusyResolve = resolve;
+    });
     await this._uiBusyPromise;
   },
 
@@ -285,11 +296,11 @@ LoginManagerPromptFactory.prototype = {
   },
 }; // end of LoginManagerPromptFactory implementation
 
-XPCOMUtils.defineLazyGetter(
-  this.LoginManagerPromptFactory.prototype,
+ChromeUtils.defineLazyGetter(
+  LoginManagerPromptFactory.prototype,
   "log",
   () => {
-    let logger = LoginHelper.createLogger("Login PromptFactory");
+    let logger = lazy.LoginHelper.createLogger("Login PromptFactory");
     return logger.log.bind(logger);
   }
 );
@@ -308,7 +319,7 @@ XPCOMUtils.defineLazyGetter(
  * nsILoginManagerPrompter: Used by Login Manager for saving/changing logins
  * found in HTML forms.
  */
-function LoginManagerPrompter() {
+export function LoginManagerPrompter() {
   Logger.debug("JSComp: LoginManagerPrompter.js loaded");
 }
 
@@ -546,7 +557,7 @@ LoginManagerPrompter.prototype = {
     if (!this._inPrivateBrowsing) {
       return true;
     }
-    return LoginHelper.privateBrowsingCaptureEnabled;
+    return lazy.LoginHelper.privateBrowsingCaptureEnabled;
   },
 
   /* ---------- nsIAuthPrompt prompts ---------- */
@@ -590,7 +601,7 @@ LoginManagerPrompter.prototype = {
    * Looks up a username and password in the database. Will prompt the user
    * with a dialog, even if a username and password are found.
    */
-  promptUsernameAndPassword(
+  async asyncPromptUsernameAndPassword(
     aDialogTitle,
     aText,
     aPasswordRealm,
@@ -598,38 +609,32 @@ LoginManagerPrompter.prototype = {
     aUsername,
     aPassword
   ) {
-    this.log("===== promptUsernameAndPassword() called =====");
+    this.log("===== asyncPromptUsernameAndPassword() called =====");
 
     if (aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_FOR_SESSION) {
       throw new Components.Exception(
-        "promptUsernameAndPassword doesn't support SAVE_PASSWORD_FOR_SESSION",
+        "asyncPromptUsernameAndPassword doesn't support SAVE_PASSWORD_FOR_SESSION",
         Cr.NS_ERROR_NOT_IMPLEMENTED
       );
     }
 
     let foundLogins = null;
+    let canRememberLogin = false;
     var selectedLogin = null;
-    var checkBox = { value: false };
-    var checkBoxLabel = null;
     var [origin, realm, unused] = this._getRealmInfo(aPasswordRealm);
 
     // If origin is null, we can't save this login.
     if (origin) {
-      var canRememberLogin = false;
       if (this._allowRememberLogin) {
         canRememberLogin =
           aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_PERMANENTLY &&
           Services.logins.getLoginSavingEnabled(origin);
       }
 
-      // if checkBoxLabel is null, the checkbox won't be shown at all.
-      if (canRememberLogin) {
-        // Localisation happens in the QML front end, so we don't use _getLocalizedString()
-        checkBoxLabel = "rememberPassword";
-      }
-
-      // Look for existing logins.
-      foundLogins = Services.logins.findLogins(origin, null, realm);
+      foundLogins = await Services.logins.searchLoginsAsync({
+        origin,
+        httpRealm: realm,
+      });
 
       // XXX Like the original code, we can't deal with multiple
       // account selection. (bug 227632)
@@ -647,7 +652,6 @@ LoginManagerPrompter.prototype = {
         }
 
         if (selectedLogin) {
-          checkBox.value = true;
           aUsername.value = selectedLogin.username;
           // If the caller provided a password, prefer it.
           if (!aPassword.value) {
@@ -663,18 +667,24 @@ LoginManagerPrompter.prototype = {
       aDialogTitle,
       aText,
       aUsername,
-      aPassword,
-      checkBoxLabel,
-      checkBox
+      aPassword
     );
 
-    if (!ok || !checkBox.value || !origin) {
-      return ok;
+    if (!ok || !canRememberLogin) {
+      return {
+        ok,
+        username: aUsername.value,
+        password: aPassword.value,
+      };
     }
 
     if (!aPassword.value) {
       this.log("No password entered, so won't offer to save.");
-      return ok;
+      return {
+        ok,
+        username: aUsername.value,
+        password: aPassword.value,
+      };
     }
 
     // XXX We can't prompt with multiple logins yet (bug 227632), so
@@ -694,22 +704,26 @@ LoginManagerPrompter.prototype = {
     if (!selectedLogin) {
       // add as new
       this.log("New login seen for " + realm);
-      Services.logins.addLogin(newLogin);
+      await Services.logins.addLoginAsync(newLogin);
     } else if (aPassword.value != selectedLogin.password) {
       // update password
       this.log("Updating password for  " + realm);
-      this._updateLogin(selectedLogin, newLogin);
+      await this._updateLogin(selectedLogin, newLogin);
     } else {
       this.log("Login unchanged, no further action needed.");
-      Services.logins.recordPasswordUse(
+      await Services.logins.recordPasswordUseAsync(
         selectedLogin,
         this._inPrivateBrowsing,
-        "prompt_login",
+        "PromptLogin",
         autofilled
       );
     }
 
-    return ok;
+    return {
+      ok,
+      username: aUsername.value,
+      password: aPassword.value,
+    };
   },
 
   /**
@@ -720,43 +734,38 @@ LoginManagerPrompter.prototype = {
    * with a dialog with a text field and ok/cancel buttons. If the user
    * allows it, then the password will be saved in the database.
    */
-  promptPassword(
+  async asyncPromptPassword(
     aDialogTitle,
     aText,
     aPasswordRealm,
     aSavePassword,
     aPassword
   ) {
-    this.log("===== promptPassword called() =====");
+    this.log("===== asyncPromptPassword() called =====");
 
     if (aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_FOR_SESSION) {
       throw new Components.Exception(
-        "promptPassword doesn't support SAVE_PASSWORD_FOR_SESSION",
+        "asyncPromptPassword doesn't support SAVE_PASSWORD_FOR_SESSION",
         Cr.NS_ERROR_NOT_IMPLEMENTED
       );
     }
 
-    var checkBox = { value: false };
-    var checkBoxLabel = null;
     var [origin, realm, username] = this._getRealmInfo(aPasswordRealm);
 
     username = decodeURIComponent(username);
 
+    let canRememberLogin = false;
     // If origin is null, we can't save this login.
     if (origin && !this._inPrivateBrowsing) {
-      var canRememberLogin =
+      canRememberLogin =
         aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_PERMANENTLY &&
         Services.logins.getLoginSavingEnabled(origin);
 
-      // if checkBoxLabel is null, the checkbox won't be shown at all.
-      if (canRememberLogin) {
-        // Localisation happens in the QML front end, so we don't use _getLocalizedString()
-        checkBoxLabel = "rememberPassword";
-      }
-
       if (!aPassword.value) {
-        // Look for existing logins.
-        var foundLogins = Services.logins.findLogins(origin, null, realm);
+        var foundLogins = await Services.logins.searchLoginsAsync({
+          origin,
+          httpRealm: realm,
+        });
 
         // XXX Like the original code, we can't deal with multiple
         // account selection (bug 227632). We can deal with finding the
@@ -766,7 +775,10 @@ LoginManagerPrompter.prototype = {
           if (foundLogins[i].username == username) {
             aPassword.value = foundLogins[i].password;
             // wallet returned straight away, so this mimics that code
-            return true;
+            return {
+              ok: true,
+              password: aPassword.value,
+            };
           }
         }
       }
@@ -776,12 +788,10 @@ LoginManagerPrompter.prototype = {
       this._chromeWindow,
       aDialogTitle,
       aText,
-      aPassword,
-      checkBoxLabel,
-      checkBox
+      aPassword
     );
 
-    if (ok && checkBox.value && origin && aPassword.value) {
+    if (ok && canRememberLogin && aPassword.value) {
       let newLogin = new LoginInfo(
         origin,
         null,
@@ -792,10 +802,13 @@ LoginManagerPrompter.prototype = {
 
       this.log("New login seen for " + realm);
 
-      Services.logins.addLogin(newLogin);
+      await Services.logins.addLoginAsync(newLogin);
     }
 
-    return ok;
+    return {
+      ok,
+      password: aPassword.value,
+    };
   },
 
   /* ---------- nsIAuthPrompt helpers ---------- */
@@ -851,14 +864,14 @@ LoginManagerPrompter.prototype = {
       var [origin, httpRealm] = this._getAuthTarget(aChannel, aAuthInfo);
 
       // Looks for existing logins to prefill the prompt with.
-      foundLogins = LoginHelper.searchLoginsWithObject({
+      foundLogins = await Services.logins.searchLoginsAsync({
         origin,
         httpRealm,
-        schemeUpgrades: LoginHelper.schemeUpgrades,
+        schemeUpgrades: lazy.LoginHelper.schemeUpgrades,
       });
       this.log("found", foundLogins.length, "matching logins.");
       let resolveBy = ["scheme", "timePasswordChanged"];
-      foundLogins = LoginHelper.dedupeLogins(
+      foundLogins = lazy.LoginHelper.dedupeLogins(
         foundLogins,
         ["username"],
         resolveBy,
@@ -1000,7 +1013,7 @@ LoginManagerPrompter.prototype = {
         if (notifyObj) {
           this._showSaveLoginNotification(this._chromeWindow, newLogin);
         } else {
-          Services.logins.addLogin(newLogin);
+          await Services.logins.addLoginAsync(newLogin);
         }
       } else if (password != selectedLogin.password) {
         this.log(
@@ -1015,14 +1028,14 @@ LoginManagerPrompter.prototype = {
         if (notifyObj) {
           this._showChangeLoginNotification(this._chromeWindow, selectedLogin, newLogin);
         } else {
-          this._updateLogin(selectedLogin, newLogin);
+          await this._updateLogin(selectedLogin, newLogin);
         }
       } else {
         this.log("Login unchanged, no further action needed.");
-        Services.logins.recordPasswordUse(
+        await Services.logins.recordPasswordUseAsync(
           selectedLogin,
           this._inPrivateBrowsing,
-          "auth_login",
+          "AuthLogin",
           autofilled
         );
       }
@@ -1240,10 +1253,8 @@ LoginManagerPrompter.prototype = {
    *       to be changed, aNewLogin.username and aNewLogin.usernameField
    *       will be set (using the user's selection) before modifyLogin()
    *       is called.
-   *
-   * Note: XPCOM stupidity: |count| is just |logins.length|.
    */
-  promptToChangePasswordWithUsernames(aBrowser, logins, count, aNewLogin) {
+  promptToChangePasswordWithUsernames(aBrowser, logins, aNewLogin) {
     this.log("promptToChangePasswordWithUsernames");
 
     // We reuse the existing message, even if it expects a username, until we
@@ -1284,7 +1295,9 @@ LoginManagerPrompter.prototype = {
             selectedLogin.usernameField,
             aNewLogin.passwordField
           );
-          self._updateLogin(selectedLogin, newLoginWithUsername);
+          self._updateLogin(selectedLogin, newLoginWithUsername).catch(
+            Cu.reportError
+          );
         }
       },
 
@@ -1361,7 +1374,7 @@ LoginManagerPrompter.prototype = {
         accessKey: "notifyBarUpdateButtonAccessKey",
         popup: null,
         callback: function(aButton) {
-          self._updateLogin(aOldLogin, aNewLogin);
+          self._updateLogin(aOldLogin, aNewLogin).catch(Cu.reportError);
         }
       },
 
@@ -1583,7 +1596,7 @@ LoginManagerPrompter.prototype = {
 
   /* ---------- Internal Methods (shared) ---------- */
 
-  _updateLogin(login, aNewLogin) {
+  async _updateLogin(login, aNewLogin) {
     var now = Date.now();
     var propBag = Cc["@mozilla.org/hash-property-bag;1"].createInstance(
       Ci.nsIWritablePropertyBag
@@ -1598,11 +1611,11 @@ LoginManagerPrompter.prototype = {
     propBag.setProperty("timePasswordChanged", now);
     propBag.setProperty("timeLastUsed", now);
     propBag.setProperty("timesUsedIncrement", 1);
-    // Note that we don't call `recordPasswordUse` so telemetry won't record a
+    // Note that we don't call `recordPasswordUseAsync` so telemetry won't record a
     // use in this case though that is normally correct since we would instead
     // record the save/update in a separate probe and recording it in both would
     // be wrong.
-    Services.logins.modifyLogin(login, propBag);
+    await Services.logins.modifyLoginAsync(login, propBag);
   },
 
   /**
@@ -1630,9 +1643,6 @@ LoginManagerPrompter.prototype = {
   _showLoginNotification(aBrowser, aName, aTextBundle, aButtons, aFormData) {
     this.log("Adding new " + aName + " notification bar");
 
-    this._chromeWindow = aBrowser;
-    let notifyWin = this._chromeWindow && this._chromeWindow.top || null;
-
     // The page we're going to hasn't loaded yet, so we want to persist
     // across the first location change.
     let logoptions = {
@@ -1642,7 +1652,11 @@ LoginManagerPrompter.prototype = {
 
     Services.embedlite.addMessageListener("embedui:login", this);
     try {
-      var winid = Services.embedlite.getIDByWindow(notifyWin);
+      // Form prompts carry the browser element, including for remote tabs.
+      // Internal HTTP-auth callers may still supply a DOM window.
+      let winid = aBrowser?.ownerDocument && aBrowser.browsingContext
+        ? Services.embedlite.getIDByBrowsingContext(aBrowser.browsingContext)
+        : Services.embedlite.getIDByWindow(aBrowser?.top || null);
       let uniqueid = this._getRandomId();
       Services.embedlite.sendAsyncMessage(winid, "embed:login",
                                           JSON.stringify({
@@ -1686,7 +1700,7 @@ LoginManagerPrompter.prototype = {
         accessKey: "notifyBarRememberPasswordButtonAccessKey",
         popup: null,
         callback: function(aButton) {
-          Services.logins.addLogin(aLogin);
+          Services.logins.addLoginAsync(aLogin).catch(Cu.reportError);
         }
       },
 
@@ -1718,17 +1732,12 @@ LoginManagerPrompter.prototype = {
 
 }; // end of LoginManagerPrompter implementation
 
-XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "log", () => {
+ChromeUtils.defineLazyGetter(LoginManagerPrompter.prototype, "log", () => {
   let logger = Logger
   return logger.debug.bind(logger);
 });
 
-XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
+ChromeUtils.defineLazyGetter(LoginManagerPrompter.prototype, "warn", () => {
   let logger = Logger
   return logger.warn.bind(logger);
 });
-
-var component = [LoginManagerPromptFactory, LoginManagerPrompter];
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory(component);
-}

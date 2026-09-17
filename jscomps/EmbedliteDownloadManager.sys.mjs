@@ -14,17 +14,19 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedliteDownloadManager"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { Downloads } = ChromeUtils.importESModule(
+  "resource://gre/modules/Downloads.sys.mjs"
+);
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
-ChromeUtils.defineESModuleGetters(this, {
-  Downloads: "resource://gre/modules/Downloads.sys.mjs",
-});
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const lazy = {};
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 const {
   DownloadCopySaver,
@@ -33,7 +35,7 @@ const {
 } = ChromeUtils.importESModule("resource://gre/modules/DownloadCore.sys.mjs");
 
 XPCOMUtils.defineLazyServiceGetter(
-  this,
+  lazy,
   "gPrintSettingsService",
   "@mozilla.org/gfx/printsettings-service;1",
   Ci.nsIPrintSettingsService
@@ -185,7 +187,7 @@ let DownloadView = {
 ////////////////////////////////////////////////////////////////////////////////
 //// EmbedliteDownloadManager
 
-function EmbedliteDownloadManager()
+export function EmbedliteDownloadManager()
 {
   Logger.debug("JSComp: EmbedliteDownloadManager.js loaded");
 }
@@ -199,6 +201,7 @@ EmbedliteDownloadManager.prototype = {
     switch (aTopic) {
       case "app-startup":
         Services.obs.addObserver(this, "profile-after-change", false);
+        Services.obs.addObserver(this, "before-cancel-download-prompt", false);
         break;
 
       case "profile-after-change":
@@ -220,6 +223,10 @@ EmbedliteDownloadManager.prototype = {
 
           await downloadList.addView(DownloadView);
         })().then(null, Cu.reportError);
+        break;
+
+      case "before-cancel-download-prompt":
+        aSubject.QueryInterface(Ci.nsISupportsPRBool).data = false;
         break;
 
       case "embedui:download":
@@ -267,30 +274,43 @@ EmbedliteDownloadManager.prototype = {
             })().then(null, Cu.reportError);
             break;
 
-          case "saveAsPdf":
-            if (Services.ww.activeWindow) {
+          case "saveAsPdf": {
+            let source = null;
+            if (data.windowId !== undefined && data.tabId !== undefined) {
+              try {
+                source = {
+                  browsingContext: Services.embedlite
+                    .QueryInterface(Ci.nsIEmbedChromeAppService)
+                    .getChromeTabBrowsingContext(
+                      data.windowId, String(data.tabId))
+                };
+              } catch (error) {
+                Logger.warn("No hosted tab to print to pdf", error);
+              }
+            } else if (Services.ww.activeWindow) {
+              source = { window: Services.ww.activeWindow };
+            }
+
+            if (source) {
               (async function() {
                 let list = await Downloads.getList(Downloads.ALL);
                 let download = await DownloadPDFSaver.createDownload({
-                  source: Services.ww.activeWindow,
+                  ...source,
                   target: data.to
                 });
                 download.start();
                 list.add(download);
               })().then(null, Cu.reportError);
             } else {
-              Logger.warn("No active window to print to pdf")
+              Logger.warn("No active page to print to pdf");
             }
             break;
+          }
         }
         break;
     }
   }
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedliteDownloadManager]);
-}
 
 /**
  * This DownloadSaver type creates a PDF file from the current document in a
@@ -309,6 +329,12 @@ DownloadPDFSaver.prototype = {
   __proto__: DownloadSaver.prototype,
 
   /**
+   * Live hosted BrowsingContext used as the source for this save. This is not
+   * serializable and is cleared as soon as execution starts.
+   */
+  _sourceBrowsingContext: null,
+
+  /**
    * A CanonicalBrowsingContext instance for printing this page.
    * This is null when saving has not started or has completed,
    * or while the operation is being canceled.
@@ -319,22 +345,24 @@ DownloadPDFSaver.prototype = {
    * Implements "DownloadSaver.execute".
    */
   async execute(aSetProgressBytesFn, aSetPropertiesFn) {
-    if (!this.download.source.windowRef) {
+    if (!this.download.source.windowRef && !this._sourceBrowsingContext) {
       throw new DownloadError({
         message:
-          "PDF saver must be passed an open window, and cannot be restarted.",
+          "PDF saver must be passed an open page, and cannot be restarted.",
         becauseSourceFailed: true,
       });
     }
 
-    let win = this.download.source.windowRef.get();
+    let browsingContext = this._sourceBrowsingContext;
+    this._sourceBrowsingContext = null;
+    let win = this.download.source.windowRef?.get();
 
     // Set windowRef to null to avoid re-trying.
     this.download.source.windowRef = null;
 
-    if (!win) {
+    if (!browsingContext && !win) {
       throw new DownloadError({
-        message: "PDF saver can't save a window that has been closed.",
+        message: "PDF saver can't save a page that has been closed.",
         becauseSourceFailed: true,
       });
     }
@@ -346,7 +374,7 @@ DownloadPDFSaver.prototype = {
     // An empty target file must exist for the PDF printer to work correctly.
     await IOUtils.writeUTF8(targetPath, "");
 
-    let printSettings = gPrintSettingsService.createNewPrintSettings();
+    let printSettings = lazy.gPrintSettingsService.createNewPrintSettings();
 
     printSettings.outputFormat = Ci.nsIPrintSettings.kOutputFormatPDF;
     printSettings.outputDestination =
@@ -364,7 +392,15 @@ DownloadPDFSaver.prototype = {
     printSettings.footerStrLeft = "";
     printSettings.footerStrRight = "";
 
-    this._browsingContext = BrowsingContext.getFromWindow(win)
+    this._browsingContext =
+      browsingContext || BrowsingContext.getFromWindow(win);
+    if (!this._browsingContext || this._browsingContext.isDiscarded) {
+      this._browsingContext = null;
+      throw new DownloadError({
+        message: "PDF saver can't save a discarded page.",
+        becauseSourceFailed: true,
+      });
+    }
 
     try {
       await new Promise((resolve, reject) => {
@@ -389,10 +425,18 @@ DownloadPDFSaver.prototype = {
    * Implements "DownloadSaver.cancel".
    */
   cancel: function DCS_cancel() {
-    if (this._browsingContext) {
-      this._browsingContext.cancel();
-      this._browsingContext = null;
-    }
+    // BrowsingContext.print() has no cancellation API. DownloadCore will wait
+    // for execute() to finish, then call removeData() for a canceled download.
+  },
+
+  /**
+   * Implements "DownloadSaver.removeData".
+   */
+  removeData(canRemoveFinalTarget) {
+    return DownloadCopySaver.prototype.removeData.call(
+      this,
+      canRemoveFinalTarget
+    );
   },
 
   /**
@@ -426,17 +470,28 @@ DownloadPDFSaver.prototype = {
  * @return The newly created DownloadPDFSaver object.
  */
 DownloadPDFSaver.createDownload = async function(aProperties) {
+  let browsingContext = aProperties.browsingContext || null;
+  let sourceWindow = aProperties.window || null;
+  let sourceUrl;
+  let isPrivate;
+  if (browsingContext) {
+    sourceUrl = browsingContext.currentURI?.spec || "about:blank";
+    isPrivate = browsingContext.usePrivateBrowsing;
+  } else {
+    sourceUrl = sourceWindow.location.href;
+    isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(sourceWindow);
+  }
   let download = await Downloads.createDownload({
-    source: aProperties.source.location.href,
+    source: sourceUrl,
     target: aProperties.target,
     contentType: "application/pdf"
   });
-  download.source.isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(
-    aProperties.source
-  );
-  download.source.windowRef = Cu.getWeakReference(aProperties.source);
+  download.source.isPrivate = isPrivate;
+  download.source.windowRef = sourceWindow
+    ? Cu.getWeakReference(sourceWindow) : null;
   download.saver = new DownloadPDFSaver();
   download.saver.download = download;
+  download.saver._sourceBrowsingContext = browsingContext;
   download["saveAsPdf"] = true;
 
   return download;

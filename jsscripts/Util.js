@@ -158,9 +158,9 @@ var Util = {
   },
 
   isTextInput: function isTextInput(aElement) {
-    return ((aElement instanceof content.HTMLInputElement &&
+    return ((content.HTMLInputElement.isInstance(aElement) &&
              aElement.mozIsTextField(false)) ||
-            aElement instanceof content.HTMLTextAreaElement);
+            content.HTMLTextAreaElement.isInstance(aElement));
   },
 
   /**
@@ -185,7 +185,7 @@ var Util = {
 
     // If a body element is editable and the body is the child of an
     // iframe or div we can assume this is an advanced HTML editor
-    if ((aElement instanceof content.HTMLIFrameElement ||
+    if ((content.HTMLIFrameElement.isInstance(aElement) ||
          ChromeUtils.getClassName(aElement) === "HTMLDivElement") &&
         aElement.contentDocument &&
         this.isEditableContent(aElement.contentDocument.body)) {
@@ -204,13 +204,13 @@ var Util = {
   },
 
   isMultilineInput: function isMultilineInput(aElement) {
-    return (aElement instanceof content.HTMLTextAreaElement);
+    return content.HTMLTextAreaElement.isInstance(aElement);
   },
 
   isLink: function isLink(aNode) {
-    return ((aNode instanceof content.HTMLAnchorElement && aNode.href) ||
-            (aNode instanceof content.HTMLAreaElement && aNode.href) ||
-            aNode instanceof content.HTMLLinkElement);
+    return ((content.HTMLAnchorElement.isInstance(aNode) && aNode.href) ||
+            (content.HTMLAreaElement.isInstance(aNode) && aNode.href) ||
+            content.HTMLLinkElement.isInstance(aNode));
   },
 
   isText: function isText(aElement) {
@@ -218,14 +218,14 @@ var Util = {
     return (className === "HTMLParagraphElement" ||
             className === "HTMLLIElement" ||
             className === "HTMLPreElement" ||
-            aElement instanceof content.HTMLBodyElement ||
+            content.HTMLBodyElement.isInstance(aElement) ||
             className === "HTMLDivElement" ||
             className === "HTMLHeadingElement" ||
             className === "HTMLTableCellElement");
   },
 
   isMedia: function isMedia(aElement) {
-    return (aElement instanceof content.HTMLMediaElement ||
+    return (content.HTMLMediaElement.isInstance(aElement) ||
             ChromeUtils.getClassName(aElement) === "HTMLVideoElement" ||
             aElement.getAttribute("playable") == "true")
   },

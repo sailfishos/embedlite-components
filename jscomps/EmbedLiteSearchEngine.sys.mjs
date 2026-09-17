@@ -6,16 +6,22 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteSearchEngine"];
+const lazy = {};
+ChromeUtils.defineESModuleGetters(lazy, {
+  SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+});
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 // Common helper service
-function EmbedLiteSearchEngine()
+export function EmbedLiteSearchEngine()
 {
   Logger.debug("JSComp: EmbedLiteSearchEngine.js loaded");
 }
@@ -30,7 +36,7 @@ EmbedLiteSearchEngine.prototype = {
       return;
     }
 
-    Services.search.getEngines().then((engines) => {
+    lazy.SearchService.getEngines().then((engines) => {
       let engineNames = engines.map(function (element) {
         return element.name;
       });
@@ -38,7 +44,7 @@ EmbedLiteSearchEngine.prototype = {
       let defaultEngine = null;
       if (enginesAvailable) {
         try {
-          defaultEngine = Services.search.defaultEngine;
+          defaultEngine = lazy.SearchService.defaultEngine;
         } catch (e) {
           Logger.warn("EmbedLiteSearchEngine failed to get default engine:", e);
         }
@@ -78,7 +84,7 @@ EmbedLiteSearchEngine.prototype = {
             break;
           }
           case "loadxml": {
-            Services.search.addOpenSearchEngine(data.uri, null).then(
+            lazy.SearchService.addOpenSearchEngine(data.uri, null).then(
               engine => {
                 var message = {
                   "msg": "search-engine-added",
@@ -88,7 +94,7 @@ EmbedLiteSearchEngine.prototype = {
                 Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
               },
               errorCode => {
-                // For failure conditions see nsISearchService.idl
+                // For failure conditions see the SearchService API.
                 var message = {
                   "msg": "search-engine-added",
                   "engine": "",
@@ -100,7 +106,7 @@ EmbedLiteSearchEngine.prototype = {
             break;
           }
           case "setdefault": {
-            var engine = Services.search.getEngineByName(data.name);
+            var engine = lazy.SearchService.getEngineByName(data.name);
             if (!engine) {
               Logger.warn("EmbedLiteSearchEngine could not find engine:", data.name);
               var missingEngineMessage = {
@@ -111,7 +117,7 @@ EmbedLiteSearchEngine.prototype = {
               Services.obs.notifyObservers(null, "embed:search", JSON.stringify(missingEngineMessage));
               break;
             }
-            Services.search.setDefault(engine, Ci.nsISearchService.CHANGE_REASON_USER).then(
+            lazy.SearchService.setDefault(engine, lazy.SearchService.CHANGE_REASON.USER).then(
               () => {
                 try {
                   Services.prefs.setStringPref("browser.search.defaultenginename", engine.name);
@@ -156,7 +162,3 @@ EmbedLiteSearchEngine.prototype = {
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteSearchEngine]);
-}

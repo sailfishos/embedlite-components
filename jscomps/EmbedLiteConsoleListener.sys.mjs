@@ -9,17 +9,14 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["$EmbedLiteConsoleListener"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyServiceGetter(Services, 'env',
-                                  '@mozilla.org/process/environment;1',
-                                  'nsIEnvironment');
-
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 // Common helper service
 
@@ -158,7 +155,7 @@ function LogChannelInfo(aSubject) {
 
 // Prefix the component name with $ to ensure it is initalised
 // before all other components in the start-up sequence.
-function $EmbedLiteConsoleListener()
+export function $EmbedLiteConsoleListener()
 {
 }
 
@@ -265,7 +262,3 @@ $EmbedLiteConsoleListener.prototype = {
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([$EmbedLiteConsoleListener]);
-}

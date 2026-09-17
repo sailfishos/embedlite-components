@@ -8,17 +8,18 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "UserAgentOverrides" ];
-
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { UserAgentUpdates } = ChromeUtils.import("chrome://embedlite/content/UserAgentUpdates.jsm");
+const { UserAgentUpdates } = ChromeUtils.importESModule(
+  "chrome://embedlite/content/UserAgentUpdates.sys.mjs"
+);
+
+const lazy = {};
 
 const PREF_OVERRIDES_ENABLED = "general.useragent.site_specific_overrides";
 const MAX_OVERRIDE_FOR_HOST_CACHE_SIZE = 250;
 
 // lazy load nsHttpHandler to improve startup performance.
-XPCOMUtils.defineLazyGetter(this, "DEFAULT_UA", function() {
+ChromeUtils.defineLazyGetter(lazy, "DEFAULT_UA", function() {
   return Cc["@mozilla.org/network/protocol;1?name=http"]
            .getService(Ci.nsIHttpProtocolHandler)
            .userAgent;
@@ -34,7 +35,7 @@ var gOverrideFunctions = [
 ];
 var gBuiltUAs = new Map;
 
-var UserAgentOverrides = {
+export const UserAgentOverrides = {
   init: function uao_init() {
     if (gInitialized)
       return;
@@ -136,7 +137,7 @@ function getUserAgentFromOverride(override)
   }
   let [search, replace] = override.split("#", 2);
   if (search && replace) {
-    userAgent = DEFAULT_UA.replace(new RegExp(search, "g"), replace);
+    userAgent = lazy.DEFAULT_UA.replace(new RegExp(search, "g"), replace);
   } else {
     userAgent = override;
   }
@@ -158,7 +159,7 @@ function buildOverrides() {
     let override = gPrefBranch.getCharPref(domain);
     let userAgent = getUserAgentFromOverride(override);
 
-    if (userAgent != DEFAULT_UA) {
+    if (userAgent != lazy.DEFAULT_UA) {
       gOverrides.set(domain, userAgent);
     }
   }
@@ -168,7 +169,7 @@ function HTTP_on_useragent_request(aSubject, aTopic, aData) {
   let channel = aSubject.QueryInterface(Ci.nsIHttpChannel);
 
   for (let callback of gOverrideFunctions) {
-    let modifiedUA = callback(channel, DEFAULT_UA);
+    let modifiedUA = callback(channel, lazy.DEFAULT_UA);
     if (modifiedUA) {
       channel.setRequestHeader("User-Agent", modifiedUA, false);
       return;
