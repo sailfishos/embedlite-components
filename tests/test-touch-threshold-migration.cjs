@@ -23,6 +23,7 @@ function startProfile(defaultValue, savedPrefs) {
     ChromeUtils: {
       importESModule() { return { LoginManagerParent: {} }; },
       registerWindowActor() {},
+      unregisterWindowActor() {},
       generateQI() { return () => {}; }
     },
     Services: {

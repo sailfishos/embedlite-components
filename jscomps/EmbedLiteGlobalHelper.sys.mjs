@@ -19,6 +19,26 @@ const { Logger } = loggerScope;
 // Firefox's normal browser chrome bootstrap that would otherwise do this.
 ChromeUtils.importESModule("resource://gre/modules/ActorManagerParent.sys.mjs");
 
+// Use the same EmbedLite request/response bridge as the other native pickers.
+// ActorManagerParent registers the generic Gecko date picker first, so replace
+// that registration before content documents can request one.
+ChromeUtils.unregisterWindowActor("DateTimePicker");
+ChromeUtils.registerWindowActor("DateTimePicker", {
+  parent: {
+    esModuleURI:
+      "resource://embedlite-components/EmbedLiteDateTimePickerParent.sys.mjs",
+  },
+  child: {
+    esModuleURI: "moz-src:///toolkit/actors/DateTimePickerChild.sys.mjs",
+    events: {
+      MozOpenDateTimePicker: {},
+      MozCloseDateTimePicker: {},
+    },
+  },
+  includeChrome: true,
+  allFrames: true,
+});
+
 // Firefox registers its Prompt actor from the desktop browser bootstrap.
 // EmbedLite does not run that bootstrap, but remote content still uses the
 // actor to ask the parent process to show JavaScript dialogs.
