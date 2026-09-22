@@ -6,6 +6,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 
 const promptQueues = new Map();
+let nextPromptId = 0;
 
 export class PromptParent extends JSWindowActorParent {
   didDestroy() {
@@ -72,6 +73,7 @@ export class PromptParent extends JSWindowActorParent {
 
     let payload = {
       winId,
+      promptId: String(++nextPromptId),
       title: args.title,
       text: args.text,
       inPermitUnload: !!args.inPermitUnload,
@@ -145,6 +147,14 @@ export class PromptParent extends JSWindowActorParent {
           console.warn("Unable to remove EmbedLite prompt listener", error);
         }
         this._pendingPrompts?.delete(pendingPrompt);
+        if (promptAborted) {
+          try {
+            embedService.sendAsyncMessage(winId, "embed:promptabort",
+              JSON.stringify({ winId, promptId: payload.promptId }));
+          } catch (error) {
+            console.warn("Unable to cancel EmbedLite prompt", error);
+          }
+        }
         args.promptAborted = promptAborted;
         resolve(args);
       };
@@ -163,7 +173,8 @@ export class PromptParent extends JSWindowActorParent {
           if (
             !response ||
             typeof response !== "object" ||
-            response.winId !== winId
+            response.winId !== winId ||
+            response.promptId !== payload.promptId
           ) {
             return;
           }
