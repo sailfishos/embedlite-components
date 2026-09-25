@@ -5,6 +5,7 @@ chromecontent_manifest_DATA = \
 
 chromeskin_manifestdir=$(libdir)/mozembedlite/chrome/chrome/skin
 chromeskin_manifest_DATA = \
+	embedliteAboutNetError.css \
 	netError.css \
 	$(NULL)
 

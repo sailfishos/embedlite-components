@@ -3,12 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 (function(global) {
-var Services = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 
 var ClipboardReadPasteHelper = global.ClipboardReadPasteHelper || {};
 
 Object.assign(ClipboardReadPasteHelper, {
-  _requestId: ClipboardReadPasteHelper._requestId || 0,
   _pendingRequestId: null,
   _pendingClipboards: null,
   _eventTarget: ClipboardReadPasteHelper._eventTarget || null,
@@ -43,7 +41,7 @@ Object.assign(ClipboardReadPasteHelper, {
       this._respond(false);
     }
 
-    this._pendingRequestId = ++this._requestId;
+    this._pendingRequestId = Services.uuid.generateUUID().toString();
     this._pendingClipboards = clipboards;
     sendAsyncMessage("embed:clipboardreadpaste", {
       id: this._pendingRequestId,
@@ -151,11 +149,7 @@ Object.assign(ClipboardReadPasteHelper, {
   },
 
   _clipboardEventTarget: function _clipboardEventTarget() {
-    try {
-      return Services.embedlite.chromeEventHandler(content) || content;
-    } catch (e) {
-      return content;
-    }
+    return content;
   },
 
   _pasteDialogDelay: function _pasteDialogDelay() {

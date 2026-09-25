@@ -1,0 +1,210 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+const Cc = Components.classes;
+const Ci = Components.interfaces;
+const Cu = Components.utils;
+const Cr = Components.results;
+
+const PREF_BD_USEDOWNLOADDIR = "browser.download.useDownloadDir";
+const PREF_BD_DOWNLOADDIR = "browser.download.dir";
+const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
+
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
+
+const { DownloadPaths } = ChromeUtils.importESModule("resource://gre/modules/DownloadPaths.sys.mjs");
+const { Downloads } = ChromeUtils.importESModule("resource://gre/modules/Downloads.sys.mjs");
+const { FileUtils } = ChromeUtils.importESModule("resource://gre/modules/FileUtils.sys.mjs");
+
+Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
+XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
+                                    "@mozilla.org/embedlite-app-service;1",
+                                    Ci.nsIEmbedAppService);
+///////////////////////////////////////////////////////////////////////////////
+//// Helper Functions
+
+/**
+ * Determines if a given directory is able to be used to download to.
+ *
+ * @param aDirectory
+ *        The directory to check.
+ * @return true if we can use the directory, false otherwise.
+ */
+function isUsableDirectory(aDirectory)
+{
+  return aDirectory.exists() && aDirectory.isDirectory() &&
+         aDirectory.isWritable();
+}
+
+// -----------------------------------------------------------------------
+// HelperApp Launcher Dialog
+// -----------------------------------------------------------------------
+
+export function HelperAppLauncherDialog() {
+  Logger.debug("JSComp: HelperAppDialog.sys.mjs loaded");
+  // Initialize data properties.
+  this.mLauncher = null;
+  this.mWinId = 0;
+  this.mRequestId = "";
+}
+
+HelperAppLauncherDialog.prototype = {
+  classID: Components.ID("{e9d277a0-268a-4ec2-bb8c-10fdf3e44611}"),
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIHelperAppLauncherDialog], [Ci.nsIObserver]),
+
+  observe: function(aSubject, aTopic, aData) {
+        switch (aTopic) {
+        case "embedui:downloadpicker": {
+            let data;
+            try {
+              data = JSON.parse(aData);
+            } catch (error) {
+              Logger.warn("HelperAppDialog: invalid picker response", error);
+              return;
+            }
+            if (data.requestId !== this.mRequestId ||
+                Number(data.winId) !== this.mWinId) {
+              return;
+            }
+            this.saveAndDownload(data);
+            break;
+        }
+        }
+  },
+
+  show: function hald_show(aLauncher, aContext, aReason) {
+    // Check to see if we can open this file or not
+    Logger.debug("HelperAppLauncherDialog show");
+
+    // See nsIMIMEInfo.idl, nsIExternalHelperAppService and uriloader/exthandler/nsExternalHelperAppService.cpp
+    // For now save them all.
+
+//    if (aLauncher.MIMEInfo.hasDefaultHandler) {
+//      aLauncher.MIMEInfo.preferredAction = Ci.nsIMIMEInfo.useSystemDefault;
+//      aLauncher.launchWithApplication(null, false);
+//    }
+    aLauncher.promptForSaveDestination();
+  },
+
+  promptForSaveToFileAsync: function hald_promptForSaveToFileAsync(aLauncher, aWindowContext, aDefaultFileName,
+                                  aSuggestedFileExtension,
+                                  aForcePrompt) {
+    this.mLauncher = aLauncher;
+    Services.obs.addObserver(this, "embedui:downloadpicker", false);
+
+    var result = {
+      defaultFileName: aDefaultFileName,
+      suggestedFileExtension: aSuggestedFileExtension
+    }
+    if (!aForcePrompt) {
+      let autodownload = Services.prefs.getBoolPref(PREF_BD_USEDOWNLOADDIR, false);
+
+      if (autodownload) {
+        try {
+          result.downloadDirectory = Services.prefs.getStringPref(PREF_BD_DOWNLOADDIR);
+        } catch (e) {
+          Logger.warn("HelperAppDialog: browser.download.dir isn't enabled, will use prefferedDir", e)
+        }
+        this.saveAndDownload(result);
+        return;
+      }
+    }
+    try {
+      let sourceWindow = null;
+      try {
+        sourceWindow = aWindowContext.getInterface(Ci.nsIDOMWindow);
+      } catch (error) {
+        Logger.warn("HelperAppDialog: no source window", error);
+      }
+      let winId = Services.embedlite.getIDByWindow(
+        sourceWindow || Services.ww.activeWindow);
+      this.mWinId = winId;
+      this.mRequestId = Services.uuid.generateUUID().toString();
+      result.winId = winId;
+      result.requestId = this.mRequestId;
+      Services.embedlite.sendAsyncMessage(winId, "embed:downloadpicker", JSON.stringify(result));
+    } catch (e) {
+      Logger.warn("HelperAppDialog: sending async message failed", e)
+      this.finishDownloadPicker(null, true);
+    }
+  },
+
+  promptForSaveToFile: function hald_promptForSaveToFile(aLauncher, aContext, aDefaultFile, aSuggestedFileExt, aForcePrompt) {
+    Logger.debug("HelperAppLauncherDialog promptForSaveToFile -- not supported");
+    throw Cr.NS_ERROR_NOT_AVAILABLE;
+  },
+
+  getFinalLeafName: function (aLeafName, aFileExt) {
+    return DownloadPaths.sanitize(aLeafName) ||
+        "unnamed" + (aFileExt ? "." + aFileExt : "");
+  },
+
+  validateLeafName: function hald_validateLeafName(aLocalFolder, aLeafName, aFileExt) {
+    Logger.debug("HelperAppLauncherDialog validateLeafName");
+
+    if (!(aLocalFolder && isUsableDirectory(aLocalFolder))) {
+      throw new Components.Exception("Destination directory non-existing or permission error",
+                                     Cr.NS_ERROR_FILE_ACCESS_DENIED);
+    }
+
+    aLeafName = this.getFinalLeafName(aLeafName, aFileExt);
+    aLocalFolder.append(aLeafName);
+
+    // The following assignment can throw an exception, but
+    // is now caught properly in the caller of validateLeafName.
+    var createdFile = DownloadPaths.createNiceUniqueFile(aLocalFolder);
+
+    return createdFile;
+  },
+
+  _notify: function hald_notify(aLauncher, aCallback) {
+    let notifier = Cc[aCallback ? "@mozilla.org/alerts-service;1" : "@mozilla.org/toaster-alerts-service;1"].getService(Ci.nsIAlertsService);
+    notifier.showAlertNotification(URI_GENERIC_ICON_DOWNLOAD,
+                                   "alertDownloads",
+                                   "alertCantOpenDownload",
+                                   true, "", aCallback, "downloadopen-fail");
+  },
+  saveAndDownload: function(data) {
+    let file = null;
+
+    (async () => {
+      if (data.cancelled) {
+        this.finishDownloadPicker(null, true);
+        return;
+      }
+      let prefferedDir = data.downloadDirectory;
+      let downloadFolder = new FileUtils.File(prefferedDir);
+      if (!isUsableDirectory(downloadFolder)) {
+        prefferedDir = await Downloads.getPreferredDownloadsDirectory();
+        downloadFolder = new FileUtils.File(prefferedDir);
+      }
+      try {
+        file = this.validateLeafName(downloadFolder, data.defaultFileName,
+                                     data.suggestedFileExtension);
+      } catch (e) {
+        // When the default download directory is write-protected,
+        // prompt the user for a different target file.
+        Logger.warn(e);
+      }
+
+      this.finishDownloadPicker(file, !!data.requestId);
+    })().catch(Cu.reportError);
+  },
+
+  finishDownloadPicker: function(file, dialogWasShown) {
+    let launcher = this.mLauncher;
+    this.mLauncher = null;
+    this.mWinId = 0;
+    this.mRequestId = "";
+    try {
+      Services.obs.removeObserver(this, "embedui:downloadpicker", true);
+    } catch (error) {
+      Logger.warn("HelperAppDialog: removing observer failed", error);
+    }
+    if (launcher) {
+      launcher.saveDestinationAvailable(file, dialogWasShown);
+    }
+  },
+};

@@ -150,7 +150,7 @@ var ContextMenuHandler = {
           this._target = elem;
 
           // Don't include "copy" for password fields.
-          if (!(elem instanceof content.HTMLInputElement) || elem.mozIsTextField(true)) {
+          if (!content.HTMLInputElement.isInstance(elem) || elem.mozIsTextField(true)) {
             // If there is a selection add cut and copy
             if (selectionStart != selectionEnd) {
               state.types.push("cut");
@@ -180,7 +180,7 @@ var ContextMenuHandler = {
           state.label = state.mediaURL = (elem.currentSrc || elem.src);
           state.types.push((elem.paused || elem.ended) ?
             "media-paused" : "media-playing");
-          if (elem instanceof targetWindow.HTMLVideoElement) {
+          if (targetWindow.HTMLVideoElement.isInstance(elem)) {
             state.types.push("video");
           }
           isText = false;

@@ -8,14 +8,13 @@ var EXPORTED_SYMBOLS = ["FilePicker"];
 
 const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { FileUtils } = ChromeUtils.importESModule("resource://gre/modules/FileUtils.sys.mjs");
 
 Cu.importGlobalProperties(['File']);
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
-                                    "nsIEmbedAppService");
+                                    Ci.nsIEmbedAppService);
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 

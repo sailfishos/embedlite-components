@@ -5,12 +5,13 @@ SUBDIRS += search-engines
 OTHER_FILES += \
     jsscripts/*.js \
     jsscripts/*.jsm \
+    jsscripts/*.mjs \
     jsscripts/*.xml \
-    jsscripts/sync/*.js \
     jsscripts/*.manifest \
     jsscripts/*.am \
     jscomps/*.js \
     jscomps/*.jsm \
+    jscomps/*.mjs \
     jscomps/*.manifest \
     jscomps/*.am \
     overrides/*.* \
