@@ -170,6 +170,17 @@ EmbedLiteGlobalHelper.prototype = {
         Services.obs.addObserver(this, "xpcom-shutdown", false);
         Services.obs.addObserver(this, "profile-after-change", false);
 
+        // The XPCOM contract alone no longer registers a network protocol.
+        // Process scripts also run in the parent and in future content processes.
+        Services.ppmm.loadProcessScript("data:application/javascript," + encodeURIComponent(`
+          Services.io.registerProtocolHandler(
+            "intent",
+            Cc["@mozilla.org/network/protocol;1?name=intent"].createInstance(Ci.nsIProtocolHandler),
+            Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE,
+            -1
+          );
+        `), true);
+
         Services.ppmm.loadProcessScript(
           "chrome://global/content/process-content.js",
           true
