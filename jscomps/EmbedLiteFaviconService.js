@@ -54,7 +54,13 @@ var gProgressListener = {
     let iconPath = domDoc.documentURIObject.prePath + "/favicon.ico";
     try {
       let winId = Services.embedlite.getIDByWindow(aWebProgress.DOMWindow);
-      NetUtil.asyncFetch(iconPath, function(aInputStream, aStatusCode, aRequest) {
+      NetUtil.asyncFetch({
+        uri: iconPath,
+        loadingNode: domDoc,
+        securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_INHERITS_SEC_CONTEXT |
+                       Ci.nsILoadInfo.SEC_DISALLOW_SCRIPT,
+        contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE_FAVICON
+      }, function(aInputStream, aStatusCode, aRequest) {
         if (!Components.isSuccessCode(aStatusCode) || aRequest.contentType == "text/html") {
           return;
         }
