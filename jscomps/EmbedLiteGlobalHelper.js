@@ -49,6 +49,17 @@ EmbedLiteGlobalHelper.prototype = {
         Services.obs.addObserver(this, "xpcom-shutdown", false);
         Services.obs.addObserver(this, "profile-after-change", false);
 
+        // The XPCOM contract alone no longer registers a network protocol.
+        // Process scripts also run in the parent and in future content processes.
+        Services.ppmm.loadProcessScript("data:application/javascript," + encodeURIComponent(`
+          Services.io.registerProtocolHandler(
+            "intent",
+            Cc["@mozilla.org/network/protocol;1?name=intent"].createInstance(Ci.nsIProtocolHandler),
+            Ci.nsIProtocolHandler.URI_LOADABLE_BY_ANYONE,
+            -1
+          );
+        `), true);
+
         Services.ppmm.loadProcessScript(
           "chrome://global/content/process-content.js",
           true
@@ -60,6 +71,7 @@ EmbedLiteGlobalHelper.prototype = {
         break;
       }
       case "profile-after-change": {
+        this._migratePreferences();
         break;
       }
       case "xpcom-shutdown": {
@@ -69,6 +81,23 @@ EmbedLiteGlobalHelper.prototype = {
         break;
       }
     }
+  },
+
+  _migratePreferences() {
+    const pref = "apz.touch_start_tolerance";
+    const migrated = "embedlite.prefs.touch_start_tolerance_migrated";
+    // Wait for the Gecko package with the Firefox Android touch threshold.
+    if (Services.prefs.getDefaultBranch("").getStringPref(pref, "") !== "0.06" ||
+        Services.prefs.getBoolPref(migrated, false)) {
+      return;
+    }
+
+    // WebView used to save a Qt-derived threshold on first run. Remove it
+    // once per profile so Gecko's default applies; later user changes survive.
+    // Old automatic and manually set values cannot be distinguished.
+    Services.prefs.clearUserPref(pref);
+    Services.prefs.setBoolPref(migrated, true);
+    Services.prefs.savePrefFile(null);
   },
 
   notifyInvalidSubmit: function notifyInvalidSubmit(aFormElement, aInvalidElements) {

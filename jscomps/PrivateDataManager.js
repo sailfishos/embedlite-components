@@ -86,7 +86,7 @@ PrivateDataManager.prototype = {
     }
     this._siteDataSizePromise = new Promise((resolve, reject) => {
       try {
-        Services.qms.getUsage(function (request) {
+        Services.qms.getUsage(request => {
           let usage = 0;
           if (request.resultCode == Cr.NS_OK) {
             let items = request.result;
@@ -95,13 +95,13 @@ PrivateDataManager.prototype = {
             }
           }
           resolve(usage);
-          this._siteDataSizePromise = null;
         });
       } catch (e) {
         debug("error in calculating site data size: " + e);
         reject(e);
-        this._siteDataSizePromise = null;
       }
+    }).finally(() => {
+      this._siteDataSizePromise = null;
     });
     return this._siteDataSizePromise;
   },
