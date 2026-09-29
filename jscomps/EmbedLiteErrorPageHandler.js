@@ -144,26 +144,17 @@ var ErrorPageEventHandler = {
           let temp = errorDoc.getElementById("temporaryExceptionButton");
           if (target == temp || target == perm) {
             // Handle setting an cert exception and reloading the page
-            let uri = Services.io.newURI(errorDoc.location.href);
-            let securityInfo = this._docShell.failedChannel.securityInfo;
+            let failedChannel = this._docShell.failedChannel;
+            let uri = failedChannel.URI;
+            let securityInfo = failedChannel.securityInfo;
             securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
             let cert = securityInfo.serverCert;
             let overrideService = Cc["@mozilla.org/security/certoverride;1"]
                                     .getService(Ci.nsICertOverrideService);
-            let flags = 0;
-            if (securityInfo.isUntrusted) {
-              flags |= overrideService.ERROR_UNTRUSTED;
-            }
-            if (securityInfo.isDomainMismatch) {
-              flags |= overrideService.ERROR_MISMATCH;
-            }
-            if (securityInfo.isNotValidAtThisTime) {
-              flags |= overrideService.ERROR_TIME;
-            }
             let temporary = (target == temp) ||
                              PrivateBrowsingUtils.isWindowPrivate(errorDoc.defaultView);
-            let attrs = target.nodePrincipal.originAttributes;
-            overrideService.rememberValidityOverride(uri.asciiHost, uri.port, attrs, cert, flags,
+            let attrs = failedChannel.loadInfo.originAttributes;
+            overrideService.rememberValidityOverride(uri.asciiHost, uri.port, attrs, cert,
                                                      temporary);
             errorDoc.location.reload();
           } else if (target == errorDoc.getElementById("getMeOutOfHereButton")) {
