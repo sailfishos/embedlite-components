@@ -33,6 +33,11 @@ export class DateTimePickerParent extends GeckoDateTimePickerParent {
   }
 
   showPicker(data) {
+    if (!this.browsingContext.canOpenModalPicker) {
+      return;
+    }
+
+    this.#cancelEmbedPicker();
     // The Sailfish UI currently provides a native date picker only. Keep the
     // standard Gecko panel for the time and datetime-local input types.
     if (data.type !== "date") {
@@ -40,11 +45,7 @@ export class DateTimePickerParent extends GeckoDateTimePickerParent {
       return;
     }
 
-    if (!this.browsingContext.canOpenModalPicker) {
-      return;
-    }
-
-    this.#cancelEmbedPicker();
+    super.close();
 
     let embedService;
     let winId;

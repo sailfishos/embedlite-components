@@ -52,7 +52,7 @@ export class PromptParent extends JSWindowActorParent {
         responseTopic = "selectresponse";
         break;
       default:
-        return undefined;
+        return { ...args, promptAborted: true };
     }
 
     let embedService;

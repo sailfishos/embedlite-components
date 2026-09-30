@@ -9,7 +9,8 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 let source = fs.readFileSync(
-  path.join(__dirname, "../jscomps/EmbedLiteDateTimePickerParent.sys.mjs"),
+  path.join(__dirname,
+    "../jscomps/EmbedLiteDateTimePickerParent.sys.mjs"),
   "utf8"
 );
 source = source
@@ -177,4 +178,30 @@ const timeRequest = { type: "time", detail: {} };
 timeActor.showPicker(timeRequest);
 assert.equal(timeActor.fallbackPicker, timeRequest);
 
-console.log("Date picker routing tests passed");
+// Switching backend must tear down the previous picker and route Close to
+// the current one, even if a stale native reply arrives afterwards.
+for (const type of ["time", "datetime-local"]) {
+  const switching = new scope.DateTimePickerParent();
+  switching.showPicker({ type: "date", detail: {} });
+  const staleListener = listener;
+  const nativeRequest = requests.at(-1).data;
+  switching.showPicker({ type, detail: {} });
+  assert.equal(listener, null);
+  assert.equal(requests.at(-1).name, "embed:datepickerabort");
+  assert.equal(requests.at(-1).data.id, nativeRequest.id);
+  assert.equal(switching.fallbackPicker.type, type);
+  staleListener.onMessageReceived("embedui:datepickerresponse", JSON.stringify({
+    ...nativeRequest, accepted: true, year: 2026, month: 9, day: 17,
+  }));
+  assert.equal(switching.messages.length, 0);
+  const close = { name: "InputPicker:Close" };
+  switching.receiveMessage(close);
+  assert.equal(switching.fallbackMessage, close);
+
+  switching.fallbackClosed = false;
+  switching.showPicker({ type: "date", detail: {} });
+  assert.equal(switching.fallbackClosed, true, "Native picker closes Gecko panel");
+  switching.didDestroy();
+  assert.equal(listener, null);
+}
+console.log("Date picker routing and backend switching tests passed");

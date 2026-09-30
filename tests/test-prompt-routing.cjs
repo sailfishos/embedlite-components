@@ -68,5 +68,16 @@ const respond = data => listeners.get('confirmresponse').onMessageReceived(
   assert.equal((await thirdResult).ok, true);
   assert.equal((await fourthResult).promptAborted, true);
   assert.equal(messages.at(-1), c, 'destroyed queued actors must not display a dialog');
+  const unsupported = new context.PromptParent();
+  const count = messages.length;
+  for (const promptType of ['promptPassword', 'promptUserAndPass', 'unknown']) {
+    const result = await unsupported.receiveMessage({ name: 'Prompt:Open',
+      data: { promptType, value: 'unchanged' } });
+    assert.equal(result.promptAborted, true);
+    assert.equal(result.promptType, promptType);
+    assert.equal(result.value, 'unchanged');
+  }
+  assert.equal(messages.length, count);
+  assert.equal(listeners.size, 0);
   console.log('Prompt routing: stale replies, teardown, current reply and serialization passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

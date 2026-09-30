@@ -112,14 +112,14 @@ HelperAppLauncherDialog.prototype = {
       }
     }
     try {
-      let sourceWindow = null;
-      try {
-        sourceWindow = aWindowContext.getInterface(Ci.nsIDOMWindow);
-      } catch (error) {
-        Logger.warn("HelperAppDialog: no source window", error);
+      // The dialog parent can be a chrome window for remote downloads. Route
+      // using the launcher source instead of whichever tab is currently active.
+      let context = BrowsingContext.get(aLauncher.browsingContextId);
+      let winId = context && Services.embedlite.getIDByBrowsingContext(context);
+      if (!winId) {
+        this.finishDownloadPicker(null, true);
+        return;
       }
-      let winId = Services.embedlite.getIDByWindow(
-        sourceWindow || Services.ww.activeWindow);
       this.mWinId = winId;
       this.mRequestId = Services.uuid.generateUUID().toString();
       result.winId = winId;
