@@ -61,3 +61,55 @@ scope.prompter._showLoginNotification(null, "password-save", [], [], {});
 assert.equal(sent.length, 3, "Missing origins must not target another tab");
 assert.equal(warnings, 1);
 console.log("Login prompt routing tests passed");
+
+
+// HTTP authentication must stay attached to a remote background tab even
+// when the chrome window belongs to a different selected tab.
+const authMethod = source.match(/  _promptAuth\([^\n]*\) \{[\s\S]*?\n  },/);
+assert.ok(authMethod);
+async function testAuthRouting() {
+  const listeners = new Set();
+  const authSent = [];
+  const authScope = {
+    ChromeUtils: { generateQI() { return () => {}; } },
+    Ci: { nsIAuthInformation: { ONLY_PASSWORD: 1 } },
+    Services: { embedlite: {
+      getIDByBrowsingContext(context) {
+        if (!context || !context.endpoint) throw new Error("No source endpoint");
+        return context.endpoint;
+      },
+      getIDByWindow() { assert.fail("Auth must not target the selected chrome tab"); },
+      addMessageListener(name, listener) { listeners.add(listener); },
+      removeMessageListener(name, listener) { listeners.delete(listener); },
+      sendAsyncMessage(endpoint, name, json) { authSent.push({ endpoint, name, data: JSON.parse(json) }); }
+    } }
+  };
+  vm.createContext(authScope);
+  vm.runInContext(`globalThis.prompter = {
+    _getPromptBrowsingContext() { return this.context; },
+    _chromeWindow: { endpoint: 99 },
+    _getAuthMessage() { return "Password"; },
+    _GetAuthInfo() { return ["user", ""]; },
+    _SetAuthInfo(info, user, password) { info.username = user; info.password = password; },
+    warn() {}, ${authMethod[0]}
+  };`, authScope);
+  authScope.prompter.context = { window: null, endpoint: 17 };
+  const info = { flags: 0 };
+  const pending = authScope.prompter._promptAuth({}, 0, info, "", {});
+  assert.equal(authSent.length, 1);
+  assert.equal(authSent[0].endpoint, 17);
+  assert.equal(authSent[0].data.winId, 17);
+  for (const listener of [...listeners]) {
+    listener.onMessageReceived("authresponse", JSON.stringify({ winId: 17, accepted: true, password: "test" }));
+  }
+  assert.equal(await pending, true);
+  assert.equal(info.password, "test");
+  assert.equal(listeners.size, 0);
+  for (const context of [null, { window: null }]) {
+    authScope.prompter.context = context;
+    assert.equal(await authScope.prompter._promptAuth({}, 0, { flags: 0 }, "", {}), false);
+  }
+  assert.equal(authSent.length, 1);
+  console.log("Background HTTP-auth routing tests passed");
+}
+testAuthRouting().catch(error => { console.error(error); process.exitCode = 1; });

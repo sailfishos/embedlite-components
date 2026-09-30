@@ -66,7 +66,6 @@ EmbedHelper.prototype = {
     addMessageListener("embedui:exitFullscreen", this);
     addMessageListener("embedui:zoomToRect", this);
     addMessageListener("embedui:scrollTo", this);
-    addMessageListener("embedui:addhistory", this);
     addMessageListener("embedui:runjavascript", this);
     addMessageListener("Memory:Dump", this);
     addMessageListener("Gesture:ContextMenuSynth", this);
@@ -173,76 +172,7 @@ EmbedHelper.prototype = {
         }
         break;
       }
-      case "embedui:addhistory": {
-        // aMessage.data contains: 1) list of 'links' loaded from DB, 2) current 'index'.
 
-        let docShell = content.docShell;
-        let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
-        let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
-
-        try {
-          // Initially we load the current URL and that creates an unneeded entry in History -> purge it.
-          if (sessionHistory.count > 0) {
-            sessionHistory.purgeHistory(1);
-          }
-        } catch (e) {
-            Logger.warn("Warning: couldn't purgeHistory. Was it a file download?", e);
-        }
-
-        // Use same default value as there is in nsSHistory.cpp of Gecko.
-        let maxEntries = 50;
-        try {
-          maxEntries = Services.prefs.getIntPref("browser.sessionhistory.max_entries");
-        } catch (e) {
-          maxEntries = 50;
-        } /*pref is missing*/
-
-        let links = aMessage.data.links;
-        let itemsToRemove = Math.max(0, links.length - maxEntries);
-        // Adjust index to the range max session history entries.
-        let index = Math.max(0, (aMessage.data.index - itemsToRemove));
-        links.splice(0, itemsToRemove);
-        links.forEach(function(link) {
-            let uri;
-            try {
-                uri = ioService.newURI(link, null, null);
-            } catch (e) {
-                Logger.debug("Warning: no protocol provided for uri '" + link + "'. Assuming http..." + e);
-                uri = ioService.newURI("http://" + link, null, null);
-            }
-            let historyEntry = sessionHistory.createEntry();
-            historyEntry.URI = uri;
-            historyEntry.triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-            sessionHistory.addEntry(historyEntry);
-        });
-        if (index < 0) {
-            Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
-            sessionHistory.getEntryAtIndex(0);
-            index = 0;
-        } else if (index >= sessionHistory.count) {
-            let lastIndex = sessionHistory.count - 1;
-            Logger.debug("Warning: session history entry index out of bound:" + index + ". There are " + sessionHistory.count +
-                 " item(s) in the session history. Returning index " + lastIndex);
-            sessionHistory.getEntryAtIndex(lastIndex);
-            index = lastIndex;
-        } else {
-            sessionHistory.getEntryAtIndex(index);
-        }
-
-        // Update index value to enable forward and backward
-        sessionHistory.index = index;
-        sessionHistory.updateIndex();
-
-        let initialURI;
-        try {
-            initialURI = ioService.newURI(links[index], null, null);
-        } catch (e) {
-            Logger.debug("Warning: couldn't construct initial URI. Assuming a http:// URI is provided");
-            initialURI = ioService.newURI("http://" + links[index], null, null);
-        }
-        docShell.setCurrentURIForSessionStore(initialURI);
-        break;
-      }
       case "embedui:runjavascript": {
         if (aMessage.data && aMessage.data.script) {
           let callbackId = aMessage.data.callbackId;

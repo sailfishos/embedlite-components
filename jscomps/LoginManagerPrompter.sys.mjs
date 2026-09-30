@@ -402,20 +402,16 @@ LoginManagerPrompter.prototype = {
   _promptAuth(aChannel, aLevel, aAuthInfo, checkboxLabel, checkbox) {
     return new Promise(resolve => {
       let browsingContext = this._getPromptBrowsingContext();
-      let win = null;
-      try {
-        win = browsingContext?.top?.window || browsingContext?.window;
-      } catch (e) {}
-
-      if (!win) {
-        win = this._chromeWindow;
-      }
-
       let winId;
       try {
-        winId = Services.embedlite.getIDByWindow(win);
+        // Remote documents have no DOM window in this process. Resolve their
+        // endpoint directly; falling back to the chrome window targets its
+        // selected tab, which need not be the authentication requester.
+        winId = browsingContext
+          ? Services.embedlite.getIDByBrowsingContext(browsingContext)
+          : 0;
       } catch (e) {
-        this.warn("LoginManagerPrompter: unable to find window id", e);
+        this.warn("LoginManagerPrompter: unable to find auth endpoint", e);
         resolve(false);
         return;
       }
