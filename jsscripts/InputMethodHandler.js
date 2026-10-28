@@ -98,13 +98,31 @@ InputMethodHandler.prototype = {
     }
 
     try {
+      let cursorPosition = aElement.selectionStart;
+      let anchorPosition = aElement.selectionEnd;
+      if (cursorPosition === null) {
+        // The email and number input types have no selection API, but their
+        // editor still has a selection, and the input method needs the cursor.
+        let selection = aElement.editor.selection;
+        cursorPosition = this._valueOffset(aElement, selection.focusNode, selection.focusOffset);
+        anchorPosition = this._valueOffset(aElement, selection.anchorNode, selection.anchorOffset);
+      }
       sendAsyncMessage("InputMethodHandler:SetInputContext",
                        {surroundingText: aElement.value,
-                        cursorPosition: aElement.selectionStart,
-                        anchorPosition: aElement.selectionEnd});
+                        cursorPosition: cursorPosition,
+                        anchorPosition: anchorPosition});
     } catch (e) {
       Logger.warn("InputMethodHandler: sending async message failed", e);
     }
+  },
+
+  // A single-line editor keeps its value in one text node; any other
+  // selection node is the editor root, before or after that text.
+  _valueOffset: function(aElement, aNode, aOffset) {
+    if (aNode && aNode.nodeType === aNode.TEXT_NODE) {
+      return aOffset;
+    }
+    return aOffset > 0 ? aElement.value.length : 0;
   },
 
   _resetInputContext: function(aElement) {
